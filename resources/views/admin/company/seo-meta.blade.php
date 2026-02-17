@@ -25,7 +25,7 @@
                         <h3 class="card-title mb-0 flex-grow-1">SEO Meta Fields</h3>
                     </div>
 
-                    <form action="{{ route('admin.company.seo-meta.update') }}" method="POST"
+                    <form action="{{ route('admin.seo-meta') }}" method="POST"
                         enctype="multipart/form-data">
                         @csrf
                         <div class="card-body">

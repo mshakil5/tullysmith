@@ -94,7 +94,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('serviceJob.index') }}" class="nav-link {{ Route::is('serviceJob.index') ? 'active' : '' }}">
+                    <a href="{{ route('serviceJob.index') }}" class="nav-link {{ Route::is('serviceJob.index') || Route::is('serviceJob.show') ? 'active' : '' }}">
                         <i class="ri-briefcase-line"></i>
                         <span>Jobs</span>
                     </a>
@@ -130,7 +130,7 @@
                 @php
                     $settingsRoute = Route::is(
                         'admin.companyDetails',
-                        'admin.company.seo-meta',
+                        'admin.seo-meta',
                         'admin.aboutUs',
                         'admin.privacy-policy',
                         'admin.terms-and-conditions',
@@ -158,8 +158,8 @@
                                   class="nav-link {{ Route::is('admin.companyDetails') ? 'active' : '' }}">Company Details</a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('admin.company.seo-meta') }}" 
-                                  class="nav-link {{ Route::is('admin.company.seo-meta') ? 'active' : '' }}">SEO</a>
+                                <a href="{{ route('admin.seo-meta') }}" 
+                                  class="nav-link {{ Route::is('admin.seo-meta') ? 'active' : '' }}">SEO</a>
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('admin.aboutUs') }}" 

@@ -71,7 +71,7 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Priority</label>
+                                <label class="form-label">Priority <span class="text-danger">*</span></label>
                                 <select id="priority" name="priority" class="form-control">
                                     <option value="">Select Priority</option>
                                     <option value="low">Low</option>

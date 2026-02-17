@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\CheckPermission;
+use App\Http\Middleware\IsAdmin;
+use App\Http\Middleware\IsClient;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,10 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
         ]);
         $middleware->alias([
-            'is_admin' => App\Http\Middleware\IsAdmin::class,
-            'is_client' => \App\Http\Middleware\IsClient::class,
+            'is_admin' => IsAdmin::class,
+            'is_client' => IsClient::class,
+            'permission.check' => CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->withCommands([
+        \App\Console\Commands\SyncAppPermissions::class,
+    ])
+    ->create();

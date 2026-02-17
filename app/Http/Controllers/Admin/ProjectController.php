@@ -26,7 +26,7 @@ class ProjectController extends Controller
                           <ul class="dropdown-menu dropdown-menu-end">
                             <li><button class="dropdown-item EditBtn" data-id="' . $row->id . '"><i class="ri-pencil-fill me-2"></i>Edit</button></li>
                             <li class="dropdown-divider"></li>
-                            <li><button class="dropdown-item deleteBtn" data-delete-url="' . route('project.destroy', $row->id) . '" data-method="DELETE" data-table="#projectTable"><i class="ri-delete-bin-fill me-2"></i>Delete</button></li>
+                            <li><button class="dropdown-item deleteBtn" data-delete-url="' . route('project.delete', $row->id) . '" data-method="DELETE" data-table="#projectTable"><i class="ri-delete-bin-fill me-2"></i>Delete</button></li>
                           </ul>
                         </div>';
                 })

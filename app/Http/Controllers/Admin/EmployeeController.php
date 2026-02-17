@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use DataTables;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class EmployeeController extends Controller
 {
@@ -33,11 +34,16 @@ class EmployeeController extends Controller
                           </ul>
                         </div>';
                 })
+                ->addColumn('role', function ($row) {
+                    return $row->getRoleNames()->first() ?? '-';
+                })
                 ->rawColumns(['status', 'action'])
                 ->make(true);
         }
 
-        return view('admin.employee.index');
+        $roles = Role::orderBy('name')->get();
+
+        return view('admin.employee.index', compact('roles'));
     }
 
     public function store(Request $request)
@@ -50,9 +56,10 @@ class EmployeeController extends Controller
             'address' => 'nullable|string|max:500',
             'additional_info' => 'nullable|string',
             'password' => 'required|string|min:6|confirmed',
+            'role_id' => 'required|exists:roles,id',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'primary_contact' => $request->primary_contact,
             'email' => $request->email,
@@ -64,12 +71,16 @@ class EmployeeController extends Controller
             'status' => 1,
         ]);
 
+        $role = Role::find($request->role_id);
+        $user->syncRoles($role);
+
         return response()->json(['message' => 'Employee created successfully.']);
     }
 
     public function edit($id)
     {
         $user = User::findOrFail($id);
+        $user->role_id = $user->roles()->first()?->id;
         return response()->json($user);
     }
 
@@ -84,6 +95,7 @@ class EmployeeController extends Controller
             'address' => 'nullable|string|max:500',
             'additional_info' => 'nullable|string',
             'password' => 'nullable|string|min:6|confirmed',
+            'role_id' => 'required|exists:roles,id',
         ]);
 
         $user = User::findOrFail($request->id);
@@ -96,6 +108,9 @@ class EmployeeController extends Controller
         $user->additional_info = $request->additional_info;
         if ($request->password) $user->password = Hash::make($request->password);
         $user->save();
+
+        $role = Role::find($request->role_id);
+        $user->syncRoles($role);
 
         return response()->json(['message' => 'Employee updated successfully.']);
     }

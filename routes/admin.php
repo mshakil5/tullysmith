@@ -8,44 +8,53 @@ use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\NoteController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceJobChecklistController;
 use App\Http\Controllers\Admin\ServiceJobController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin']], function () {
+Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permission.check']], function () {
     Route::get('/dashboard', [HomeController::class, 'adminHome'])->name('admin.dashboard');
 
     // Employee
-    Route::get('/employee', [EmployeeController::class, 'index'])->name('employee.index');
-    Route::post('/employee', [EmployeeController::class, 'store'])->name('employee.store');
-    Route::get('/employee/{id}/edit', [EmployeeController::class, 'edit'])->name('employee.edit');
-    Route::post('/employee-update', [EmployeeController::class, 'update'])->name('employee.update');
-    Route::delete('/employee/{id}', [EmployeeController::class, 'destroy'])->name('employee.delete');
-    Route::post('/employee-status', [EmployeeController::class, 'toggleStatus'])->name('employee.toggleStatus');
+    Route::prefix('employee')->name('employee.')->group(function () {
+        Route::get('/', [EmployeeController::class, 'index'])->name('index');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [EmployeeController::class, 'edit'])->name('edit');
+        Route::post('/update', [EmployeeController::class, 'update'])->name('update');
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('delete');
+        Route::post('/status', [EmployeeController::class, 'toggleStatus'])->name('toggleStatus');
+    });
 
     // Client
-    Route::get('/client', [ClientController::class, 'index'])->name('client.index');
-    Route::post('/client', [ClientController::class, 'store'])->name('client.store');
-    Route::get('/client/{id}/edit', [ClientController::class, 'edit'])->name('client.edit');
-    Route::post('/client-update', [ClientController::class, 'update'])->name('client.update');
-    Route::delete('/client/{id}', [ClientController::class, 'destroy'])->name('client.delete');
-    Route::post('/client-status', [ClientController::class, 'toggleStatus'])->name('client.toggleStatus');
+    Route::prefix('client')->name('client.')->group(function () {
+        Route::get('/', [ClientController::class, 'index'])->name('index');
+        Route::post('/', [ClientController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ClientController::class, 'edit'])->name('edit');
+        Route::post('/update', [ClientController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ClientController::class, 'destroy'])->name('delete');
+        Route::post('/status', [ClientController::class, 'toggleStatus'])->name('toggleStatus');
+    });
 
     // Project
-    Route::get('/project', [ProjectController::class, 'index'])->name('project.index');
-    Route::post('/project', [ProjectController::class, 'store'])->name('project.store');
-    Route::get('/project/{id}/edit', [ProjectController::class, 'edit'])->name('project.edit');
-    Route::post('/project-update', [ProjectController::class, 'update'])->name('project.update');
-    Route::delete('/project/{id}', [ProjectController::class, 'destroy'])->name('project.destroy');
+    Route::prefix('project')->name('project.')->group(function () {
+        Route::get('/', [ProjectController::class, 'index'])->name('index');
+        Route::post('/', [ProjectController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ProjectController::class, 'edit'])->name('edit');
+        Route::post('/update', [ProjectController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ProjectController::class, 'destroy'])->name('delete');
+    });
 
     // Service Job
-    Route::get('/service-job', [ServiceJobController::class, 'index'])->name('serviceJob.index');
-    Route::post('/service-job', [ServiceJobController::class, 'store'])->name('serviceJob.store');
-    Route::get('/service-job/{id}/edit', [ServiceJobController::class, 'edit'])->name('serviceJob.edit');
-    Route::post('/service-job-update', [ServiceJobController::class, 'update'])->name('serviceJob.update');
-    Route::delete('/service-job/{id}', [ServiceJobController::class, 'destroy'])->name('serviceJob.delete');
-    Route::get('/service-job/{id}', [ServiceJobController::class, 'show'])->name('serviceJob.show');
+    Route::prefix('service-job')->name('serviceJob.')->group(function () {
+        Route::get('/', [ServiceJobController::class, 'index'])->name('index');
+        Route::post('/', [ServiceJobController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ServiceJobController::class, 'edit'])->name('edit');
+        Route::post('/update', [ServiceJobController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ServiceJobController::class, 'destroy'])->name('delete');
+        Route::get('/{id}', [ServiceJobController::class, 'show'])->name('show');
+    });
 
     // Note
     Route::post('/note', [NoteController::class, 'store'])->name('note.store');
@@ -60,17 +69,29 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin']], funct
     // Checklist Under Service Job
     Route::get('/checklist/active/list', [ChecklistController::class, 'getActiveList'])->name('checklist.active.list');
     Route::get('/checklist/{id}/items', [ChecklistController::class, 'getItems'])->name('checklist.items');
-    Route::get('/service-job/{id}/checklists', [ServiceJobChecklistController::class, 'getChecklists'])->name('service-job.checklists');
-    Route::post('/service-job/checklist', [ServiceJobChecklistController::class, 'store'])->name('service-job.checklist.store');
-    Route::delete('/service-job/checklist/{id}', [ServiceJobChecklistController::class, 'destroy'])->name('service-job.checklist.destroy');
+    Route::get('/service-job/{id}/checklists', [ServiceJobChecklistController::class, 'getChecklists'])->name('checklist.service-job');
+    Route::post('/service-job/checklist', [ServiceJobChecklistController::class, 'store'])->name('checklist.service-job.store');
+    Route::delete('/service-job/checklist/{id}', [ServiceJobChecklistController::class, 'destroy'])->name('checklist.service-job.destroy');
 
     //Checklist
-    Route::get('/checklist', [ChecklistController::class, 'index'])->name('checklist.index');
-    Route::post('/checklist', [ChecklistController::class, 'store'])->name('checklist.store');
-    Route::get('/checklist/{id}/edit', [ChecklistController::class, 'edit'])->name('checklist.edit');
-    Route::post('/checklist-update', [ChecklistController::class, 'update'])->name('checklist.update');
-    Route::delete('/checklist/{id}', [ChecklistController::class, 'destroy'])->name('checklist.destroy');
-    Route::post('/checklist-status', [ChecklistController::class, 'toggleStatus'])->name('checklist.toggleStatus');
+    Route::prefix('checklist')->name('checklist.')->group(function () {
+        Route::get('/', [ChecklistController::class, 'index'])->name('index');
+        Route::post('/', [ChecklistController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ChecklistController::class, 'edit'])->name('edit');
+        Route::post('/update', [ChecklistController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ChecklistController::class, 'destroy'])->name('delete');
+        Route::post('/status', [ChecklistController::class, 'toggleStatus'])->name('toggleStatus');
+    });
+
+    // Roles
+    Route::prefix('roles')->name('role.')->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::post('/update', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{id}', [RoleController::class, 'delete'])->name('delete');
+        Route::get('/permissions', [RoleController::class, 'permissions'])->name('permissions');
+    });
 
     // Contact
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
@@ -82,8 +103,8 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin']], funct
     Route::get('/company-details', [CompanyDetailsController::class, 'index'])->name('admin.companyDetails');
     Route::post('/company-details', [CompanyDetailsController::class, 'update'])->name('admin.companyDetails');
 
-    Route::get('/company/seo-meta', [CompanyDetailsController::class, 'seoMeta'])->name('admin.company.seo-meta');
-    Route::post('/company/seo-meta/update', [CompanyDetailsController::class, 'seoMetaUpdate'])->name('admin.company.seo-meta.update');
+    Route::get('/company/seo-meta', [CompanyDetailsController::class, 'seoMeta'])->name('admin.seo-meta');
+    Route::post('/company/seo-meta/update', [CompanyDetailsController::class, 'seoMetaUpdate'])->name('admin.seo-meta');
 
     Route::get('/about-us', [CompanyDetailsController::class, 'aboutUs'])->name('admin.aboutUs');
     Route::post('/about-us', [CompanyDetailsController::class, 'aboutUsUpdate'])->name('admin.aboutUs');

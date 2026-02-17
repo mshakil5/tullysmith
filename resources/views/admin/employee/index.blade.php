@@ -54,6 +54,15 @@
                                     <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
                                     <input type="password" id="password_confirmation" name="password_confirmation" class="form-control">
                                 </div>
+                                <div class="col-6">
+                                    <label class="form-label">Role <span class="text-danger">*</span></label>
+                                    <select id="role_id" name="role_id" class="form-select">
+                                        <option value="">Select Role</option>
+                                        @foreach($roles as $role)
+                                            <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                             <div class="mt-3 text-end">
                                 <button type="button" id="addBtn" class="btn btn-primary" value="Create">Create</button>
@@ -72,11 +81,12 @@
                 <h4 class="card-title mb-0">Clients</h4>
             </div>
             <div class="card-body">
-                <table id="clientTable" class="table table-bordered table-striped">
+                <table id="userTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>Sl</th>
                             <th>Name</th>
+                            <th>Role</th>
                             <th>Email</th>
                             <th>Phone</th>
                             <th>Contact</th>
@@ -100,7 +110,7 @@
                 }
             });
 
-            var table = $('#clientTable').DataTable({
+            var table = $('#userTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('employee.index') }}",
@@ -113,6 +123,10 @@
                     {
                         data: 'name',
                         name: 'name'
+                    },
+                    {
+                        data: 'role',
+                        name: 'role'
                     },
                     {
                         data: 'email',
@@ -196,6 +210,7 @@
                     $('#primary_contact').val(res.primary_contact);
                     $('#address').val(res.address);
                     $(".summernote").summernote('code', res.additional_info ?? '');
+                    $('#role_id').val(res.role_id ?? '');
                     $('#password, #password_confirmation').prop('required', false);
                     $('#cardTitle').text('Update Employee');
                     $('#addBtn').val('Update').text('Update');

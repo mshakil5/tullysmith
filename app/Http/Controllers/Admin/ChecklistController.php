@@ -33,7 +33,7 @@ class ChecklistController extends Controller
                           <ul class="dropdown-menu dropdown-menu-end">
                             <li><button class="dropdown-item EditBtn" data-id="' . $row->id . '"><i class="ri-pencil-fill me-2"></i>Edit</button></li>
                             <li class="dropdown-divider"></li>
-                            <li><button class="dropdown-item deleteBtn" data-delete-url="' . route('checklist.destroy', $row->id) . '" data-method="DELETE" data-table="#checklistTable"><i class="ri-delete-bin-fill me-2"></i>Delete</button></li>
+                            <li><button class="dropdown-item deleteBtn" data-delete-url="' . route('checklist.delete', $row->id) . '" data-method="DELETE" data-table="#checklistTable"><i class="ri-delete-bin-fill me-2"></i>Delete</button></li>
                           </ul>
                         </div>';
                 })

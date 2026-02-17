@@ -181,3 +181,11 @@ function reloadTable(tableSelector = null) {
         table.ajax.reload(null, false);
     }
 }
+
+$(document).ajaxError(function(event, jqxhr, settings, thrownError) {
+    if (jqxhr.status === 403) {
+        let message = jqxhr.responseJSON?.message ?? "You don't have permission to perform this action";
+        showError(message);
+        return false;
+    }
+});

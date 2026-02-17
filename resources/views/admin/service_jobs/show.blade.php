@@ -589,7 +589,7 @@ function loadChecklists() {
         e.preventDefault();
         let checklistId = $(this).data('checklist-id');
 
-        $.post("{{ route('service-job.checklist.store') }}", {
+        $.post("{{ route('checklist.service-job.store') }}", {
             service_job_id: jobId,
             checklist_id: checklistId
         }, function(res) {
