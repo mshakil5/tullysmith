@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthContoller;
 use App\Http\Controllers\Api\ChecklistController;
+use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\RoleController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,15 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::delete('/{id}', [ChecklistController::class, 'destroy']);
         Route::post('/{id}/toggle-status', [ChecklistController::class, 'toggleStatus']);
         Route::get('/{id}/items', [ChecklistController::class, 'items']);
+    });
+
+    Route::prefix('client')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store']);
+        Route::get('/{id}', [ClientController::class, 'show']);
+        Route::post('/{id}', [ClientController::class, 'update']);
+        Route::delete('/{id}', [ClientController::class, 'destroy']);
+        Route::post('/{id}/toggle-status', [ClientController::class, 'toggleStatus']);
     });
 
 });
