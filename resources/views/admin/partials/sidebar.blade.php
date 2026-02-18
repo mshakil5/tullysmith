@@ -113,6 +113,14 @@
                         <span>Clients</span>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a href="{{ route('checklist.index') }}" class="nav-link {{ Route::is('checklist.index') ? 'active' : '' }}">
+                        <i class="ri-checkbox-multiple-line"></i>
+                        <span>Checklist</span>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a href="{{ route('employee.index') }}" class="nav-link {{ Route::is('employee.index') ? 'active' : '' }}">
                         <i class="ri-team-line"></i>
@@ -121,9 +129,9 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('checklist.index') }}" class="nav-link {{ Route::is('checklist.index') ? 'active' : '' }}">
-                        <i class="ri-checkbox-multiple-line"></i>
-                        <span>Checklist</span>
+                    <a href="{{ route('role.index') }}" class="nav-link {{ Route::is('role.index') ? 'active' : '' }}">
+                        <i class="ri-shield-user-line"></i>
+                        <span>Roles</span>
                     </a>
                 </li>
 

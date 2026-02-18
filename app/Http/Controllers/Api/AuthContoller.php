@@ -20,9 +20,4 @@ class AuthContoller extends Controller
 
         return response()->json(['message' => 'Invalid credentials.', 'error' => 'Unauthenticated'], 401);
     }
-
-    public function user()
-    {
-        return Auth::user();
-    }
 }
