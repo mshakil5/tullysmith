@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\ServiceJobController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthContoller::class, 'login']);
@@ -56,6 +57,14 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/{id}', [ProjectController::class, 'show']);
         Route::post('/{id}', [ProjectController::class, 'update']);
         Route::delete('/{id}', [ProjectController::class, 'destroy']);
+    });
+
+    Route::prefix('job')->group(function () {
+        Route::get('/', [ServiceJobController::class, 'index']);
+        Route::post('/', [ServiceJobController::class, 'store']);
+        Route::get('/{id}', [ServiceJobController::class, 'show']);
+        Route::post('/{id}', [ServiceJobController::class, 'update']);
+        Route::delete('/{id}', [ServiceJobController::class, 'destroy']);
     });
 
 });
