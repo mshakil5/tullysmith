@@ -31,4 +31,10 @@ class User extends Authenticatable
     {
         return $this->roles()->first();
     }
+
+    public function getCreationStatusAttribute()
+    {
+        $role = $this->getUserRole();
+        return ($role && $role->name === 'admin') ? 'approved' : 'pending';
+    }
 }

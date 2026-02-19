@@ -3,9 +3,12 @@
 use App\Http\Controllers\Api\AuthContoller;
 use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\ServiceJobChecklistController;
 use App\Http\Controllers\Api\ServiceJobController;
 use Illuminate\Support\Facades\Route;
 
@@ -65,6 +68,24 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/{id}', [ServiceJobController::class, 'show']);
         Route::post('/{id}', [ServiceJobController::class, 'update']);
         Route::delete('/{id}', [ServiceJobController::class, 'destroy']);
+    });
+
+    Route::prefix('note')->group(function () {
+        Route::post('/', [NoteController::class, 'store']);
+        Route::get('/service-job/{jobId}', [NoteController::class, 'getNotes']);
+        Route::delete('/{id}', [NoteController::class, 'destroy']);
+    });
+
+    Route::prefix('document')->group(function () {
+        Route::post('/', [DocumentController::class, 'store']);
+        Route::get('/service-job/{jobId}', [DocumentController::class, 'getDocuments']);
+        Route::delete('/{id}', [DocumentController::class, 'destroy']);
+    });
+
+    Route::prefix('service-job')->group(function () {
+        Route::get('/{id}/checklists', [ServiceJobChecklistController::class, 'getChecklists']);
+        Route::post('/checklist', [ServiceJobChecklistController::class, 'store']);
+        Route::delete('/checklist/{id}', [ServiceJobChecklistController::class, 'destroy']);
     });
 
 });
