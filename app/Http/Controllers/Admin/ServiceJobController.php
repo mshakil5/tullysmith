@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ServiceJob;
 use App\Models\Project;
+use App\Models\ServiceJob;
+use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use DataTables;
+use Illuminate\Http\Request;
 
 class ServiceJobController extends Controller
 {
@@ -116,7 +117,9 @@ class ServiceJobController extends Controller
             ->latest()
             ->get();
 
-        return view('admin.service_jobs.index', compact('projects'));
+        $workers   = User::byRole('Worker')->get();
+
+        return view('admin.service_jobs.index', compact('projects', 'workers'));
     }
 
     public function store(Request $request)
@@ -138,7 +141,7 @@ class ServiceJobController extends Controller
 
         $estimatedHours = $this->calculateHours($request->start_datetime, $request->end_datetime);
 
-        ServiceJob::create([
+        $job = ServiceJob::create([
             'job_id' => $jobId,
             'job_title' => $request->job_title,
             'client_id' => $project->client_id,
@@ -153,12 +156,17 @@ class ServiceJobController extends Controller
             'estimated_hours' => $estimatedHours,
         ]);
 
+        if ($request->has('worker_ids')) {
+            $job->workers()->sync($request->worker_ids);
+        }
+
         return response()->json(['message' => 'Job created successfully.']);
     }
 
     public function edit($id)
     {
-        $job = ServiceJob::with('client', 'project')->findOrFail($id);
+        $job = ServiceJob::with('client', 'project', 'workers')->findOrFail($id);
+        $job->worker_ids = $job->workers->pluck('id');
         return response()->json($job);
     }
 
@@ -195,6 +203,12 @@ class ServiceJobController extends Controller
             'end_datetime' => $request->end_datetime,
             'estimated_hours' => $estimatedHours,
         ]);
+
+        if ($request->has('worker_ids')) {
+            $job->workers()->sync($request->worker_ids);
+        } else {
+            $job->workers()->detach();
+        }
 
         return response()->json(['message' => 'Job updated successfully.']);
     }

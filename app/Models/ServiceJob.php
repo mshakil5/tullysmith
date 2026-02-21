@@ -22,6 +22,11 @@ class ServiceJob extends Model
         return $this->belongsTo(Project::class, 'project_id');
     }
 
+    public function workers()
+    {
+        return $this->belongsToMany(User::class, 'service_job_workers');
+    }
+
     public function notes()
     {
         return $this->hasMany(Note::class)->latest();

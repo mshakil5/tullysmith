@@ -37,4 +37,13 @@ class User extends Authenticatable
         $role = $this->getUserRole();
         return ($role && (strtolower($role->name) === 'admin' || strtolower($role->name) === 'super admin')) ? 'approved' : 'pending';
     }
+
+    public function scopeByRole($query, $roleName)
+    {
+        return $query->whereHas('roles', fn($q) => $q->where('name', $roleName));
+    }
+
+    // $workers   = User::byRole('Worker')->get();
+    // $supervisors  = User::byRole('Supervisor')->get();
+    // $admins    = User::byRole('Admin')->get();
 }

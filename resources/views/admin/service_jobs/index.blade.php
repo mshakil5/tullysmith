@@ -85,12 +85,23 @@
                                 <input type="text" id="estimated_hours" name="estimated_hours" class="form-control" readonly>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label">Assign Workers</label>
+                                <select class="form-select select2" name="worker_ids[]" multiple>
+                                    @foreach($workers as $worker)
+                                        <option value="{{ $worker->id }}">
+                                            {{ $worker->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
                                 <label class="form-label">Start Date Time</label>
                                 <input type="datetime-local" id="start_datetime" name="start_datetime" class="form-control">
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">End Date Time</label>
                                 <input type="datetime-local" id="end_datetime" name="end_datetime" class="form-control">
                             </div>
@@ -172,7 +183,9 @@ $(function () {
         $('#project_id').val(null).trigger('change');
         $('#client_name').val('');
         $('#client_id').val('');
-        $(".summernote").summernote('code', '');
+        $('select[name="worker_ids[]"]').val(null).trigger('change');
+        $(".summernote#description").summernote('code', '');
+        $(".summernote#instructions").summernote('code', '');
         $('#codeid').val('');
         $('#estimated_hours').val('0');
         $('#cardTitle').text('Add New Job');
@@ -257,6 +270,11 @@ $(function () {
             $('#client_id').val(res.client_id);
             $('#client_name').val(res.client.name);
             $('#address').val(res.address);
+            var workerSelect = $('select[name="worker_ids[]"]');
+            workerSelect.val(null).trigger('change');
+            if (res.worker_ids && res.worker_ids.length > 0) {
+                workerSelect.val(res.worker_ids).trigger('change');
+            }
 
             $(".summernote#description").summernote('code', res.description ?? '');
             $(".summernote#instructions").summernote('code', res.instructions ?? '');
@@ -272,6 +290,7 @@ $(function () {
             $('#addBtn').val('Update').text('Update');
             $('#addThisFormContainer').show();
             $('#newBtn').hide();
+            pagetop();
         });
     });
 
