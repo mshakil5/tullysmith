@@ -11,6 +11,8 @@ class SyncAppPermissions extends Command
     protected $signature = 'permission:sync';
     protected $description = 'Sync permissions from config/app-permissions.php to database';
 
+    //php artisan permission:sync
+
     public function handle()
     {
         $this->info('Syncing permissions from config...');

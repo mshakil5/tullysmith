@@ -6,12 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Note extends Model
 {
-    protected $fillable = [
-        'service_job_id',
-        'created_by',
-        'status',
-        'note',
-    ];
+    protected $guarded = [];
 
     public function job()
     {

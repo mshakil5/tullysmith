@@ -18,6 +18,9 @@ class RoleController extends Controller
             return DataTables::of($roles)
                 ->addIndexColumn()
                 ->addColumn('permissions_count', function ($row) {
+                    if ($row->name === 'Super Admin') {
+                        return '<span class="badge bg-success">All permissions</span>';
+                    }
                     return '<span class="badge bg-success">' . $row->permissions()->count() . ' permissions</span>';
                 })
                 ->addColumn('action', function ($row) {

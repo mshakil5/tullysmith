@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('service_job_id')->nullable()->constrained('service_jobs')->onDelete('cascade');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->longText('note')->nullable();
-            $table->string('status')->default('approved'); // pending | approved | rejected
+            $table->string('status')->default('pending'); // pending | approved | rejected
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
         });
     }

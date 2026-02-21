@@ -22,7 +22,8 @@ return new class extends Migration
             $table->string('file')->nullable(); // stored filename
             $table->decimal('amount', 10, 2)->nullable(); // only invoice/receipt
 
-            $table->string('status')->default('approved'); // pending|approved|rejected
+            $table->string('status')->default('pending'); // pending|approved|rejected
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
         });
     }

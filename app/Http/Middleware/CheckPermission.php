@@ -12,6 +12,12 @@ class CheckPermission
     {
         $user = auth()->user();
 
+        $role = $user->getUserRole();
+
+        if ($role && $role->name === 'Super Admin') {
+            return $next($request);
+        }
+
         if (!$user) {
             if ($request->expectsJson()) {
                 return response()->json([

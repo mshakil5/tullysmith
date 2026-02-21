@@ -6,15 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
-    protected $fillable = [
-        'service_job_id',
-        'created_by',
-        'type',
-        'title',
-        'file',
-        'amount',
-        'status',
-    ];
+    protected $guarded = [];
 
     public function job()
     {

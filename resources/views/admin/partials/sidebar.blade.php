@@ -101,6 +101,13 @@
                 </li>
 
                 <li class="nav-item">
+                    <a href="{{ route('approvals.index') }}" class="nav-link {{ Route::is('approvals.index') ? 'active' : '' }}">
+                        <i class="ri-file-list-3-line"></i>
+                        <span>Approvals</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a href="{{ route('project.index') }}" class="nav-link {{ Route::is('project.index') ? 'active' : '' }}">
                         <i class="ri-folder-3-line"></i>
                         <span>Projects</span>

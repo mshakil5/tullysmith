@@ -21,13 +21,5 @@ class UserSeeder extends Seeder
       'user_type' => 1,
       'status' => 1,
     ]);
-
-    // User::create([
-    //   'name' => 'User',
-    //   'email' => 'user@gmail.com',
-    //   'password' => Hash::make('123456'),
-    //   'user_type' => 0,
-    //   'status' => 1,
-    // ]);
   }
 }

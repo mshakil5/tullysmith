@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ApprovalController;
 use App\Http\Controllers\Admin\ChecklistController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CompanyDetailsController;
@@ -92,6 +93,10 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::delete('/{id}', [RoleController::class, 'delete'])->name('delete');
         Route::get('/permissions', [RoleController::class, 'permissions'])->name('permissions');
     });
+
+    Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
+    Route::get('/approvals/{type}/{id}', [ApprovalController::class, 'show'])->name('approvals.show');
+    Route::post('/approvals/{type}/{id}/action', [ApprovalController::class, 'action'])->name('approvals.action');
 
     // Contact
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
