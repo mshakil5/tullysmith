@@ -20,7 +20,7 @@ class NoteController extends Controller
             'service_job_id' => $request->service_job_id,
             'created_by' => auth()->id(),
             'note' => $request->note,
-            'status' => 'approved',
+            'status' => auth()->user()->creation_status,
         ]);
 
         return response()->json([

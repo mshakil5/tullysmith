@@ -45,7 +45,7 @@ class DocumentController extends Controller
             'title' => $request->title,
             'amount' => $amount,
             'file' => $docPath,
-            'status' => 'approved',
+            'status' => auth()->user()->creation_status,
         ]);
 
         return response()->json([

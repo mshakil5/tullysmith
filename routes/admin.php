@@ -94,6 +94,7 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::get('/permissions', [RoleController::class, 'permissions'])->name('permissions');
     });
 
+    // Approvals
     Route::get('/approvals', [ApprovalController::class, 'index'])->name('approvals.index');
     Route::get('/approvals/{type}/{id}', [ApprovalController::class, 'show'])->name('approvals.show');
     Route::post('/approvals/{type}/{id}/action', [ApprovalController::class, 'action'])->name('approvals.action');

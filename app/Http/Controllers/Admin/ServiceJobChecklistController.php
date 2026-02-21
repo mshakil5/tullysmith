@@ -19,7 +19,7 @@ class ServiceJobChecklistController extends Controller
         $assignment = ServiceJobChecklist::create([
             'service_job_id' => $request->service_job_id,
             'checklist_id' => $request->checklist_id,
-            'status' => 'approved',
+            'status' => auth()->user()->creation_status,
             'assigned_by'    => Auth::id(),
         ]);
 
