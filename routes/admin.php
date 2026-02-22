@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CompanyDetailsController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\JobAssignmentController;
 use App\Http\Controllers\Admin\NoteController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceJobChecklistController;
@@ -45,6 +46,14 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/update', [ServiceJobController::class, 'update'])->name('update');
         Route::delete('/{id}', [ServiceJobController::class, 'destroy'])->name('delete');
         Route::get('/{id}', [ServiceJobController::class, 'show'])->name('show');
+    });
+
+    Route::prefix('job-assignment')->name('jobAssignment.')->group(function () {
+        Route::get('/', [JobAssignmentController::class, 'index'])->name('index');
+        Route::get('/data', [JobAssignmentController::class, 'data'])->name('data');
+        Route::post('/', [JobAssignmentController::class, 'store'])->name('store');
+        Route::post('/{id}/update', [JobAssignmentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [JobAssignmentController::class, 'destroy'])->name('delete');
     });
 
     // Note

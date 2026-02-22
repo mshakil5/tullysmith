@@ -38,6 +38,8 @@
 
     <!-- Custom Css -->
     <link href="{{ asset('resources/backend/css/custom.min.css') }}" rel="stylesheet" type="text/css" />
+
+    @stack('css')
 </head>
 
 <body>
