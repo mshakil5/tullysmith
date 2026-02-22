@@ -30,38 +30,49 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Project <span class="text-danger">*</span></label>
-                                <select id="project_id" name="project_id" class="form-control select2">
-                                    <option value="">Select Project</option>
-                                    @foreach($projects as $project)
-                                        <option value="{{ $project->id }}" data-client-id="{{ $project->client_id }}" data-client-name="{{ $project->client->name }}">{{ $project->name }}</option>
+                                <label class="form-label">Client <span class="text-danger">*</span>
+                                    <a href="#" class="ms-2 small text-primary" id="quickAddClientBtn">+ Add New</a>
+                                </label>
+                                <select id="client_id" name="client_id" class="form-control select2">
+                                    <option value="">Select Client</option>
+                                    @foreach($clients as $client)
+                                        <option value="{{ $client->id }}">{{ $client->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Client</label>
-                                <input type="text" id="client_name" class="form-control" readonly>
-                                <input type="hidden" id="client_id" name="client_id">
+                                <label class="form-label">Address Line 1</label>
+                                <input type="text" id="address_line1" name="address_line1" class="form-control">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Address</label>
-                                <input type="text" id="address" name="address" class="form-control">
+                                <label class="form-label">Address Line 2</label>
+                                <input type="text" id="address_line2" name="address_line2" class="form-control">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">City</label>
+                                <input type="text" id="city" name="city" class="form-control">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Postcode <span class="text-danger">*</span></label>
+                                <input type="text" id="postcode" name="postcode" class="form-control">
                             </div>
 
                             <div class="col-md-12">
                                 <label class="form-label">Description</label>
-                                <textarea class="form-control summernote" id="description" name="description"></textarea>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                             </div>
 
                             <div class="col-md-12">
                                 <label class="form-label">Instructions</label>
-                                <textarea class="form-control summernote" id="instructions" name="instructions"></textarea>
+                                <textarea class="form-control" id="instructions" name="instructions" rows="3"></textarea>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label">Status</label>
+                                <label class="form-label">Status <span class="text-danger">*</span></label>
                                 <select id="status1" name="status" class="form-control">
                                     <option value="draft">Draft</option>
                                     <option value="active">Active</option>
@@ -73,37 +84,26 @@
                             <div class="col-md-4">
                                 <label class="form-label">Priority <span class="text-danger">*</span></label>
                                 <select id="priority" name="priority" class="form-control">
-                                    <option value="">Select Priority</option>
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
                                     <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
                                 </select>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label">Estimated Hours</label>
-                                <input type="text" id="estimated_hours" name="estimated_hours" class="form-control" readonly>
+                                <input type="number" step="0.5" id="estimated_hours" name="estimated_hours" class="form-control">
                             </div>
 
-                            <div class="col-md-4">
-                                <label class="form-label">Assign Workers</label>
-                                <select class="form-select select2" name="worker_ids[]" multiple>
-                                    @foreach($workers as $worker)
-                                        <option value="{{ $worker->id }}">
-                                            {{ $worker->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" id="start_date" name="start_date" class="form-control">
                             </div>
 
-                            <div class="col-md-4">
-                                <label class="form-label">Start Date Time</label>
-                                <input type="datetime-local" id="start_datetime" name="start_datetime" class="form-control">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label">End Date Time</label>
-                                <input type="datetime-local" id="end_datetime" name="end_datetime" class="form-control">
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
 
                         </div>
@@ -122,8 +122,15 @@
 
 <div class="container-fluid" id="contentContainer">
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="card-title mb-0">Jobs</h4>
+            <select id="statusFilter" class="form-select w-auto">
+                <option value="">All Status</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+            </select>
         </div>
         <div class="card-body">
             <table id="serviceJobTable" class="table table-bordered table-striped">
@@ -133,8 +140,8 @@
                         <th>Job ID</th>
                         <th>Job Title</th>
                         <th>Client</th>
-                        <th>Project</th>
-                        <th>Address</th>
+                        <th>City</th>
+                        <th>Postcode</th>
                         <th>Status</th>
                         <th>Priority</th>
                         <th>Start</th>
@@ -144,6 +151,40 @@
                     </tr>
                 </thead>
             </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="quickAddClientModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Add Client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickClientForm">
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="qc_name" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" id="qc_email" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Phone <span class="text-danger">*</span></label>
+                            <input type="text" name="phone" id="qc_phone" class="form-control">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="quickClientSaveBtn">Save Client</button>
+            </div>
         </div>
     </div>
 </div>
@@ -158,36 +199,69 @@ $(function () {
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
+    $('#quickAddClientBtn').click(function (e) {
+        e.preventDefault();
+        $('#quickClientForm')[0].reset();
+        $('#quickAddClientModal').modal('show');
+    });
+
+    $('#quickClientSaveBtn').click(function () {
+        var fd = new FormData(document.getElementById('quickClientForm'));
+
+        $.ajax({
+            url: "{{ route('client.store') }}",
+            method: "POST",
+            data: fd,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                var newOption = new Option(res.client.name, res.client.id, true, true);
+                $('#client_id').append(newOption).trigger('change');
+                $('#quickAddClientModal').modal('hide');
+                showSuccess(res.message);
+            },
+            error: function (xhr) {
+                if (xhr.status === 422 && xhr.responseJSON.errors) {
+                    let first = Object.values(xhr.responseJSON.errors)[0][0];
+                    showError(first);
+                } else showError(xhr.responseJSON?.message ?? 'Error');
+            }
+        });
+    });
+
     var table = $('#serviceJobTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: "{{ route('serviceJob.index') }}",
+        ajax: {
+            url: "{{ route('serviceJob.index') }}",
+            data: function (d) {
+                d.status = $('#statusFilter').val();
+            }
+        },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'job_id', name: 'job_id' },
             { data: 'job_title', name: 'job_title' },
             { data: 'client', name: 'client', orderable: false, searchable: false },
-            { data: 'project', name: 'project', orderable: false, searchable: false },
-            { data: 'address', name: 'address' },
+            { data: 'city', name: 'city' },
+            { data: 'postcode', name: 'postcode' },
             { data: 'status', name: 'status' },
             { data: 'priority', name: 'priority' },
-            { data: 'start_datetime', name: 'start_datetime' },
-            { data: 'end_datetime', name: 'end_datetime' },
+            { data: 'start_date', name: 'start_date' },
+            { data: 'end_date', name: 'end_date' },
             { data: 'estimated_hours', name: 'estimated_hours', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false },
         ]
     });
 
+    $('#statusFilter').on('change', function () {
+        table.ajax.reload();
+    });
+
     $('#newBtn').click(function () {
         $('#createThisForm')[0].reset();
-        $('#project_id').val(null).trigger('change');
-        $('#client_name').val('');
-        $('#client_id').val('');
-        $('select[name="worker_ids[]"]').val(null).trigger('change');
-        $(".summernote#description").summernote('code', '');
-        $(".summernote#instructions").summernote('code', '');
+        $('#client_id').val(null).trigger('change');
         $('#codeid').val('');
-        $('#estimated_hours').val('0');
         $('#cardTitle').text('Add New Job');
         $('#addBtn').val('Create').text('Create');
         $('#addThisFormContainer').show(300);
@@ -200,34 +274,7 @@ $(function () {
         $('#createThisForm')[0].reset();
     });
 
-    $(document).on('change', '#project_id', function() {
-        var selectedOption = $(this).find(':selected');
-        var clientId = selectedOption.data('client-id');
-        var clientName = selectedOption.data('client-name');
-        
-        $('#client_id').val(clientId);
-        $('#client_name').val(clientName);
-    });
-
-    $(document).on('change', '#start_datetime, #end_datetime', function() {
-        calculateEstimatedHours();
-    });
-
-    function calculateEstimatedHours() {
-        var startDateTime = $('#start_datetime').val();
-        var endDateTime = $('#end_datetime').val();
-
-        if (startDateTime && endDateTime) {
-            var start = new Date(startDateTime);
-            var end = new Date(endDateTime);
-            var diffMs = end - start;
-            var diffHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
-            $('#estimated_hours').val(diffHours);
-        }
-    }
-
     $('#addBtn').click(function () {
-
         var btn = this;
         var url = $(btn).val() === 'Create'
             ? "{{ route('serviceJob.store') }}"
@@ -256,35 +303,26 @@ $(function () {
                 } else showError(xhr.responseJSON?.message ?? 'Error');
             }
         });
-
     });
 
     $(document).on('click', '.EditBtn', function () {
         var id = $(this).data('id');
 
         $.get("{{ url('/admin/service-job') }}/" + id + "/edit", {}, function (res) {
-
             $('#codeid').val(res.id);
             $('#job_title').val(res.job_title);
-            $('#project_id').val(res.project_id).trigger('change');
-            $('#client_id').val(res.client_id);
-            $('#client_name').val(res.client.name);
-            $('#address').val(res.address);
-            var workerSelect = $('select[name="worker_ids[]"]');
-            workerSelect.val(null).trigger('change');
-            if (res.worker_ids && res.worker_ids.length > 0) {
-                workerSelect.val(res.worker_ids).trigger('change');
-            }
-
-            $(".summernote#description").summernote('code', res.description ?? '');
-            $(".summernote#instructions").summernote('code', res.instructions ?? '');
-
+            $('#client_id').val(res.client_id).trigger('change');
+            $('#address_line1').val(res.address_line1);
+            $('#address_line2').val(res.address_line2);
+            $('#city').val(res.city);
+            $('#postcode').val(res.postcode);
+            $('#description').val(res.description);
+            $('#instructions').val(res.instructions);
             $('#status1').val(res.status);
             $('#priority').val(res.priority);
-
-            $('#start_datetime').val(res.start_datetime);
-            $('#end_datetime').val(res.end_datetime);
-            $('#estimated_hours').val(res.estimated_hours ?? '0');
+            $('#estimated_hours').val(res.estimated_hours);
+            $('#start_date').val(res.start_date);
+            $('#end_date').val(res.end_date);
 
             $('#cardTitle').text('Update Job');
             $('#addBtn').val('Update').text('Update');

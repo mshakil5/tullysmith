@@ -1,18 +1,18 @@
 @php
     if ($type === 'note') {
         $title    = $item->note;
-        $jobTitle = $item->job->job_title ?? 'N/A';
-        $submitter = $item->user->name ?? 'N/A';
+        $jobTitle = $item->job->job_title ?? '';
+        $submitter = $item->user->name ?? '';
         $status   = $item->status;
     } elseif ($type === 'document') {
         $title    = $item->title ?? $item->type;
-        $jobTitle = $item->job->job_title ?? 'N/A';
-        $submitter = $item->user->name ?? 'N/A';
+        $jobTitle = $item->job->job_title ?? '';
+        $submitter = $item->user->name ?? '';
         $status   = $item->status;
     } else {
-        $title    = $item->checklist->title ?? 'N/A';
-        $jobTitle = $item->serviceJob->job_title ?? 'N/A';
-        $submitter = $item->assignedBy->name ?? 'N/A';
+        $title    = $item->checklist->title ?? '';
+        $jobTitle = $item->serviceJob->job_title ?? '';
+        $submitter = $item->assignedBy->name ?? '';
         $status   = $item->status;
     }
 @endphp

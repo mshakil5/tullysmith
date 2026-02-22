@@ -201,6 +201,7 @@
                     $('#addBtn').val('Update').text('Update');
                     $('#addThisFormContainer').show();
                     $('#newBtn').hide();
+                    pagetop();
                 });
             });
 

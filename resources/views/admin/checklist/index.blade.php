@@ -38,7 +38,7 @@
 
                             <div class="col-md-12">
                                 <label class="form-label">Description</label>
-                                <textarea class="form-control summernote" id="description" name="description"></textarea>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                             </div>
 
                             <div class="col-md-12">
@@ -163,7 +163,6 @@ $(function () {
         `);
         itemCount = 1;
         $('#is_active').prop('checked', true);
-        $(".summernote").summernote('code', '');
         $('#cardTitle').text('Add New Checklist');
         $('#addBtn').val('Create').text('Create');
         $('#addThisFormContainer').show(300);
@@ -246,7 +245,7 @@ $(function () {
             $('#codeid').val(res.id);
             $('#title').val(res.title);
             $('#is_active').prop('checked', res.is_active);
-            $(".summernote").summernote('code', res.description ?? '');
+            $("#description").val(res.description);
 
             $('#itemsContainer').html('');
             itemCount = 0;
@@ -289,6 +288,7 @@ $(function () {
             $('#addBtn').val('Update').text('Update');
             $('#addThisFormContainer').show();
             $('#newBtn').hide();
+            pagetop();
         });
     });
 

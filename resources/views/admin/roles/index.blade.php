@@ -213,6 +213,7 @@ $(function() {
 
             $('#addThisFormContainer').show();
             $('#newBtn').hide();
+            pagetop();
         });
     });
 });

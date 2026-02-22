@@ -17,16 +17,6 @@ class ServiceJob extends Model
         return $this->belongsTo(User::class, 'client_id');
     }
 
-    public function project()
-    {
-        return $this->belongsTo(Project::class, 'project_id');
-    }
-
-    public function workers()
-    {
-        return $this->belongsToMany(User::class, 'service_job_workers');
-    }
-
     public function notes()
     {
         return $this->hasMany(Note::class)->latest();
@@ -39,11 +29,11 @@ class ServiceJob extends Model
 
     public function formattedStartDate()
     {
-        return $this->start_datetime ? Carbon::parse($this->start_datetime)->format('d M Y H:i') : 'N/A';
+        return $this->start_date ? Carbon::parse($this->start_date)->format('d M Y') : '';
     }
 
     public function formattedEndDate()
     {
-        return $this->end_datetime ? Carbon::parse($this->end_datetime)->format('d M Y H:i') : 'N/A';
+        return $this->end_date ? Carbon::parse($this->end_date)->format('d M Y') : '';
     }
 }

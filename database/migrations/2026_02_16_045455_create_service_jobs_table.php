@@ -15,16 +15,18 @@ return new class extends Migration
             $table->id();
             $table->string('job_id')->unique();
             $table->string('job_title')->nullable();
-            $table->foreignId('project_id')->nullable()->constrained('projects')->onDelete('cascade');
             $table->foreignId('client_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->string('address')->nullable();
             $table->longText('description')->nullable();
             $table->longText('instructions')->nullable();
-            $table->string('status')->nullable();   // pending, active, completed
-            $table->string('priority')->nullable(); // high, medium, low
-            $table->dateTime('start_datetime')->nullable();
-            $table->dateTime('end_datetime')->nullable();
-            $table->decimal('estimated_hours', 8, 2)->nullable();
+            $table->string('status')->nullable(); // Draft, Active, pending, active, completed
+            $table->string('priority')->nullable(); // high, medium, low, urgent
+            $table->string('address_line1')->nullable();
+            $table->string('address_line2')->nullable();
+            $table->string('city')->nullable();
+            $table->string('postcode')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
+            $table->decimal('estimated_hours', 4, 1)->nullable();
             $table->timestamps();
         });
     }

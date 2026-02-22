@@ -10,29 +10,21 @@
                     <h2>{{ $job->job_title }}</h2>
                     <span class="badge bg-{{ $job->status === 'draft' ? 'secondary' : ($job->status === 'active' ? 'success' : ($job->status === 'pending' ? 'warning' : 'primary')) }}">{{ ucfirst($job->status) }}</span>
                 </div>
-                <a href="{{ route('serviceJob.index') }}" class="btn btn-secondary">Back</a>
+                <a href="{{ route('serviceJob.index') }}" class="btn btn-primary">Back</a>
             </div>
         </div>
     </div>
 
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-2">Client</p>
-                    <h6>{{ $job->client->name ?? 'N/A' }}</h6>
+                    <h6>{{ $job->client->name ?? '' }}</h6>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted mb-2">Project</p>
-                    <h6>{{ $job->project->name ?? 'N/A' }}</h6>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-2">Duration</p>
@@ -40,10 +32,10 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <p class="text-muted mb-2">Hours</p>
+                    <p class="text-muted mb-2">Estimated Hours</p>
                     <h6>{{ $job->estimated_hours ?? 0 }} hrs</h6>
                 </div>
             </div>
@@ -73,13 +65,15 @@
                     <div class="row">
                         <div class="col-md-8">
                             <h5>Description</h5>
-                            <p>{!! $job->description ?? 'No description' !!}</p>
+                            <p>{!! $job->description ?? '' !!}</p>
 
                             <h5 class="mt-4">Instructions</h5>
-                            <p>{!! $job->instructions ?? 'No instructions' !!}</p>
+                            <p>{!! $job->instructions ?? '' !!}</p>
 
                             <h5 class="mt-4">Address</h5>
-                            <p>{{ $job->address ?? 'No address' }}</p>
+                            <p>
+                                {{ collect([$job->address_line1, $job->address_line2, $job->city, $job->postcode])->filter()->implode(', ') ?: '' }}
+                            </p>
 
                             <h5 class="mt-4">Daily Notes & Updates (<span id="notesCount">0</span>)</h5>
                             <div class="card">

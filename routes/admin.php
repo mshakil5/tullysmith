@@ -8,7 +8,6 @@ use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\NoteController;
-use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceJobChecklistController;
 use App\Http\Controllers\Admin\ServiceJobController;
@@ -36,15 +35,6 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/update', [ClientController::class, 'update'])->name('update');
         Route::delete('/{id}', [ClientController::class, 'destroy'])->name('delete');
         Route::post('/status', [ClientController::class, 'toggleStatus'])->name('toggleStatus');
-    });
-
-    // Project
-    Route::prefix('project')->name('project.')->group(function () {
-        Route::get('/', [ProjectController::class, 'index'])->name('index');
-        Route::post('/', [ProjectController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [ProjectController::class, 'edit'])->name('edit');
-        Route::post('/update', [ProjectController::class, 'update'])->name('update');
-        Route::delete('/{id}', [ProjectController::class, 'destroy'])->name('delete');
     });
 
     // Service Job

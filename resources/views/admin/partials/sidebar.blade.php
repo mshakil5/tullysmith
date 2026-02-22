@@ -108,13 +108,6 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('project.index') }}" class="nav-link {{ Route::is('project.index') ? 'active' : '' }}">
-                        <i class="ri-folder-3-line"></i>
-                        <span>Projects</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
                     <a href="{{ route('client.index') }}" class="nav-link {{ Route::is('client.index') ? 'active' : '' }}">
                         <i class="ri-user-3-line"></i>
                         <span>Clients</span>

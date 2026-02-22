@@ -34,7 +34,7 @@ class ServiceJobChecklistController extends Controller
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'title' => $item->checklist->title ?? 'N/A',
+                    'title' => $item->checklist->title ?? '',
                     'description' => $item->checklist->description,
                     'items' => $item->checklist->items->map(function ($checklistItem) {
                         return [

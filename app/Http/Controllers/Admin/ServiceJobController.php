@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Project;
 use App\Models\ServiceJob;
 use App\Models\User;
-use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -15,22 +13,14 @@ class ServiceJobController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-
-            $jobs = ServiceJob::with('client:id,name', 'project:id,name')
+            $jobs = ServiceJob::with('client:id,name')
                 ->select([
-                    'id',
-                    'job_id',
-                    'job_title',
-                    'client_id',
-                    'project_id',
-                    'address',
-                    'status',
-                    'priority',
-                    'start_datetime',
-                    'end_datetime',
-                    'estimated_hours',
-                    'created_at'
+                    'id', 'job_id', 'job_title', 'client_id',
+                    'address_line1', 'address_line2', 'city', 'postcode',
+                    'status', 'priority', 'start_date', 'end_date',
+                    'estimated_hours', 'created_at'
                 ])
+                ->when($request->status, fn($q) => $q->where('status', $request->status))
                 ->orderByDesc('id');
 
             return DataTables::of($jobs)
@@ -38,10 +28,6 @@ class ServiceJobController extends Controller
 
                 ->addColumn('client', function ($row) {
                     return $row->client->name ?? '';
-                })
-
-                ->addColumn('project', function ($row) {
-                    return $row->project->name ?? '';
                 })
 
                 ->addColumn('status', function ($row) {
@@ -65,11 +51,11 @@ class ServiceJobController extends Controller
                     return '<span class="badge bg-' . $color . '">' . ucfirst($row->priority) . '</span>';
                 })
 
-                ->addColumn('start_datetime', function ($row) {
+                ->addColumn('start_date', function ($row) {
                     return $row->formattedStartDate();
                 })
 
-                ->addColumn('end_datetime', function ($row) {
+                ->addColumn('end_date', function ($row) {
                     return $row->formattedEndDate();
                 })
 
@@ -112,130 +98,104 @@ class ServiceJobController extends Controller
                 ->make(true);
         }
 
-        $projects = Project::with('client:id,name')
-            ->select('id', 'name', 'client_id')
-            ->latest()
-            ->get();
+        $clients = User::where('user_type', 0)->select('id', 'name')->latest()->get();
 
-        $workers   = User::byRole('Worker')->get();
-
-        return view('admin.service_jobs.index', compact('projects', 'workers'));
+        return view('admin.service_jobs.index', compact('clients'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'job_title' => 'required|string|max:255',
-            'project_id' => 'required|integer|exists:projects,id',
-            'address' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
-            'instructions' => 'nullable|string',
-            'status' => 'required|string|max:50',
-            'priority' => 'required|string|max:50',
-            'start_datetime' => 'nullable|date_format:Y-m-d\TH:i',
-            'end_datetime' => 'nullable|date_format:Y-m-d\TH:i',
+            'job_title'      => 'required|string|max:255',
+            'client_id'      => 'required|integer|exists:users,id',
+            'description'    => 'nullable|string',
+            'instructions'   => 'nullable|string',
+            'status'         => 'required|string|max:50',
+            'priority'       => 'required|string|max:50',
+            'address_line1'  => 'nullable|string|max:255',
+            'address_line2'  => 'nullable|string|max:255',
+            'city'           => 'nullable|string|max:100',
+            'postcode'       => 'required|string|max:20',
+            'start_date'     => 'nullable|date',
+            'end_date'       => 'nullable|date',
+            'estimated_hours'=> 'nullable|numeric',
         ]);
 
-        $project = Project::findOrFail($request->project_id);
-        $jobId = 'JOB-' . time();
-
-        $estimatedHours = $this->calculateHours($request->start_datetime, $request->end_datetime);
-
-        $job = ServiceJob::create([
-            'job_id' => $jobId,
-            'job_title' => $request->job_title,
-            'client_id' => $project->client_id,
-            'project_id' => $request->project_id,
-            'address' => $request->address,
-            'description' => $request->description,
-            'instructions' => $request->instructions,
-            'status' => $request->status,
-            'priority' => $request->priority,
-            'start_datetime' => $request->start_datetime,
-            'end_datetime' => $request->end_datetime,
-            'estimated_hours' => $estimatedHours,
+        ServiceJob::create([
+            'job_id'          => 'JOB-' . time(),
+            'job_title'       => $request->job_title,
+            'client_id'       => $request->client_id,
+            'description'     => $request->description,
+            'instructions'    => $request->instructions,
+            'status'          => $request->status,
+            'priority'        => $request->priority,
+            'address_line1'   => $request->address_line1,
+            'address_line2'   => $request->address_line2,
+            'city'            => $request->city,
+            'postcode'        => $request->postcode,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+            'estimated_hours' => $request->estimated_hours,
         ]);
-
-        if ($request->has('worker_ids')) {
-            $job->workers()->sync($request->worker_ids);
-        }
 
         return response()->json(['message' => 'Job created successfully.']);
     }
 
     public function edit($id)
     {
-        $job = ServiceJob::with('client', 'project', 'workers')->findOrFail($id);
-        $job->worker_ids = $job->workers->pluck('id');
+        $job = ServiceJob::with('client')->findOrFail($id);
         return response()->json($job);
     }
 
     public function update(Request $request)
     {
         $request->validate([
-            'id' => 'required|exists:service_jobs,id',
-            'job_title' => 'required|string|max:255',
-            'project_id' => 'required|integer|exists:projects,id',
-            'address' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
-            'instructions' => 'nullable|string',
-            'status' => 'required|string|max:50',
-            'priority' => 'required|string|max:50',
-            'start_datetime' => 'nullable|date_format:Y-m-d\TH:i',
-            'end_datetime' => 'nullable|date_format:Y-m-d\TH:i',
+            'id'             => 'required|exists:service_jobs,id',
+            'job_title'      => 'required|string|max:255',
+            'client_id'      => 'required|integer|exists:users,id',
+            'description'    => 'nullable|string',
+            'instructions'   => 'nullable|string',
+            'status'         => 'required|string|max:50',
+            'priority'       => 'required|string|max:50',
+            'address_line1'  => 'nullable|string|max:255',
+            'address_line2'  => 'nullable|string|max:255',
+            'city'           => 'nullable|string|max:100',
+            'postcode'       => 'required|string|max:20',
+            'start_date'     => 'nullable|date',
+            'end_date'       => 'nullable|date',
+            'estimated_hours'=> 'nullable|numeric',
         ]);
 
-        $project = Project::findOrFail($request->project_id);
         $job = ServiceJob::findOrFail($request->id);
 
-        $estimatedHours = $this->calculateHours($request->start_datetime, $request->end_datetime);
-
         $job->update([
-            'job_title' => $request->job_title,
-            'client_id' => $project->client_id,
-            'project_id' => $request->project_id,
-            'address' => $request->address,
-            'description' => $request->description,
-            'instructions' => $request->instructions,
-            'status' => $request->status,
-            'priority' => $request->priority,
-            'start_datetime' => $request->start_datetime,
-            'end_datetime' => $request->end_datetime,
-            'estimated_hours' => $estimatedHours,
+            'job_title'       => $request->job_title,
+            'client_id'       => $request->client_id,
+            'description'     => $request->description,
+            'instructions'    => $request->instructions,
+            'status'          => $request->status,
+            'priority'        => $request->priority,
+            'address_line1'   => $request->address_line1,
+            'address_line2'   => $request->address_line2,
+            'city'            => $request->city,
+            'postcode'        => $request->postcode,
+            'start_date'      => $request->start_date,
+            'end_date'        => $request->end_date,
+            'estimated_hours' => $request->estimated_hours,
         ]);
-
-        if ($request->has('worker_ids')) {
-            $job->workers()->sync($request->worker_ids);
-        } else {
-            $job->workers()->detach();
-        }
 
         return response()->json(['message' => 'Job updated successfully.']);
     }
 
     public function destroy($id)
     {
-        $job = ServiceJob::findOrFail($id);
-        $job->delete();
-
+        ServiceJob::findOrFail($id)->delete();
         return response()->json(['message' => 'Job deleted successfully.']);
     }
 
     public function show($id)
     {
-        $job = ServiceJob::with('client', 'project')->findOrFail($id);
+        $job = ServiceJob::with('client')->findOrFail($id);
         return view('admin.service_jobs.show', compact('job'));
-    }
-
-    private function calculateHours($startDateTime, $endDateTime)
-    {
-        if (!$startDateTime || !$endDateTime) {
-            return null;
-        }
-
-        $start = Carbon::createFromFormat('Y-m-d\TH:i', $startDateTime);
-        $end = Carbon::createFromFormat('Y-m-d\TH:i', $endDateTime);
-        
-        return round($start->diffInMinutes($end) / 60, 2);
     }
 }

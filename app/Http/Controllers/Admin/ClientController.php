@@ -50,7 +50,7 @@ class ClientController extends Controller
             'additional_info' => 'nullable|string',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'primary_contact' => $request->primary_contact,
             'email' => $request->email,
@@ -62,7 +62,7 @@ class ClientController extends Controller
             'status' => 1,
         ]);
 
-        return response()->json(['message' => 'Client created successfully.']);
+        return response()->json(['message' => 'Client created successfully.', 'client' => $user]);
     }
 
     public function edit($id)
