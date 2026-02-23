@@ -54,6 +54,11 @@
                 <li class="nav-item">
                     <a class="nav-link" id="checklists-tab" data-bs-toggle="tab" href="#checklists" role="tab">Checklists (<span id="navChecklistsCount">0</span>)</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#assignments" role="tab">
+                        Assignments <span class="badge bg-primary ms-1">{{ $job->assignments->count() }}</span>
+                    </a>
+                </li>
             </ul>
         </div>
 
@@ -151,7 +156,41 @@
                         <p class="text-muted text-center py-4">Loading checklists...</p>
                     </div>
                 </div>
+                
 
+                <div class="tab-pane fade" id="assignments" role="tabpanel">
+                    <h5 class="mb-3">Assignments</h5>
+                    @if($job->assignments->isEmpty())
+                        <p class="text-muted text-center py-4">No assignments yet</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Worker</th>
+                                        <th>Date</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($job->assignments as $i => $assignment)
+                                    <tr>
+                                        <td>{{ $i + 1 }}</td>
+                                        <td>{{ $assignment->worker->name ?? '-' }}</td>
+                                        <td>{{ $assignment->formatted_date }}</td>
+                                        <td>{{ $assignment->formatTime($assignment->start_time) ?? '-' }}</td>
+                                        <td>{{ $assignment->formatTime($assignment->end_time) ?? '-' }}</td>
+                                        <td>{{ $assignment->note ?? '-' }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

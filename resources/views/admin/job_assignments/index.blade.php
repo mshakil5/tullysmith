@@ -140,7 +140,6 @@ $(function () {
         },
         eventClick: function (info) {
             var p = info.event.extendedProps;
-            if (isPast(p.assigned_date)) return;
             openFormEdit(info.event.id, p);
         },
         eventDidMount: function(info) {

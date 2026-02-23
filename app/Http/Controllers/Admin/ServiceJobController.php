@@ -195,7 +195,7 @@ class ServiceJobController extends Controller
 
     public function show($id)
     {
-        $job = ServiceJob::with('client')->findOrFail($id);
+        $job = ServiceJob::with('client', 'assignments.worker')->findOrFail($id);
         return view('admin.service_jobs.show', compact('job'));
     }
 }

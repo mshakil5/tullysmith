@@ -17,6 +17,11 @@ class ServiceJob extends Model
         return $this->belongsTo(User::class, 'client_id');
     }
 
+    public function assignments()
+    {
+        return $this->hasMany(JobAssignment::class, 'service_job_id')->with('worker')->latest();
+    }
+
     public function notes()
     {
         return $this->hasMany(Note::class)->latest();
