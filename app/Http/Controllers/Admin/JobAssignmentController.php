@@ -46,6 +46,38 @@ class JobAssignmentController extends Controller
         return response()->json($assignments);
     }
 
+    private function hasTimeConflict($workerId, $assignedDate, $startTime, $endTime, $excludeId = null)
+    {
+        $query = JobAssignment::where('worker_id', $workerId)
+            ->where('assigned_date', $assignedDate);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId); // skip self when updating
+        }
+
+        $existing = $query->get();
+
+        foreach ($existing as $assign) {
+            // If either has no time → treat as full day conflict (strict policy)
+            if (!$startTime || !$endTime || !$assign->start_time || !$assign->end_time) {
+                return true; // conflict - one or both are full-day
+            }
+
+            // Both have times → check overlap
+            $newStart = $startTime;
+            $newEnd   = $endTime;
+            $existStart = $assign->start_time;
+            $existEnd   = $assign->end_time;
+
+            // Overlap condition
+            if ($newStart < $existEnd && $newEnd > $existStart) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -59,12 +91,23 @@ class JobAssignmentController extends Controller
             'end_time.after' => 'End time must be after start time.',
         ]);
 
+        $workerId     = $request->worker_id;
+        $assignedDate = $request->assigned_date;
+        $startTime    = $request->start_time;
+        $endTime      = $request->end_time;
+
+        if ($this->hasTimeConflict($workerId, $assignedDate, $startTime, $endTime)) {
+            return response()->json([
+                'message' => 'This staff member is already assigned during this time slot on the selected date.'
+            ], 422);
+        }
+
         JobAssignment::create([
             'service_job_id' => $request->service_job_id,
-            'worker_id'      => $request->worker_id,
-            'assigned_date'  => $request->assigned_date,
-            'start_time'     => $request->start_time,
-            'end_time'       => $request->end_time,
+            'worker_id'      => $workerId,
+            'assigned_date'  => $assignedDate,
+            'start_time'     => $startTime,
+            'end_time'       => $endTime,
             'note'           => $request->note,
         ]);
 
@@ -83,6 +126,17 @@ class JobAssignmentController extends Controller
         ], [
             'end_time.after' => 'End time must be after start time.',
         ]);
+
+        $workerId     = $request->worker_id;
+        $assignedDate = $request->assigned_date;
+        $startTime    = $request->start_time;
+        $endTime      = $request->end_time;
+
+        if ($this->hasTimeConflict($workerId, $assignedDate, $startTime, $endTime, $id)) {
+            return response()->json([
+                'message' => 'This staff member is already assigned during this time slot on the selected date.'
+            ], 422);
+        }
 
         JobAssignment::findOrFail($id)->update($request->only([
             'service_job_id', 'worker_id', 'assigned_date', 'start_time', 'end_time', 'note'

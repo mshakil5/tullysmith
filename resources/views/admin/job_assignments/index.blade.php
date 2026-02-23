@@ -38,7 +38,6 @@
                     <form id="assignForm">
                         @csrf
                         <input type="hidden" id="assignment_id" name="assignment_id">
-                        <input type="hidden" id="assigned_date" name="assigned_date">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Job <span class="text-danger">*</span></label>
@@ -58,11 +57,15 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label">Assign Date <span class="text-danger">*</span></label>
+                                <input type="date" name="assigned_date" id="assigned_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label">Start Time</label>
                                 <input type="time" name="start_time" id="start_time" class="form-control">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">End Time</label>
                                 <input type="time" name="end_time" id="end_time" class="form-control">
                             </div>

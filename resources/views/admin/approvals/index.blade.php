@@ -73,6 +73,7 @@
         function typeIcon(type) {
             if (type === 'checklist') return '<div style="width:40px;height:40px;background:#fff8e1;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-checkbox-multiple-line" style="color:#f59e0b;font-size:20px;"></i></div>';
             if (type === 'document') return '<div style="width:40px;height:40px;background:#e8f5e9;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-file-text-line" style="color:#22c55e;font-size:20px;"></i></div>';
+            if (type === 'timelog') return '<div style="width:40px;height:40px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-time-line" style="color:#16a34a;font-size:20px;"></i></div>';
             return '<div style="width:40px;height:40px;background:#e3f2fd;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-sticky-note-line" style="color:#3b82f6;font-size:20px;"></i></div>';
         }
 

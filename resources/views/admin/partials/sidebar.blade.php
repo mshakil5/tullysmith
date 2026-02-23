@@ -86,6 +86,17 @@
                     </a>
                 </li>
 
+                @role('Worker')
+                <li class="nav-item">
+                    <a href="{{ route('time.index') }}" class="nav-link {{ Route::is('time.*') ? 'active' : '' }}">
+                        <i class="ri-time-line"></i>
+                        <span>Time</span>
+                    </a>
+                </li>
+                @endrole
+
+                @hasanyrole('Super Admin|Admin')
+
                 <li class="nav-item d-none">
                     <a href="{{ route('contacts.index') }}" class="nav-link {{ Route::is('contacts.index') ? 'active' : '' }}">
                         <i class="ri-mail-open-line"></i>
@@ -203,6 +214,7 @@
                         </ul>
                     </div>
                 </li>
+                @endhasanyrole
 
             </ul>
         </div>

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\NoteController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceJobChecklistController;
 use App\Http\Controllers\Admin\ServiceJobController;
+use App\Http\Controllers\Admin\TimeController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,16 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/update', [ServiceJobController::class, 'update'])->name('update');
         Route::delete('/{id}', [ServiceJobController::class, 'destroy'])->name('delete');
         Route::get('/{id}', [ServiceJobController::class, 'show'])->name('show');
+    });
+
+    // Time
+    Route::prefix('time')->name('time.')->group(function () {
+        Route::get('/',            [TimeController::class, 'index'])->name('index');
+        Route::post('/clock-in',   [TimeController::class, 'clockIn'])->name('clockIn');
+        Route::post('/clock-out',  [TimeController::class, 'clockOut'])->name('clockOut');
+        Route::get('/stats',       [TimeController::class, 'stats'])->name('stats');
+        Route::get('/timesheet',   [TimeController::class, 'timesheet'])->name('timesheet');
+        Route::get('/export',      [TimeController::class, 'exportTimesheet'])->name('export');
     });
 
     Route::prefix('job-assignment')->name('jobAssignment.')->group(function () {

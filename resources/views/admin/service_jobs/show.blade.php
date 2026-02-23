@@ -54,11 +54,13 @@
                 <li class="nav-item">
                     <a class="nav-link" id="checklists-tab" data-bs-toggle="tab" href="#checklists" role="tab">Checklists (<span id="navChecklistsCount">0</span>)</a>
                 </li>
+                @hasanyrole('Super Admin|Admin')
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#assignments" role="tab">
                         Assignments <span class="badge bg-primary ms-1">{{ $job->assignments->count() }}</span>
                     </a>
                 </li>
+                @endhasanyrole
             </ul>
         </div>
 
@@ -147,9 +149,11 @@
                 <div class="tab-pane fade" id="checklists" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">Job Checklists (<span id="checklistsCount">0</span>)</h5>
+                        @hasanyrole('Super Admin|Admin')
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignChecklistModal">
                             Assign Checklist
                         </button>
+                        @endhasanyrole
                     </div>
 
                     <div id="checklistsContainer">
@@ -270,6 +274,11 @@
 @endsection
 
 @section('script')
+
+<script>
+    var isAdminOrSuper = {{ auth()->user()->hasAnyRole(['Super Admin', 'Admin']) ? 'true' : 'false' }};
+</script>
+
 <script>
 $(function() {
 
@@ -475,69 +484,67 @@ $(function() {
         });
     }
 
-function loadChecklists() {
-    $.get("/admin/service-job/" + jobId + "/checklists", function(res) {
-        let html = '';
-        let count = res.checklists.length;
+    function loadChecklists() {
+        $.get("/admin/service-job/" + jobId + "/checklists", function(res) {
+            let html = '';
+            let count = res.checklists.length;
 
-        $('#checklistsCount').text(count);
-        $('#navChecklistsCount').text(count);
+            $('#checklistsCount').text(count);
+            $('#navChecklistsCount').text(count);
 
-        if (count === 0) {
-            html = '<p class="text-muted text-center py-4">No checklists assigned yet</p>';
-        } else {
-            res.checklists.forEach(function(item, index) {
-                let itemsHtml = '';
-                if (item.items && item.items.length > 0) {
-                    item.items.forEach(function(checkItem) {
-                        let typeLabel = checkItem.type
-                            .replace(/_/g, ' ')
-                            .split(' ')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' ');
-                        
-                        itemsHtml += `
-                            <div class="ps-3 mb-2 pb-2 border-start border-2">
-                                <div class="d-flex align-items-start gap-2">
-                                    <span class="badge bg-light text-dark mt-1">${typeLabel}</span>
-                                    <span class="flex-grow-1">${checkItem.question}</span>
-                                    ${checkItem.is_required ? '<span class="badge bg-danger ms-2 mt-1">Required</span>' : ''}
+            if (count === 0) {
+                html = '<p class="text-muted text-center py-4">No checklists assigned yet</p>';
+            } else {
+                res.checklists.forEach(function(item, index) {
+                    let itemsHtml = '';
+                    if (item.items && item.items.length > 0) {
+                        item.items.forEach(function(checkItem) {
+                            let typeLabel = checkItem.type
+                                .replace(/_/g, ' ')
+                                .split(' ')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(' ');
+                            
+                            itemsHtml += `
+                                <div class="ps-3 mb-2 pb-2 border-start border-2">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <span class="badge bg-light text-dark mt-1">${typeLabel}</span>
+                                        <span class="flex-grow-1">${checkItem.question}</span>
+                                        ${checkItem.is_required ? '<span class="badge bg-danger ms-2 mt-1">Required</span>' : ''}
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    itemsHtml = '<p class="text-muted text-center py-2 ps-3">No items</p>';
-                }
+                            `;
+                        });
+                    } else {
+                        itemsHtml = '<p class="text-muted text-center py-2 ps-3">No items</p>';
+                    }
 
-                html += `
-                    <div class="accordion mb-3" id="checklistAccordion${index}">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
-                                    <strong>${item.title}</strong>
-                                    <span class="badge bg-info ms-2">${item.items ? item.items.length : 0} items</span>
-                                </button>
-                            </h2>
-                            <div id="collapse${index}" class="accordion-collapse collapse" data-bs-parent="#checklistAccordion${index}">
-                                <div class="accordion-body p-3">
-                                    ${itemsHtml}
-                                    <div class="text-end mt-3">
-                                        <button class="btn btn-sm btn-outline-danger deleteChecklistBtn" data-id="${item.id}">
-                                            <i class="ri-delete-bin-fill"></i> Remove
-                                        </button>
+                    html += `
+                        <div class="accordion mb-3" id="checklistAccordion${index}">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
+                                        <strong>${item.title}</strong>
+                                        <span class="badge bg-info ms-2">${item.items ? item.items.length : 0} items</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse${index}" class="accordion-collapse collapse" data-bs-parent="#checklistAccordion${index}">
+                                    <div class="accordion-body p-3">
+                                        ${itemsHtml}
+                                        <div class="text-end mt-3">
+                                            ${isAdminOrSuper ? '<button class="btn btn-sm btn-outline-danger deleteChecklistBtn" data-id="' + item.id + '"><i class="ri-delete-bin-fill"></i> Remove</button>' : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `;
-            });
-        }
+                    `;
+                });
+            }
 
-        $('#checklistsContainer').html(html);
-    });
-}
+            $('#checklistsContainer').html(html);
+        });
+    }
 
     function loadChecklistItems(checklistId) {
         $.get("/admin/checklist/" + checklistId + "/items", function(res) {

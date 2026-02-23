@@ -19,13 +19,14 @@ class SyncAppPermissions extends Command
 
         $permissions = Config::get('app-permissions.permissions');
 
-        foreach ($permissions as $permissionKey => $permissionLabel) {
-            $permission = Permission::firstOrCreate(
-                ['name' => $permissionKey],
-                ['guard_name' => 'web']
-            );
+        foreach ($permissions as $permissionName) {
 
-            $this->info("✓ Created/Updated: {$permissionLabel} ({$permissionKey})");
+            Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web'
+            ]);
+
+            $this->info("✓ Synced: {$permissionName}");
         }
 
         $this->info('All permissions synced successfully!');

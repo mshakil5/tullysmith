@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Note;
 use App\Models\Document;
+use App\Models\Note;
 use App\Models\ServiceJobChecklist;
+use App\Models\TimeLog;
 use Illuminate\Http\Request;
 
 class ApprovalController extends Controller
@@ -60,11 +61,28 @@ class ApprovalController extends Controller
                     'status'     => $c->status,
                 ]);
 
-            $items = $notes->concat($documents)->concat($checklists)->sortByDesc('created_at')->values();
+            $timelogs = TimeLog::with(['worker', 'job'])
+                ->when($status && $status !== 'all', fn($q) => $q->where('status', $status))
+                ->latest()
+                ->get()
+                ->map(fn($t) => [
+                    'id'         => $t->id,
+                    'type'       => 'timelog',
+                    'title'      => $t->job->job_title ?? '—',
+                    'job'        => $t->job->job_title ?? '',
+                    'client'     => '',
+                    'created_by' => $t->worker->name ?? '',
+                    'created_at' => $t->clock_in_at->format('M d, H:i'),
+                    'status'     => $t->status,
+                ]);
+
+
+            $items = $notes->concat($documents)->concat($checklists)->concat($timelogs)->sortByDesc('created_at')->values();
 
             $pendingCount = Note::where('status', 'pending')->count()
                 + Document::where('status', 'pending')->count()
-                + ServiceJobChecklist::where('status', 'pending')->count();
+                + ServiceJobChecklist::where('status', 'pending')->count()
+                + TimeLog::where('status','pending')->count();
 
             return response()->json([
                 'items'         => $items,
@@ -85,6 +103,8 @@ class ApprovalController extends Controller
             $item = Note::with(['job.client', 'user'])->findOrFail($id);
         } elseif ($type === 'document') {
             $item = Document::with(['job.client', 'user'])->findOrFail($id);
+        } elseif ($type === 'timelog') {
+            $item = TimeLog::findOrFail($id);
         } else {
             $item = ServiceJobChecklist::with(['serviceJob.client', 'checklist.items', 'assignedBy'])->findOrFail($id);
         }
@@ -100,6 +120,8 @@ class ApprovalController extends Controller
             $item = Note::findOrFail($id);
         } elseif ($type === 'document') {
             $item = Document::findOrFail($id);
+        } elseif ($type === 'timelog') {
+            $item = TimeLog::with(['worker', 'job', 'assignment'])->findOrFail($id);
         } else {
             $item = ServiceJobChecklist::findOrFail($id);
         }
