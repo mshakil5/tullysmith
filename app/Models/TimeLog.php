@@ -32,7 +32,7 @@ class TimeLog extends Model
     public function getTotalHoursFormattedAttribute()
     {
         if (!$this->clock_out_at) return 'Active';
-        return number_format($this->total_hours, 1) . 'h';
+        return number_format($this->total_hours, 2) . 'h';
     }
 
     public function getClockInTimeAttribute()

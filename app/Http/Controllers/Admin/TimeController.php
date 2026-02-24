@@ -161,7 +161,9 @@ class TimeController extends Controller
         $totalHours = $logs->whereNotNull('clock_out_at')->sum('total_hours');
         $breakdown  = $logs->groupBy(fn($l) => $l->clock_in_at->toDateString());
 
-        return view('admin.time.timesheet', compact('logs','totalHours','breakdown','mode','offset','label','start','end'));
+        return view('admin.time.timesheet', compact(
+            'logs', 'totalHours', 'breakdown', 'mode', 'offset', 'label', 'start', 'end'
+        ));
     }
 
     public function exportTimesheet(Request $request)
@@ -172,10 +174,16 @@ class TimeController extends Controller
 
         [$start, $end, $label] = $this->timesheetRange($mode, $offset);
 
-        $logs       = TimeLog::with('job:id,job_title')->where('worker_id', $workerId)->whereBetween('clock_in_at', [$start, $end])->orderBy('clock_in_at')->get();
+        $logs       = TimeLog::with('job:id,job_title')
+                        ->where('worker_id', $workerId)
+                        ->whereBetween('clock_in_at', [$start, $end])
+                        ->orderBy('clock_in_at')
+                        ->get();
+
         $totalHours = $logs->whereNotNull('clock_out_at')->sum('total_hours');
 
-        $csv = "Date,Job,Clock In,Clock Out,Hours,Location Note\n";
+        $csv = "Date,Job,Clock In,Clock Out,Hours\n";
+
         foreach ($logs as $log) {
             $csv .= implode(',', [
                 $log->clock_in_at->format('d/m/Y'),
@@ -183,10 +191,10 @@ class TimeController extends Controller
                 $log->clock_in_at->format('h:i A'),
                 $log->clock_out_at ? $log->clock_out_at->format('h:i A') : 'Active',
                 $log->total_hours ?? '',
-                '"' . ($log->location_note ?? '') . '"',
             ]) . "\n";
         }
-        $csv .= "\nTotal,,,,," . number_format($totalHours, 2) . "h\n";
+
+        $csv .= "\nTotal,,,, " . number_format($totalHours, 2) . "h\n";
 
         return response($csv, 200, [
             'Content-Type'        => 'text/csv',
@@ -222,9 +230,9 @@ class TimeController extends Controller
     {
         $today = now()->toDateString();
         return [
-            'todayHours' => TimeLog::where('worker_id', $workerId)->whereDate('clock_in_at', $today)->whereNotNull('clock_out_at')->sum('total_hours'),
-            'weekHours'  => TimeLog::where('worker_id', $workerId)->whereBetween('clock_in_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotNull('clock_out_at')->sum('total_hours'),
-            'monthHours' => TimeLog::where('worker_id', $workerId)->whereMonth('clock_in_at', now()->month)->whereNotNull('clock_out_at')->sum('total_hours'),
+            'todayHours' => round(TimeLog::where('worker_id', $workerId)->whereDate('clock_in_at', $today)->whereNotNull('clock_out_at')->sum('total_hours'), 2),
+            'weekHours'  => round(TimeLog::where('worker_id', $workerId)->whereBetween('clock_in_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotNull('clock_out_at')->sum('total_hours'), 2),
+            'monthHours' => round(TimeLog::where('worker_id', $workerId)->whereMonth('clock_in_at', now()->month)->whereNotNull('clock_out_at')->sum('total_hours'), 2),
         ];
     }
 

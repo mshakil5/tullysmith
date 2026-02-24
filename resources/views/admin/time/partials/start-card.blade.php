@@ -1,27 +1,38 @@
-<div class="card border-0 text-white mb-4" style="background:#405189;border-radius:16px;">
-    <div class="card-body p-4">
-        <h5 class="fw-bold mb-3 text-white">Start Your Day</h5>
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Start Your Day</h5>
+    </div>
+    <div class="card-body">
         @if($todayAssignments->isEmpty())
-            <p class="mb-0" style="opacity:0.7;font-size:0.85rem;">No jobs assigned for today.</p>
+            <div class="alert alert-warning mb-3">
+                <i class="ri-information-line me-1"></i> No jobs assigned for today.
+            </div>
         @else
             @foreach($todayAssignments as $assignment)
-            <div class="job-select-item border rounded-3 p-3 mb-2"
-                 style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25) !important;cursor:pointer;"
+            <div class="job-select-item border rounded p-3 mb-2"
+                 style="cursor:pointer;transition:border-color 0.15s,background 0.15s;"
                  data-id="{{ $assignment->id }}"
                  data-start="{{ $assignment->start_time ? \Carbon\Carbon::parse($assignment->start_time)->format('H:i') : '' }}"
                  data-end="{{ $assignment->end_time ? \Carbon\Carbon::parse($assignment->end_time)->format('H:i') : '' }}">
-                <p class="mb-0 fw-semibold text-white" style="font-size:0.88rem;">{{ $assignment->job->job_title }}</p>
-                <p class="mb-0 text-white" style="opacity:0.75;font-size:0.75rem;">
-                    {{ $assignment->job->job_id }}
-                    @if($assignment->start_time) · {{ \Carbon\Carbon::parse($assignment->start_time)->format('h:i A') }} @endif
-                    @if($assignment->end_time) – {{ \Carbon\Carbon::parse($assignment->end_time)->format('h:i A') }} @endif
-                    @if($assignment->job->city) · {{ $assignment->job->city }} @endif
-                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-semibold">{{ $assignment->job->job_title }}</h6>
+                        <p class="text-muted mb-0 fs-12">
+                            {{ $assignment->job->job_id }}
+                            @if($assignment->start_time) · {{ \Carbon\Carbon::parse($assignment->start_time)->format('h:i A') }} @endif
+                            @if($assignment->end_time) – {{ \Carbon\Carbon::parse($assignment->end_time)->format('h:i A') }} @endif
+                            @if($assignment->job->city) · {{ $assignment->job->city }} @endif
+                        </p>
+                    </div>
+                    <span class="badge badge-soft-{{ $assignment->job->status === 'active' ? 'success' : 'warning' }}">
+                        {{ ucfirst($assignment->job->status) }}
+                    </span>
+                </div>
             </div>
             @endforeach
         @endif
-        <button class="btn w-100 mt-3 fw-semibold" id="clockInBtn" style="background:#fff;color:#405189;">
-            <i class="ri-camera-line"></i> Clock In with Photo
+        <button class="btn btn-primary w-100 mt-2" id="clockInBtn">
+            <i class="ri-camera-line me-1"></i> Clock In with Photo
         </button>
     </div>
 </div>
