@@ -17,8 +17,9 @@
                     <h4 class="mb-0">Timesheets</h4>
                 </div>
 
-                <a href="{{ route('time.export', ['mode' => $mode, 'offset' => $offset]) }}"
-                   class="btn btn-soft-primary btn-sm">
+                <!-- ── FIXED: Always include worker_id when set ── -->
+                <a href="{{ route('time.export') }}?mode={{ $mode }}&offset={{ $offset }}{!! $workerId ? '&worker_id=' . $workerId : '' !!}"
+                   class="btn btn-soft-primary btn-sm {{ !$workerId ? 'disabled opacity-50' : '' }}">
                     <i class="ri-download-2-line me-1"></i> Export CSV
                 </a>
             </div>
@@ -28,7 +29,7 @@
                     <div class="card-body">
                         <label class="form-label fw-medium">Select Worker</label>
                         <select name="worker_id" id="workerSelect" class="form-control select2"
-                                onchange="window.location = '{{ route('time.timesheet') }}?worker_id=' + this.value + '&mode={{ $mode }}&offset={{ $offset }}'">
+                                onchange="window.location = '{{ route('time.timesheet') }}?mode={{ $mode }}&offset={{ $offset }}' + (this.value ? '&worker_id=' + this.value : '')">
                             <option value="">-- Choose a worker --</option>
                             @foreach($workers as $worker)
                                 <option value="{{ $worker->id }}" {{ $workerId == $worker->id ? 'selected' : '' }}>

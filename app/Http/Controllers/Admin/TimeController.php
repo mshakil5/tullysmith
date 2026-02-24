@@ -152,15 +152,15 @@ class TimeController extends Controller
             $workerId = $currentUser->id;
             $selectedWorker = null;
         } else {
-            $workerId = $request->query('worker_id', null);
+            $workerId = $request->query('worker_id');
 
-            if (!$workerId) {
-                $selectedWorker = null;
-            } else {
+            if ($workerId) {
                 $selectedWorker = User::byRole('Worker')->find($workerId);
                 if (!$selectedWorker) {
                     abort(404, 'Worker not found');
                 }
+            } else {
+                $selectedWorker = null;
             }
         }
 
@@ -170,7 +170,7 @@ class TimeController extends Controller
         [$start, $end, $label] = $this->timesheetRange($mode, $offset);
 
         $logs = collect();
-        $totalHours = 0.00;
+        $totalHours = 0.0;
         $breakdown  = collect();
 
         if ($workerId) {
@@ -196,37 +196,67 @@ class TimeController extends Controller
 
     public function exportTimesheet(Request $request)
     {
-        $workerId = auth()->id();
-        $mode     = $request->input('mode', 'weekly');
-        $offset   = (int) $request->input('offset', 0);
+        $currentUser = auth()->user();
+
+        if ($currentUser->hasRole('Worker')) {
+            $workerId = $currentUser->id;
+        } else {
+            $workerId = $request->query('worker_id', $currentUser->id);
+
+            if ($workerId != $currentUser->id) {
+                $worker = User::byRole('Worker')->find($workerId);
+                if (!$worker) {
+                    abort(404, 'Worker not found');
+                }
+            }
+        }
+
+        $mode   = $request->input('mode', 'weekly');
+        $offset = (int) $request->input('offset', 0);
 
         [$start, $end, $label] = $this->timesheetRange($mode, $offset);
 
-        $logs       = TimeLog::with('job:id,job_title')
-                        ->where('worker_id', $workerId)
-                        ->whereBetween('clock_in_at', [$start, $end])
-                        ->orderBy('clock_in_at')
-                        ->get();
+        $logs = TimeLog::with('job:id,job_title')
+            ->where('worker_id', $workerId)
+            ->whereBetween('clock_in_at', [$start, $end])
+            ->orderBy('clock_in_at')
+            ->get();
 
         $totalHours = $logs->whereNotNull('clock_out_at')->sum('total_hours');
 
         $csv = "Date,Job,Clock In,Clock Out,Hours\n";
 
         foreach ($logs as $log) {
+            $jobTitle = $log->job ? $log->job->job_title : '';
+
+            $jobTitle = str_replace('"', '""', $jobTitle);
+            if (str_contains($jobTitle, ',') || str_contains($jobTitle, '"') || str_contains($jobTitle, "\n")) {
+                $jobTitle = '"' . $jobTitle . '"';
+            }
+
             $csv .= implode(',', [
                 $log->clock_in_at->format('d/m/Y'),
-                '"' . ($log->job->job_title ?? '') . '"',
+                $jobTitle,
                 $log->clock_in_at->format('h:i A'),
                 $log->clock_out_at ? $log->clock_out_at->format('h:i A') : 'Active',
-                $log->total_hours ?? '',
+                $log->total_hours ? number_format($log->total_hours, 2) : '',
             ]) . "\n";
         }
 
         $csv .= "\nTotal,,,, " . number_format($totalHours, 2) . "h\n";
 
+        $filename = "timesheet_{$label}.csv";
+        if (!$currentUser->hasRole('Worker') && $workerId != $currentUser->id) {
+            $worker = User::find($workerId);
+            if ($worker) {
+                $safeName = str_replace([' ', '/'], '_', strtolower($worker->name));
+                $filename = "timesheet_{$safeName}_{$label}.csv";
+            }
+        }
+
         return response($csv, 200, [
-            'Content-Type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="timesheet_' . str_replace([' ', '-'], '_', $label) . '.csv"',
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
 
