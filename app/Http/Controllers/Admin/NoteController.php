@@ -38,13 +38,14 @@ class NoteController extends Controller
     public function getNotes($jobId)
     {
         $job = ServiceJob::findOrFail($jobId);
-        $notes = $job->notes()->where('status', 'approved')->with('user:id,name')->get();
+        $notes = $job->notes()->with('user:id,name')->get();
 
         return response()->json([
             'notes' => $notes->map(function($note) {
                 return [
                     'id' => $note->id,
                     'note' => $note->note,
+                    'status' => $note->status,
                     'created_by' => $note->user->name ?? 'Unknown',
                     'created_at' => $note->created_at->format('M d, H:i'),
                 ];

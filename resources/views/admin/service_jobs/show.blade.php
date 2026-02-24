@@ -49,15 +49,33 @@
                     <a class="nav-link active" id="overview-tab" data-bs-toggle="tab" href="#overview" role="tab">Overview</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="documents-tab" data-bs-toggle="tab" href="#documents" role="tab">Documents (<span id="documentsCount">0</span>)</a>
+                    <a class="nav-link" id="documents-tab" data-bs-toggle="tab" href="#documents" role="tab">
+                        Documents 
+                        <span class="badge bg-primary ms-1">
+                            <span id="documentsCount">0</span>
+                        </span>
+                    </a>
                 </li>
+
                 <li class="nav-item">
-                    <a class="nav-link" id="checklists-tab" data-bs-toggle="tab" href="#checklists" role="tab">Checklists (<span id="navChecklistsCount">0</span>)</a>
+                    <a class="nav-link" id="checklists-tab" data-bs-toggle="tab" href="#checklists" role="tab">
+                        Checklists 
+                        <span class="badge bg-primary ms-1">
+                            <span id="navChecklistsCount">0</span>
+                        </span>
+                    </a>
                 </li>
                 @hasanyrole('Super Admin|Admin')
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#assignments" role="tab">
                         Assignments <span class="badge bg-primary ms-1">{{ $job->assignments->count() }}</span>
+                    </a>
+                </li>
+                @endhasanyrole
+                @hasanyrole('Super Admin|Admin')
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#timelogs" role="tab">
+                        Time Logs <span class="badge bg-primary ms-1">{{ $job->timeLogs->count() }}</span>
                     </a>
                 </li>
                 @endhasanyrole
@@ -195,6 +213,87 @@
                         </div>
                     @endif
                 </div>
+
+                <div class="tab-pane fade" id="timelogs" role="tabpanel">
+                    <h5 class="mb-3">Time Logs</h5>
+                    @if($job->timeLogs->isEmpty())
+                        <p class="text-muted text-center py-4">No time logs yet</p>
+                    @else
+                        <div class="row g-3">
+                            @foreach($job->timeLogs as $log)
+                            <div class="col-md-6">
+                                <div class="card border">
+                                    <div class="card-body">
+                                       <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0 fw-semibold">{{ $log->worker->name ?? '-' }}</h6>
+                                            @php
+                                                $statusColor = match($log->status) {
+                                                    'approved' => 'success',
+                                                    'rejected' => 'danger',
+                                                    'pending'  => 'warning',
+                                                    default    => 'secondary',
+                                                };
+                                            @endphp
+                                            @if(!$log->clock_out_at)
+                                                <span class="badge bg-warning text-dark">Active</span>
+                                            @else
+                                                <span class="badge bg-{{ $statusColor }} {{ $log->status === 'pending' ? 'text-dark' : '' }}">{{ ucfirst($log->status) }}</span>
+                                            @endif
+                                        </div>
+
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <p class="text-muted mb-0" style="font-size:0.7rem;text-transform:uppercase;">Clock In</p>
+                                                <p class="fw-semibold mb-0" style="font-size:0.85rem;">{{ $log->clock_in_at->format('h:i A') }}</p>
+                                                <p class="text-muted mb-0" style="font-size:0.72rem;">{{ $log->clock_in_at->format('d M Y') }}</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="text-muted mb-0" style="font-size:0.7rem;text-transform:uppercase;">Clock Out</p>
+                                                @if($log->clock_out_at)
+                                                    <p class="fw-semibold mb-0" style="font-size:0.85rem;">{{ $log->clock_out_at->format('h:i A') }}</p>
+                                                    <p class="text-muted mb-0" style="font-size:0.72rem;">{{ $log->clock_out_at->format('d M Y') }}</p>
+                                                @else
+                                                    <p class="fw-semibold mb-0 text-success" style="font-size:0.85rem;">Still Running</p>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        @if($log->total_hours)
+                                        <div class="d-flex justify-content-between align-items-center p-2 rounded mb-2" style="background:#f8fafc;">
+                                            <span class="text-muted small"><i class="ri-time-line me-1"></i>Total Hours</span>
+                                            <strong class="text-primary">{{ number_format($log->total_hours, 2) }}h</strong>
+                                        </div>
+                                        @endif
+
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <p class="text-muted mb-1" style="font-size:0.7rem;text-transform:uppercase;">Clock In Photo</p>
+                                                @if($log->clock_in_photo)
+                                                    <img src="{{($log->clock_in_photo) }}" class="w-100 img-fluid">
+                                                @endif
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="text-muted mb-1" style="font-size:0.7rem;text-transform:uppercase;">Clock Out Photo</p>
+                                                @if($log->clock_out_photo)
+                                                    <img src="{{($log->clock_out_photo) }}" class="w-100 img-fluid">
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        @if($log->clock_in_lat && $log->clock_in_lng)
+                                        <div class="mt-2">
+                                            <a href="https://maps.google.com/?q={{ $log->clock_in_lat }},{{ $log->clock_in_lng }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100">
+                                                <i class="ri-map-pin-line me-1"></i> View Location
+                                            </a>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
@@ -253,7 +352,6 @@
     </div>
 </div>
 
-<!-- Assign Checklist Modal -->
 <div class="modal fade" id="assignChecklistModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -266,6 +364,19 @@
                 <div id="checklistListContainer">
                     <p class="text-muted text-center py-4">Loading checklists...</p>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imgModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-0 py-2">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2 text-center">
+                <img id="fullImg" src="" class="img-fluid rounded" />
             </div>
         </div>
     </div>
@@ -316,6 +427,7 @@ $(function() {
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>${note.created_by}</strong>
+                                    <span class="badge bg-${note.status === 'approved' ? 'success' : note.status === 'rejected' ? 'danger' : 'warning'} ms-1">${note.status}</span>
                                     <p class="mb-2 text-muted" style="font-size: 12px;">${note.created_at}</p>
                                     <p class="mb-0">${note.note}</p>
                                 </div>
@@ -326,8 +438,8 @@ $(function() {
                         </div>
                     `;
                 });
-                $('#notesCount').text(res.notes.length);
             }
+            $('#notesCount').text(res.notes.length);
             $('#notesContainer').html(html);
         });
     }
@@ -404,7 +516,9 @@ $(function() {
 
     $(document).on('click', '.deleteNoteBtn', function() {
         var noteId = $(this).data('id');
-        if (confirm('Are you sure?')) {
+        showConfirm('Are you sure?').then(result => {
+            if (!result.isConfirmed) return;
+
             $.ajax({
                 url: "{{ url('/admin/note') }}/" + noteId,
                 method: 'DELETE',
@@ -418,13 +532,16 @@ $(function() {
                     showError('Error deleting note');
                 }
             });
-        }
+
+        });
     });
 
     $(document).on('click', '.deleteDocBtn', function() {
         let id = $(this).data('id');
 
-        if (confirm('Delete this document?')) {
+        showConfirm('Delete this document?').then(result => {
+            if (!result.isConfirmed) return;
+
             $.ajax({
                 url: "{{ url('/admin/document') }}/" + id,
                 method: "DELETE",
@@ -438,7 +555,7 @@ $(function() {
                     showError('Error deleting document');
                 }
             });
-        }
+        });
     });
 
     function loadDocuments() {
@@ -461,13 +578,13 @@ $(function() {
                         <div class="border rounded p-3 mb-2 d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>${doc.title ?? doc.type}</strong>
+                                <span class="badge bg-${doc.status === 'approved' ? 'success' : doc.status === 'rejected' ? 'danger' : 'warning'} ms-1">${doc.status}</span>
                                 <div class="text-muted" style="font-size: 13px;">
                                     ${doc.type} • ${doc.created_by} • ${doc.created_at}
                                 </div>
                             </div>
 
                             <div class="d-flex align-items-center gap-2">
-                                ${amountHtml}
                                 <a class="btn btn-sm btn-outline-primary" target="_blank" href="${doc.file_url}">
                                    <i class="ri-download-2-line"></i> View
                                 </a>
@@ -648,21 +765,24 @@ $(function() {
 
     $(document).on('click', '.deleteChecklistBtn', function() {
         let id = $(this).data('id');
-        if (!confirm('Remove this checklist from the job?')) return;
 
-        $.ajax({
-            url: "/admin/service-job/checklist/" + id,
-            method: 'DELETE',
-            success: function(res) {
-                if (res.success) {
-                    loadChecklists();
-                    loadChecklistsForSelection();
-                    showSuccess(res.message);
+        showConfirm('Remove this checklist from the job?').then(result => {
+            if (!result.isConfirmed) return;
+
+            $.ajax({
+                url: "/admin/service-job/checklist/" + id,
+                method: 'DELETE',
+                success: function(res) {
+                    if (res.success) {
+                        loadChecklists();
+                        loadChecklistsForSelection();
+                        showSuccess(res.message);
+                    }
+                },
+                error: function() {
+                    showError('Error removing checklist');
                 }
-            },
-            error: function() {
-                showError('Error removing checklist');
-            }
+            });
         });
     });
 });

@@ -62,6 +62,7 @@ class ApprovalController extends Controller
                 ]);
 
             $timelogs = TimeLog::with(['worker', 'job'])
+                ->whereNotNull('clock_out_at')
                 ->when($status && $status !== 'all', fn($q) => $q->where('status', $status))
                 ->latest()
                 ->get()

@@ -128,19 +128,25 @@
         });
 
         $(document).on('click', '.actionBtn', function () {
-            var action         = $(this).data('action');
+            var action = $(this).data('action');
             var rejectionReason = $('#rejectionReason').val();
 
-            $.post("{{ url('/admin/approvals') }}/" + currentItemType + "/" + currentItemId + "/action", {
-                action: action,
-                rejection_reason: rejectionReason,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            }, function (res) {
-                if (res.success) {
-                    $('#detailModal').modal('hide');
-                    loadApprovals(currentStatus);
-                    showSuccess('Action successful');
-                }
+            showConfirm().then(result => {
+                if (!result.isConfirmed) return;
+
+                $.post("{{ url('/admin/approvals') }}/" + currentItemType + "/" + currentItemId + "/action", {
+                    action: action,
+                    rejection_reason: rejectionReason,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                }, function (res) {
+                    if (res.success) {
+                        $('#detailModal').modal('hide');
+                        loadApprovals(currentStatus);
+                        showSuccess('Action successful');
+                    }
+                }).fail(function(xhr) {
+                    showError(xhr.responseJSON?.message || 'Error performing action');
+                });
             });
         });
     });

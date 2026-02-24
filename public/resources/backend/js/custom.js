@@ -25,6 +25,17 @@ function showError(msg) {
     });
 }
 
+//
+function showConfirm(message = 'Are you sure?') {
+    return Swal.fire({
+        title: message,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel'
+    });
+}
+
 //reload
 function reload(ms = 2000) {
     setTimeout(() => {

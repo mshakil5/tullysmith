@@ -41,4 +41,9 @@ class ServiceJob extends Model
     {
         return $this->end_date ? Carbon::parse($this->end_date)->format('d M Y') : '';
     }
+
+    public function timeLogs()
+    {
+        return $this->hasMany(TimeLog::class, 'service_job_id')->with('worker')->latest();
+    }
 }

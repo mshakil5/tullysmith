@@ -68,7 +68,6 @@ class DocumentController extends Controller
         $job = ServiceJob::findOrFail($jobId);
 
         $docs = $job->documents()
-            ->where('status', 'approved')
             ->with('user:id,name')
             ->get();
 
@@ -78,6 +77,7 @@ class DocumentController extends Controller
                 return [
                     'id' => $doc->id,
                     'type' => $doc->type,
+                    'status' => $doc->status,
                     'title' => $doc->title,
                     'amount' => $doc->amount,
                     'file_url' => $doc->file ? asset($doc->file) : null,
