@@ -15,7 +15,47 @@ class TimeController extends Controller
 {
     public function index()
     {
-        $workerId = auth()->id();
+        $currentUser = auth()->user();
+        $workerId    = auth()->id();
+        $today       = now()->toDateString();
+
+        // Worker sees their own data as before
+        $todayAssignments = JobAssignment::with('job:id,job_title,job_id,postcode,address_line1,address_line2,city,status')
+            ->where('worker_id', $workerId)
+            ->where('assigned_date', $today)
+            ->get();
+
+        $activeLog = TimeLog::with('job:id,job_title,job_id')
+            ->where('worker_id', $workerId)
+            ->whereNull('clock_out_at')
+            ->latest()->first();
+
+        $recentLogs = TimeLog::with('job:id,job_title,job_id')
+            ->where('worker_id', $workerId)
+            ->latest()->take(10)->get();
+
+        $todayHours = TimeLog::where('worker_id', $workerId)->whereDate('clock_in_at', $today)->whereNotNull('clock_out_at')->sum('total_hours');
+        $weekHours  = TimeLog::where('worker_id', $workerId)->whereBetween('clock_in_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotNull('clock_out_at')->sum('total_hours');
+        $monthHours = TimeLog::where('worker_id', $workerId)->whereMonth('clock_in_at', now()->month)->whereNotNull('clock_out_at')->sum('total_hours');
+
+        // Admin also gets workers list
+        $workers = $currentUser->hasRole('Worker')
+            ? collect()
+            : User::byRole('Worker')->select('id', 'name')->orderBy('name')->get();
+
+        return view('admin.time.index', compact(
+            'todayAssignments', 'activeLog', 'recentLogs',
+            'todayHours', 'weekHours', 'monthHours',
+            'workers', 'currentUser'
+        ));
+    }
+
+    public function workerData(Request $request)
+    {
+        if (auth()->user()->hasRole('Worker')) abort(403);
+
+        $workerId = $request->worker_id;
+        $worker   = User::byRole('Worker')->findOrFail($workerId);
         $today    = now()->toDateString();
 
         $todayAssignments = JobAssignment::with('job:id,job_title,job_id,postcode,address_line1,address_line2,city,status')
@@ -36,7 +76,67 @@ class TimeController extends Controller
         $weekHours  = TimeLog::where('worker_id', $workerId)->whereBetween('clock_in_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotNull('clock_out_at')->sum('total_hours');
         $monthHours = TimeLog::where('worker_id', $workerId)->whereMonth('clock_in_at', now()->month)->whereNotNull('clock_out_at')->sum('total_hours');
 
-        return view('admin.time.index', compact('todayAssignments','activeLog','recentLogs','todayHours','weekHours','monthHours'));
+        return response()->json([
+            'worker_name'       => $worker->name,
+            'active_card_html'  => $activeLog
+                ? view('admin.time.partials.active-card', ['log' => $activeLog])->render()
+                : view('admin.time.partials.admin-start-card', compact('todayAssignments', 'workerId'))->render(),
+            'stats_html'        => view('admin.time.partials.stats', compact('todayHours', 'weekHours', 'monthHours'))->render(),
+            'entries_html'      => $recentLogs->map(fn($log) => view('admin.time.partials.entry', compact('log'))->render())->join(''),
+        ]);
+    }
+
+    public function manualClockIn(Request $request)
+    {
+        if (auth()->user()->hasRole('Worker')) abort(403);
+
+        $request->validate([
+            'worker_id'         => 'required|exists:users,id',
+            'job_assignment_id' => 'required|exists:job_assignments,id',
+            'clock_in_at'       => 'required|date',
+            'clock_out_at'      => 'nullable|date|after:clock_in_at',
+            'clock_in_photo'    => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'clock_out_photo'   => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ], [
+            'clock_out_at.after' => 'Clock out must be after clock in.',
+        ]);
+
+        if (TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->exists()) {
+            return response()->json([
+                'message' => 'This worker already has an active clock-in. Please clock out first or use Admin Edit to update.'
+            ], 422);
+        }
+
+        $assignment = JobAssignment::findOrFail($request->job_assignment_id);
+        $workerId   = $request->worker_id;
+
+        $clockIn    = Carbon::parse($request->clock_in_at);
+        $clockOut   = $request->clock_out_at ? Carbon::parse($request->clock_out_at) : null;
+        $totalHours = $clockOut ? round($clockIn->diffInMinutes($clockOut) / 60, 2) : null;
+
+        $data = [
+            'worker_id'         => $workerId,
+            'service_job_id'    => $assignment->service_job_id,
+            'job_assignment_id' => $assignment->id,
+            'clock_in_at'       => $clockIn,
+            'clock_out_at'      => $clockOut,
+            'total_hours'       => $totalHours,
+            'location_note'     => 'Manual entry',
+        ];
+
+        if ($request->hasFile('clock_in_photo')) {
+            $base64 = 'data:image/' . $request->file('clock_in_photo')->extension() . ';base64,' . base64_encode($request->file('clock_in_photo')->get());
+            $data['clock_in_photo'] = $this->savePhoto($base64, 'clockin', $workerId);
+        }
+
+        if ($request->hasFile('clock_out_photo')) {
+            $base64 = 'data:image/' . $request->file('clock_out_photo')->extension() . ';base64,' . base64_encode($request->file('clock_out_photo')->get());
+            $data['clock_out_photo'] = $this->savePhoto($base64, 'clockout', $workerId);
+        }
+
+        TimeLog::create($data);
+
+        return response()->json(['message' => 'Manual entry created successfully.']);
     }
 
     public function clockIn(Request $request)
@@ -177,7 +277,7 @@ class TimeController extends Controller
             $logs = TimeLog::with('job:id,job_title')
                 ->where('worker_id', $workerId)
                 ->whereBetween('clock_in_at', [$start, $end])
-                ->orderBy('clock_in_at')
+                ->orderByDesc('clock_in_at')
                 ->get();
 
             $totalHours = $logs->whereNotNull('clock_out_at')->sum('total_hours');

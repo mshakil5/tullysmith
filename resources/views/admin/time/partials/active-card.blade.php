@@ -18,9 +18,11 @@
                 </span>
             </div>
         </div>
+        @role('Worker')
         <hr>
         <button class="btn btn-danger w-100" id="clockOutBtn">
             <i class="ri-stop-fill me-1"></i> Clock Out
         </button>
+        @endrole
     </div>
 </div>

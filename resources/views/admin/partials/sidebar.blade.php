@@ -86,14 +86,12 @@
                     </a>
                 </li>
 
-                @role('Worker')
                 <li class="nav-item">
                     <a href="{{ route('time.index') }}" class="nav-link {{ Route::is('time.index') ? 'active' : '' }}">
                         <i class="ri-time-line"></i>
                         <span>Time</span>
                     </a>
                 </li>
-                @endrole
 
                 <li class="nav-item">
                     <a href="{{ route('time.timesheet') }}" class="nav-link {{ Route::is('time.timesheet') ? 'active' : '' }}">

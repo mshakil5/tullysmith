@@ -2,6 +2,7 @@
 @section('title', 'Time Tracking')
 
 @section('content')
+@role('Worker')
 <div class="container-fluid">
 
     <div class="row">
@@ -91,6 +92,117 @@
         </div>
     </div>
 </div>
+@endrole
+
+@unlessrole('Worker')
+<div class="row mt-4" id="adminSection">
+
+    {{-- Worker Selector --}}
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center gap-3">
+                    <label class="fw-semibold mb-0 text-nowrap">
+                        <i class="ri-user-settings-line me-1 text-primary"></i> Select Worker to Manage:
+                    </label>
+                    <select id="adminWorkerSelect" class="form-control select2" style="max-width:300px;">
+                        <option value="">— Choose a worker —</option>
+                        @foreach($workers as $worker)
+                            <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                        @endforeach
+                    </select>
+                    <span id="adminLoadingSpinner" class="text-muted d-none">
+                        <i class="ri-loader-4-line"></i> Loading…
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Admin Worker Panel (hidden until worker selected) --}}
+    <div id="adminWorkerPanel" class="d-none">
+        <div class="row">
+            <div class="col-xl-5 col-lg-6">
+                <div id="adminClockCardWrapper"></div>
+                <div id="adminStatsWrapper"></div>
+            </div>
+            <div class="col-xl-7 col-lg-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-time-line me-1"></i>
+                            Recent Entries — <span id="adminWorkerName"></span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-3">
+                        <div id="adminEntriesList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{-- Manual Clock In Modal --}}
+<div class="modal fade" id="manualClockInModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ri-shield-user-line me-1 text-primary"></i>
+                    Clock In As Admin — <span id="manualWorkerName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="manualClockInForm" enctype="multipart/form-data"
+                      action="{{ route('time.manualClockIn') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="worker_id" id="manual_worker_id">
+                    <input type="hidden" name="job_assignment_id" id="manual_assignment_id">
+
+                    <div class="alert alert-soft-info py-2 px-3 mb-3">
+                        <i class="ri-information-line me-1"></i>
+                        Job: <strong id="manual_job_title"></strong>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Clock In <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="clock_in_at" id="manual_clock_in" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Clock Out</label>
+                            <input type="datetime-local" name="clock_out_at" id="manual_clock_out" class="form-control">
+                            <div class="form-text">Leave blank if still active.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Clock-In Photo <span class="text-muted fw-normal">(optional)</span></label>
+                            <img src="" class="d-none d-block mb-2 rounded" style="height:70px;object-fit:cover;">
+                            <input type="file" name="clock_in_photo" class="form-control" accept="image/*"
+                                onchange="this.previousElementSibling.src=window.URL.createObjectURL(this.files[0]); this.previousElementSibling.classList.remove('d-none')">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Clock-Out Photo <span class="text-muted fw-normal">(optional)</span></label>
+                            <img src="" class="d-none d-block mb-2 rounded" style="height:70px;object-fit:cover;">
+                            <input type="file" name="clock_out_photo" class="form-control" accept="image/*"
+                                onchange="this.previousElementSibling.src=window.URL.createObjectURL(this.files[0]); this.previousElementSibling.classList.remove('d-none')">
+                        </div>
+                    </div>
+
+                    <div class="mt-3 text-end">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="manualClockInSubmitBtn">
+                            <i class="ri-shield-check-line me-1"></i> Confirm Clock In
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endunlessrole
 
 @endsection
 
@@ -309,6 +421,87 @@ $(function () {
         $('#locBadge').attr('class', 'badge badge-soft-' + type);
         $('#locBadgeText').text(text);
     }
+
+    var adminWorkerId = null;
+
+    $('#adminWorkerSelect').on('change', function () {
+        adminWorkerId = $(this).val();
+        if (!adminWorkerId) {
+            $('#adminWorkerPanel').addClass('d-none');
+            return;
+        }
+
+        $('#adminLoadingSpinner').removeClass('d-none');
+
+        $.get("{{ route('time.workerData') }}", { worker_id: adminWorkerId }, function (res) {
+            $('#adminWorkerName').text(res.worker_name);
+            $('#manualWorkerName').text(res.worker_name);
+            $('#adminClockCardWrapper').html(res.active_card_html);
+            $('#adminStatsWrapper').html(res.stats_html);
+            $('#adminEntriesList').html(res.entries_html || '<p class="text-muted text-center py-3 mb-0">No entries yet</p>');
+            $('#adminWorkerPanel').removeClass('d-none');
+            $('#adminLoadingSpinner').addClass('d-none');
+        }).fail(function () {
+            $('#adminLoadingSpinner').addClass('d-none');
+            showError('Failed to load worker data.');
+        });
+    });
+
+    // ── Clock In As Admin button click ───────────────────────────────────
+    $(document).on('click', '.admin-clockin-btn', function () {
+        var assignmentId = $(this).data('assignment-id');
+        var jobTitle     = $(this).data('job-title');
+        var today        = new Date().toISOString().slice(0, 16);
+
+        $('#manual_worker_id').val(adminWorkerId);
+        $('#manual_assignment_id').val(assignmentId);
+        $('#manual_job_title').text(jobTitle);
+        $('#manual_clock_in').val(today);
+        $('#manual_clock_out').val('');
+
+        $('#manualClockInModal').modal('show');
+    });
+
+    $('#manualClockInForm').on('submit', function (e) {
+        e.preventDefault();
+
+        showConfirm('Clock in this worker as Admin? This will create an official time entry.')
+            .then(function (r) {
+                if (!r.isConfirmed) return;
+
+                var fd = new FormData(document.getElementById('manualClockInForm'));
+                $('#manualClockInSubmitBtn').prop('disabled', true).html('<i class="ri-loader-4-line"></i> Saving…');
+
+                $.ajax({
+                    url: "{{ route('time.manualClockIn') }}",
+                    method: 'POST',
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        showSuccess(res.message);
+                        $('#manualClockInModal').modal('hide');
+
+                        $.get("{{ route('time.workerData') }}", { worker_id: adminWorkerId }, function (res) {
+                            $('#adminClockCardWrapper').html(res.active_card_html);
+                            $('#adminStatsWrapper').html(res.stats_html);
+                            $('#adminEntriesList').html(res.entries_html || '<p class="text-muted text-center py-3 mb-0">No entries yet</p>');
+                        });
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422 && xhr.responseJSON.errors) {
+                            var first = Object.values(xhr.responseJSON.errors)[0][0];
+                            showError(first);
+                        } else {
+                            showError(xhr.responseJSON?.message ?? 'Error saving entry.');
+                        }
+                    },
+                    complete: function () {
+                        $('#manualClockInSubmitBtn').prop('disabled', false).html('<i class="ri-shield-check-line me-1"></i> Confirm Clock In');
+                    }
+                });
+            });
+    });
 
 });
 </script>

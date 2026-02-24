@@ -58,6 +58,8 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::get('/timesheet',   [TimeController::class, 'timesheet'])->name('timesheet');
         Route::get('/export',      [TimeController::class, 'exportTimesheet'])->name('export');
         Route::post('/{id}/admin-edit', [TimeController::class, 'adminEdit'])->name('adminEdit');
+        Route::get('/worker-data',     [TimeController::class, 'workerData'])->name('workerData');
+        Route::post('/manual-clock-in',[TimeController::class, 'manualClockIn'])->name('manualClockIn');
     });
 
     Route::prefix('job-assignment')->name('jobAssignment.')->group(function () {
