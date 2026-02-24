@@ -152,7 +152,7 @@ $(function () {
         if (selectedStartTime) {
             var nowMins = londonMinutes(), startMins = hhmm24toMins(selectedStartTime);
             if (nowMins < startMins - 30) {
-                showConfirm('Your shift starts at ' + formatTime12(selectedStartTime) + ' but it\'s currently ' + londonTimeFormatted() + ' (London time). Clock in early?')
+                showConfirm('Your shift starts at ' + formatTime12(selectedStartTime) + ' but it\'s currently ' + londonTimeFormatted() + ' Clock in early?')
                     .then(function(r) { if (r.isConfirmed) startClockInFlow(); });
                 return;
             }
@@ -165,7 +165,7 @@ $(function () {
         if (selectedEndTime) {
             var nowMins = londonMinutes(), endMins = hhmm24toMins(selectedEndTime);
             if (nowMins < endMins - 15) {
-                showConfirm('Your shift ends at ' + formatTime12(selectedEndTime) + ' but it\'s only ' + londonTimeFormatted() + ' (London time). Clock out early?')
+                showConfirm('Your shift ends at ' + formatTime12(selectedEndTime) + ' but it\'s only ' + londonTimeFormatted() + 'Clock out early?')
                     .then(function(r) { if (r.isConfirmed) startClockOutFlow(); });
                 return;
             }

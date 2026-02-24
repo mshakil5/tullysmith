@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\JobAssignment;
 use App\Models\TimeLog;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -146,23 +147,50 @@ class TimeController extends Controller
 
     public function timesheet(Request $request)
     {
-        $workerId = auth()->id();
-        $mode     = $request->input('mode', 'weekly');
-        $offset   = (int) $request->input('offset', 0);
+        $currentUser = auth()->user();
+        if ($currentUser->hasRole('Worker')) {
+            $workerId = $currentUser->id;
+            $selectedWorker = null;
+        } else {
+            $workerId = $request->query('worker_id', null);
+
+            if (!$workerId) {
+                $selectedWorker = null;
+            } else {
+                $selectedWorker = User::byRole('Worker')->find($workerId);
+                if (!$selectedWorker) {
+                    abort(404, 'Worker not found');
+                }
+            }
+        }
+
+        $mode   = $request->input('mode', 'weekly');
+        $offset = (int) $request->input('offset', 0);
 
         [$start, $end, $label] = $this->timesheetRange($mode, $offset);
 
-        $logs = TimeLog::with('job:id,job_title')
-            ->where('worker_id', $workerId)
-            ->whereBetween('clock_in_at', [$start, $end])
-            ->orderBy('clock_in_at')
-            ->get();
+        $logs = collect();
+        $totalHours = 0.00;
+        $breakdown  = collect();
 
-        $totalHours = $logs->whereNotNull('clock_out_at')->sum('total_hours');
-        $breakdown  = $logs->groupBy(fn($l) => $l->clock_in_at->toDateString());
+        if ($workerId) {
+            $logs = TimeLog::with('job:id,job_title')
+                ->where('worker_id', $workerId)
+                ->whereBetween('clock_in_at', [$start, $end])
+                ->orderBy('clock_in_at')
+                ->get();
+
+            $totalHours = $logs->whereNotNull('clock_out_at')->sum('total_hours');
+            $breakdown  = $logs->groupBy(fn($l) => $l->clock_in_at->toDateString());
+        }
+
+        $workers = $currentUser->hasRole('Worker')
+            ? collect()
+            : User::byRole('Worker')->select('id', 'name')->orderBy('name')->get();
 
         return view('admin.time.timesheet', compact(
-            'logs', 'totalHours', 'breakdown', 'mode', 'offset', 'label', 'start', 'end'
+            'logs', 'totalHours', 'breakdown', 'mode', 'offset', 'label', 'start', 'end',
+            'workerId', 'selectedWorker', 'workers', 'currentUser'
         ));
     }
 

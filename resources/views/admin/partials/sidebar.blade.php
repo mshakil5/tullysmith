@@ -88,12 +88,19 @@
 
                 @role('Worker')
                 <li class="nav-item">
-                    <a href="{{ route('time.index') }}" class="nav-link {{ Route::is('time.*') ? 'active' : '' }}">
+                    <a href="{{ route('time.index') }}" class="nav-link {{ Route::is('time.index') ? 'active' : '' }}">
                         <i class="ri-time-line"></i>
                         <span>Time</span>
                     </a>
                 </li>
                 @endrole
+
+                <li class="nav-item">
+                    <a href="{{ route('time.timesheet') }}" class="nav-link {{ Route::is('time.timesheet') ? 'active' : '' }}">
+                        <i class="ri-calendar-line"></i>
+                        <span>Timesheets</span>
+                    </a>
+                </li>
 
                 @hasanyrole('Super Admin|Admin')
 
