@@ -306,4 +306,45 @@ class TimeController extends Controller
             ],
         };
     }
+
+    public function adminEdit(Request $request, $id)
+    {
+        $request->validate([
+            'clock_in_at'     => 'required|date',
+            'clock_out_at'    => 'nullable|date|after:clock_in_at',
+            'clock_in_lat'    => 'nullable|numeric',
+            'clock_in_lng'    => 'nullable|numeric',
+            'location_note'   => 'nullable|string|max:255',
+            'clock_in_photo'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'clock_out_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ], [
+            'clock_out_at.after' => 'Clock out time must be after clock in time.',
+        ]);
+
+        $log        = TimeLog::findOrFail($id);
+        $clockIn    = Carbon::parse($request->clock_in_at);
+        $clockOut   = $request->clock_out_at ? Carbon::parse($request->clock_out_at) : null;
+        $totalHours = $clockOut ? round($clockIn->diffInMinutes($clockOut) / 60, 2) : null;
+
+        $data = [
+            'clock_in_at'   => $clockIn,
+            'clock_out_at'  => $clockOut,
+            'clock_in_lat'  => $request->clock_in_lat,
+            'clock_in_lng'  => $request->clock_in_lng,
+            'total_hours'   => $totalHours,
+        ];
+
+        if ($request->hasFile('clock_in_photo')) {
+            $base64 = 'data:image/' . $request->file('clock_in_photo')->extension() . ';base64,' . base64_encode($request->file('clock_in_photo')->get());
+            $data['clock_in_photo'] = $this->savePhoto($base64, 'clockin', $log->worker_id);
+        }
+
+        if ($request->hasFile('clock_out_photo')) {
+            $base64 = 'data:image/' . $request->file('clock_out_photo')->extension() . ';base64,' . base64_encode($request->file('clock_out_photo')->get());
+            $data['clock_out_photo'] = $this->savePhoto($base64, 'clockout', $log->worker_id);
+        }
+        $log->update($data);
+
+        return redirect()->back()->with('success', 'Time log updated successfully.');
+    }
 }

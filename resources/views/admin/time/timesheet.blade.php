@@ -175,6 +175,68 @@
                                         <div class="text-end flex-shrink-0 fw-semibold" style="min-width: 70px;">
                                             {{ $log->clock_out_at ? number_format($log->total_hours, 2) . 'h' : '—' }}
                                         </div>
+                                        @unlessrole('Worker')
+                                            <div class="flex-shrink-0">
+                                                <button type="button"
+                                                    class="btn btn-sm btn-soft-warning"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#adminEditModal{{ $log->id }}">
+                                                    <i class="ri-pencil-line"></i>
+                                                </button>
+                                            </div>
+
+                                            <div class="modal fade" id="adminEditModal{{ $log->id }}" tabindex="-1">
+                                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Edit Time Log</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <form action="{{ url('/admin/time/' . $log->id . '/admin-edit') }}" method="POST" enctype="multipart/form-data">
+                                                                @csrf
+                                                                <div class="row g-3">
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label fw-semibold">Clock In <span class="text-danger">*</span></label>
+                                                                        <input type="datetime-local" name="clock_in_at" class="form-control"
+                                                                            value="{{ $log->clock_in_at->format('Y-m-d\TH:i') }}" required>
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label fw-semibold">Clock Out</label>
+                                                                        <input type="datetime-local" name="clock_out_at" class="form-control"
+                                                                            value="{{ $log->clock_out_at ? $log->clock_out_at->format('Y-m-d\TH:i') : '' }}">
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label fw-semibold">Latitude</label>
+                                                                        <input type="number" step="any" name="clock_in_lat" class="form-control" value="{{ $log->clock_in_lat ?? '' }}">
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label fw-semibold">Longitude</label>
+                                                                        <input type="number" step="any" name="clock_in_lng" class="form-control" value="{{ $log->clock_in_lng ?? '' }}">
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label fw-semibold">Clock-In Photo</label>
+                                                                        <img src="{{ $log->clock_in_photo ?? '' }}" class="d-block mb-2 rounded {{ $log->clock_in_photo ? '' : 'd-none' }}" style="height:70px;object-fit:cover;">
+                                                                        <input type="file" name="clock_in_photo" class="form-control" accept="image/*" onchange="this.previousElementSibling.src=window.URL.createObjectURL(this.files[0]); this.previousElementSibling.classList.remove('d-none')">
+                                                                    </div>
+
+                                                                    <div class="col-md-6">
+                                                                        <label class="form-label fw-semibold">Clock-Out Photo</label>
+                                                                        <img src="{{ $log->clock_out_photo ?? '' }}" class="d-block mb-2 rounded {{ $log->clock_out_photo ? '' : 'd-none' }}" style="height:70px;object-fit:cover;"><input type="file" name="clock_out_photo" class="form-control" accept="image/*" onchange="this.previousElementSibling.src=window.URL.createObjectURL(this.files[0]); this.previousElementSibling.classList.remove('d-none')">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="mt-3 text-end">
+                                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                                    <button type="submit" class="btn btn-warning">
+                                                                        <i class="ri-save-line me-1"></i> Save Changes
+                                                                    </button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endunlessrole
                                     </div>
                                 @endforeach
                             </div>

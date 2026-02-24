@@ -99,6 +99,18 @@
 
     <script src="{{ asset('resources/backend/js/custom.js') }}"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                showSuccess("{{ session('success') }}");
+            @endif
+
+            @if(session('error'))
+                showError("{{ session('error') }}");
+            @endif
+        });
+    </script>
+
     @yield('script')
 </body>
 
