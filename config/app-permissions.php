@@ -56,6 +56,7 @@ return [
         'checklist.service-job',
         'checklist.service-job.store',
         'checklist.service-job.destroy',
+        'checklist.answer',
 
         // Roles
         'role.index',

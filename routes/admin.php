@@ -80,9 +80,12 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
     // Checklist Under Service Job
     Route::get('/checklist/active/list', [ChecklistController::class, 'getActiveList'])->name('checklist.active.list');
     Route::get('/checklist/{id}/items', [ChecklistController::class, 'getItems'])->name('checklist.items');
-    Route::get('/service-job/{id}/checklists', [ServiceJobChecklistController::class, 'getChecklists'])->name('checklist.service-job');
     Route::post('/service-job/checklist', [ServiceJobChecklistController::class, 'store'])->name('checklist.service-job.store');
     Route::delete('/service-job/checklist/{id}', [ServiceJobChecklistController::class, 'destroy'])->name('checklist.service-job.destroy');
+
+    // Checklist Answers
+    Route::get('/service-job/{id}/checklists', [ChecklistController::class, 'checklists'])->name('checklist.service-job');
+    Route::post('/service-job/checklist/{id}/answer',  [ChecklistController::class, 'saveAnswers'])->name('checklist.answer');
 
     //Checklist
     Route::prefix('checklist')->name('checklist.')->group(function () {

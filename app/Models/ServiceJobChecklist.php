@@ -12,7 +12,7 @@ class ServiceJobChecklist extends Model
     {
         return $this->belongsTo(ServiceJob::class);
     }
-    
+
     public function checklist()
     {
         return $this->belongsTo(Checklist::class);
@@ -21,5 +21,10 @@ class ServiceJobChecklist extends Model
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public function answers()
+    {
+        return $this->hasMany(ChecklistAnswer::class);
     }
 }

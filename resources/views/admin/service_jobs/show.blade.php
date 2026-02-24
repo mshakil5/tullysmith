@@ -602,64 +602,11 @@ $(function() {
     }
 
     function loadChecklists() {
-        $.get("/admin/service-job/" + jobId + "/checklists", function(res) {
-            let html = '';
-            let count = res.checklists.length;
-
+        $.get("/admin/service-job/" + jobId + "/checklists", function(html) {
+            $('#checklistsContainer').html(html);
+            var count = $('#checklistsContainer .accordion-item').length;
             $('#checklistsCount').text(count);
             $('#navChecklistsCount').text(count);
-
-            if (count === 0) {
-                html = '<p class="text-muted text-center py-4">No checklists assigned yet</p>';
-            } else {
-                res.checklists.forEach(function(item, index) {
-                    let itemsHtml = '';
-                    if (item.items && item.items.length > 0) {
-                        item.items.forEach(function(checkItem) {
-                            let typeLabel = checkItem.type
-                                .replace(/_/g, ' ')
-                                .split(' ')
-                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                .join(' ');
-                            
-                            itemsHtml += `
-                                <div class="ps-3 mb-2 pb-2 border-start border-2">
-                                    <div class="d-flex align-items-start gap-2">
-                                        <span class="badge bg-light text-dark mt-1">${typeLabel}</span>
-                                        <span class="flex-grow-1">${checkItem.question}</span>
-                                        ${checkItem.is_required ? '<span class="badge bg-danger ms-2 mt-1">Required</span>' : ''}
-                                    </div>
-                                </div>
-                            `;
-                        });
-                    } else {
-                        itemsHtml = '<p class="text-muted text-center py-2 ps-3">No items</p>';
-                    }
-
-                    html += `
-                        <div class="accordion mb-3" id="checklistAccordion${index}">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header">
-                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}">
-                                        <strong>${item.title}</strong>
-                                        <span class="badge bg-info ms-2">${item.items ? item.items.length : 0} items</span>
-                                    </button>
-                                </h2>
-                                <div id="collapse${index}" class="accordion-collapse collapse" data-bs-parent="#checklistAccordion${index}">
-                                    <div class="accordion-body p-3">
-                                        ${itemsHtml}
-                                        <div class="text-end mt-3">
-                                            ${isAdminOrSuper ? '<button class="btn btn-sm btn-outline-danger deleteChecklistBtn" data-id="' + item.id + '"><i class="ri-delete-bin-fill"></i> Remove</button>' : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            $('#checklistsContainer').html(html);
         });
     }
 
@@ -785,6 +732,33 @@ $(function() {
             });
         });
     });
+
+    $(document).on('submit', '.checklist-answer-form', function(e) {
+        e.preventDefault();
+        var form = this;
+        var id   = $(this).data('id');
+        var btn  = $(this).find('.save-answers-btn');
+        var fd   = new FormData(form);
+
+        btn.prop('disabled', true).html('<i class="ri-loader-4-line"></i> Saving…');
+
+        $.ajax({
+            url: '/admin/service-job/checklist/' + id + '/answer',
+            method: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                showSuccess(res.message);
+                loadChecklists();
+            },
+            error: function() {
+                showError('Failed to save answers.');
+                btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i> Save Answers');
+            }
+        });
+    });
+
 });
 </script>
 @endsection

@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Checklist;
+use App\Models\ChecklistAnswer;
 use App\Models\ChecklistItem;
-use Illuminate\Http\Request;
+use App\Models\ServiceJobChecklist;
 use DataTables;
+use Illuminate\Http\Request;
+use Intervention\Image\Facades\Image;
 
 class ChecklistController extends Controller
 {
@@ -174,5 +177,61 @@ class ChecklistController extends Controller
         $items = $checklist->items;
 
         return response()->json(['items' => $items]);
+    }
+
+    public function checklists($jobId)
+    {
+        $checklists = ServiceJobChecklist::where('service_job_id', $jobId)
+            ->with(['checklist.items', 'answers.answeredBy'])
+            ->get();
+
+        if ($checklists->isEmpty()) {
+            return '<p class="text-muted text-center py-4">No checklists assigned yet</p>';
+        }
+
+        return view('admin.checklist.checklist-answers', compact('checklists'))->render();
+    }
+
+    public function saveAnswers(Request $request, $id)
+    {
+        $assignment = ServiceJobChecklist::findOrFail($id);
+        $answers    = $request->input('answers', []);
+        $photos     = $request->file('photos', []);
+
+        foreach ($answers as $itemId => $answer) {
+            ChecklistAnswer::updateOrCreate(
+                [
+                    'service_job_checklist_id' => $assignment->id,
+                    'checklist_item_id'        => $itemId,
+                ],
+                [
+                    'answer'      => $answer,
+                    'answered_by' => auth()->id(),
+                ]
+            );
+        }
+
+        foreach ($photos as $itemId => $file) {
+            $data     = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', file_get_contents($file)));
+            $filename = 'checklist_' . $id . '_' . $itemId . '_' . mt_rand(10000000, 99999999) . '.webp';
+            $path     = public_path('uploads/checklist-answers/');
+            if (!file_exists($path)) mkdir($path, 0755, true);
+            Image::make($file)->encode('webp', 75)->save($path . $filename);
+            $photoPath = '/uploads/checklist-answers/' . $filename;
+
+            ChecklistAnswer::updateOrCreate(
+                [
+                    'service_job_checklist_id' => $assignment->id,
+                    'checklist_item_id'        => $itemId,
+                ],
+                [
+                    'answer'      => $photoPath,
+                    'photo_path'  => $photoPath,
+                    'answered_by' => auth()->id(),
+                ]
+            );
+        }
+
+        return response()->json(['success' => true, 'message' => 'Answers saved.']);
     }
 }

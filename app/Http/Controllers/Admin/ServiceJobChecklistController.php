@@ -26,30 +26,6 @@ class ServiceJobChecklistController extends Controller
         return response()->json(['success' => true, 'message' => 'Checklist assigned successfully']);
     }
 
-    public function getChecklists($jobId)
-    {
-        $checklists = ServiceJobChecklist::where('service_job_id', $jobId)
-            ->with('checklist.items')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'title' => $item->checklist->title ?? '',
-                    'description' => $item->checklist->description,
-                    'items' => $item->checklist->items->map(function ($checklistItem) {
-                        return [
-                            'id' => $checklistItem->id,
-                            'question' => $checklistItem->question,
-                            'type' => $checklistItem->type,
-                            'is_required' => $checklistItem->is_required,
-                        ];
-                    })->toArray(),
-                ];
-            });
-
-        return response()->json(['checklists' => $checklists]);
-    }
-
     public function destroy($id)
     {
         $assignment = ServiceJobChecklist::findOrFail($id);
