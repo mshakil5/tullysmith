@@ -14,18 +14,23 @@
             <ul class="nav nav-tabs card-header-tabs" id="approvalTabs">
                 <li class="nav-item">
                     <a class="nav-link active" href="#" data-status="pending">
-                        Pending
-                        <span class="badge bg-danger ms-1" id="pendingBadge">{{ $pendingCount }}</span>
+                        Pending <span class="badge bg-warning ms-1" id="pendingBadge">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" data-status="approved">Approved</a>
+                    <a class="nav-link" href="#" data-status="approved">
+                        Approved <span class="badge bg-success ms-1" id="approvedBadge">0</span>
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" data-status="rejected">Rejected</a>
+                    <a class="nav-link" href="#" data-status="rejected">
+                        Rejected <span class="badge bg-danger ms-1" id="rejectedBadge">0</span>
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#" data-status="all">All</a>
+                    <a class="nav-link" href="#" data-status="all">
+                        All <span class="badge bg-secondary ms-1" id="allBadge">0</span>
+                    </a>
                 </li>
             </ul>
         </div>
@@ -38,7 +43,6 @@
     </div>
 </div>
 
-<!-- Detail Modal -->
 <div class="modal fade" id="detailModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -57,98 +61,101 @@
 
 @section('script')
 <script>
-    $(function () {
-        var currentStatus = 'pending';
+$(function () {
+    var currentStatus = 'pending';
 
+    loadApprovals(currentStatus);
+
+    $('#approvalTabs a').on('click', function (e) {
+        e.preventDefault();
+        $('#approvalTabs a').removeClass('active');
+        $(this).addClass('active');
+        currentStatus = $(this).data('status');
         loadApprovals(currentStatus);
+    });
 
-        $('#approvalTabs a').on('click', function (e) {
-            e.preventDefault();
-            $('#approvalTabs a').removeClass('active');
-            $(this).addClass('active');
-            currentStatus = $(this).data('status');
-            loadApprovals(currentStatus);
-        });
+    function typeIcon(type) {
+        if (type === 'checklist')  return '<div style="width:40px;height:40px;background:#fff8e1;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-checkbox-multiple-line" style="color:#f59e0b;font-size:20px;"></i></div>';
+        if (type === 'timelog')    return '<div style="width:40px;height:40px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-time-line" style="color:#16a34a;font-size:20px;"></i></div>';
+        if (type === 'servicejob') return '<div style="width:40px;height:40px;background:#ede9fe;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-briefcase-line" style="color:#7c3aed;font-size:20px;"></i></div>';
+        return '<div style="width:40px;height:40px;background:#e3f2fd;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-sticky-note-line" style="color:#3b82f6;font-size:20px;"></i></div>';
+    }
 
-        function typeIcon(type) {
-            if (type === 'checklist') return '<div style="width:40px;height:40px;background:#fff8e1;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-checkbox-multiple-line" style="color:#f59e0b;font-size:20px;"></i></div>';
-            if (type === 'document') return '<div style="width:40px;height:40px;background:#e8f5e9;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-file-text-line" style="color:#22c55e;font-size:20px;"></i></div>';
-            if (type === 'timelog') return '<div style="width:40px;height:40px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-time-line" style="color:#16a34a;font-size:20px;"></i></div>';
-            return '<div style="width:40px;height:40px;background:#e3f2fd;border-radius:10px;display:flex;align-items:center;justify-content:center;"><i class="ri-sticky-note-line" style="color:#3b82f6;font-size:20px;"></i></div>';
-        }
+    function loadApprovals(status) {
+        $('#approvalsContainer').html('<p class="text-muted text-center py-4">Loading...</p>');
 
-        function loadApprovals(status) {
-            $('#approvalsContainer').html('<p class="text-muted text-center py-4">Loading...</p>');
+        $.get("{{ route('approvals.index') }}", { status: status }, function (res) {
+            $('#pendingBadge').text(res.pending_count);
+            $('#approvedBadge').text(res.approved_count);
+            $('#rejectedBadge').text(res.rejected_count);
+            $('#allBadge').text(res.all_count);
 
-            $.get("{{ route('approvals.index') }}", { status: status }, function (res) {
-                $('#pendingBadge').text(res.pending_count);
-
-                var html = '';
-                if (res.items.length === 0) {
-                    html = '<p class="text-muted text-center py-4">No items found</p>';
-                } else {
-                    res.items.forEach(function (item) {
-                        html += `
-                            <div class="border rounded p-3 mb-2 d-flex align-items-center gap-3 approval-item" 
-                                style="cursor:pointer;" data-type="${item.type}" data-id="${item.id}">
-                                ${typeIcon(item.type)}
-                                <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="badge bg-light text-dark border">${item.type}</span>
-                                        <small class="text-muted">${item.created_at}</small>
-                                    </div>
-                                    <strong>${item.title}</strong>
-                                    <div class="text-muted" style="font-size:13px;">${item.job} &bull; ${item.created_by}</div>
+            var html = '';
+            if (res.items.length === 0) {
+                html = '<p class="text-muted text-center py-4">No items found</p>';
+            } else {
+                res.items.forEach(function (item) {
+                    var statusColor = item.status === 'pending' ? 'warning' : (item.status === 'approved' ? 'success' : 'danger');
+                    html += `
+                        <div class="border rounded p-3 mb-2 d-flex align-items-center gap-3 approval-item"
+                            style="cursor:pointer;" data-type="${item.type}" data-id="${item.id}">
+                            ${typeIcon(item.type)}
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-light text-dark border">${item.type}</span>
+                                    <small class="text-muted">${item.created_at}</small>
                                 </div>
-                                <span class="badge bg-${item.status === 'pending' ? 'warning' : (item.status === 'approved' ? 'success' : 'danger')} text-capitalize">${item.status}</span>
+                                <strong>${item.title}</strong>
+                                <div class="text-muted" style="font-size:13px;">${item.job} &bull; ${item.created_by}</div>
                             </div>
-                        `;
-                    });
-                }
-
-                $('#approvalsContainer').html(html);
-            });
-        }
-
-        var currentItemType = null;
-        var currentItemId   = null;
-
-        $(document).on('click', '.approval-item', function () {
-            currentItemType = $(this).data('type');
-            currentItemId   = $(this).data('id');
-
-            var typeLabel = currentItemType.charAt(0).toUpperCase() + currentItemType.slice(1);
-            $('#detailModalTitle').text('Review ' + typeLabel);
-            $('#detailModalBody').html('<p class="text-center text-muted py-4">Loading...</p>');
-            $('#detailModal').modal('show');
-
-            $.get("{{ url('/admin/approvals') }}/" + currentItemType + "/" + currentItemId, function (html) {
-                $('#detailModalBody').html(html);
-            });
-        });
-
-        $(document).on('click', '.actionBtn', function () {
-            var action = $(this).data('action');
-            var rejectionReason = $('#rejectionReason').val();
-
-            showConfirm().then(result => {
-                if (!result.isConfirmed) return;
-
-                $.post("{{ url('/admin/approvals') }}/" + currentItemType + "/" + currentItemId + "/action", {
-                    action: action,
-                    rejection_reason: rejectionReason,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                }, function (res) {
-                    if (res.success) {
-                        $('#detailModal').modal('hide');
-                        loadApprovals(currentStatus);
-                        showSuccess('Action successful');
-                    }
-                }).fail(function(xhr) {
-                    showError(xhr.responseJSON?.message || 'Error performing action');
+                            <span class="badge bg-${statusColor} text-capitalize">${item.status}</span>
+                        </div>
+                    `;
                 });
+            }
+
+            $('#approvalsContainer').html(html);
+        });
+    }
+
+    var currentItemType = null;
+    var currentItemId   = null;
+
+    $(document).on('click', '.approval-item', function () {
+        currentItemType = $(this).data('type');
+        currentItemId   = $(this).data('id');
+
+        $('#detailModalTitle').text('Review ' + currentItemType.charAt(0).toUpperCase() + currentItemType.slice(1));
+        $('#detailModalBody').html('<p class="text-center text-muted py-4">Loading...</p>');
+        $('#detailModal').modal('show');
+
+        $.get("{{ url('/admin/approvals') }}/" + currentItemType + "/" + currentItemId, function (html) {
+            $('#detailModalBody').html(html);
+        });
+    });
+
+    $(document).on('click', '.actionBtn', function () {
+        var action = $(this).data('action');
+        var rejectionReason = $('#rejectionReason').val();
+
+        showConfirm().then(result => {
+            if (!result.isConfirmed) return;
+
+            $.post("{{ url('/admin/approvals') }}/" + currentItemType + "/" + currentItemId + "/action", {
+                action: action,
+                rejection_reason: rejectionReason,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            }, function (res) {
+                if (res.success) {
+                    $('#detailModal').modal('hide');
+                    loadApprovals(currentStatus);
+                    showSuccess('Action successful');
+                }
+            }).fail(function(xhr) {
+                showError(xhr.responseJSON?.message || 'Error performing action');
             });
         });
     });
+});
 </script>
 @endsection

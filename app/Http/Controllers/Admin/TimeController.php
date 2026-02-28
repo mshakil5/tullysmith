@@ -19,7 +19,6 @@ class TimeController extends Controller
         $workerId    = auth()->id();
         $today       = now()->toDateString();
 
-        // Worker sees their own data as before
         $todayAssignments = JobAssignment::with('job:id,job_title,job_id,postcode,address_line1,address_line2,city,status')
             ->where('worker_id', $workerId)
             ->where('assigned_date', $today)
@@ -38,7 +37,6 @@ class TimeController extends Controller
         $weekHours  = TimeLog::where('worker_id', $workerId)->whereBetween('clock_in_at', [now()->startOfWeek(), now()->endOfWeek()])->whereNotNull('clock_out_at')->sum('total_hours');
         $monthHours = TimeLog::where('worker_id', $workerId)->whereMonth('clock_in_at', now()->month)->whereNotNull('clock_out_at')->sum('total_hours');
 
-        // Admin also gets workers list
         $workers = $currentUser->hasRole('Worker')
             ? collect()
             : User::byRole('Worker')->select('id', 'name')->orderBy('name')->get();
@@ -101,14 +99,14 @@ class TimeController extends Controller
             'clock_out_at.after' => 'Clock out must be after clock in.',
         ]);
 
+        $workerId   = $request->worker_id;
+        $assignment = JobAssignment::findOrFail($request->job_assignment_id);
+
         if (TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->exists()) {
             return response()->json([
                 'message' => 'This worker already has an active clock-in. Please clock out first or use Admin Edit to update.'
             ], 422);
         }
-
-        $assignment = JobAssignment::findOrFail($request->job_assignment_id);
-        $workerId   = $request->worker_id;
 
         $clockIn    = Carbon::parse($request->clock_in_at);
         $clockOut   = $request->clock_out_at ? Carbon::parse($request->clock_out_at) : null;
@@ -126,12 +124,12 @@ class TimeController extends Controller
 
         if ($request->hasFile('clock_in_photo')) {
             $base64 = 'data:image/' . $request->file('clock_in_photo')->extension() . ';base64,' . base64_encode($request->file('clock_in_photo')->get());
-            $data['clock_in_photo'] = $this->savePhoto($base64, 'clockin', $workerId);
+            $data['clock_in_photo'] = $this->savePhoto($base64, 'clockin', $workerId, $clockIn->format('d M Y h:i A'), 'Clock In');
         }
 
         if ($request->hasFile('clock_out_photo')) {
             $base64 = 'data:image/' . $request->file('clock_out_photo')->extension() . ';base64,' . base64_encode($request->file('clock_out_photo')->get());
-            $data['clock_out_photo'] = $this->savePhoto($base64, 'clockout', $workerId);
+            $data['clock_out_photo'] = $this->savePhoto($base64, 'clockout', $workerId, $clockOut?->format('d M Y h:i A'), 'Clock Out');
         }
 
         TimeLog::create($data);
@@ -146,13 +144,12 @@ class TimeController extends Controller
             'photo'             => 'required|string',
             'lat'               => 'nullable|numeric',
             'lng'               => 'nullable|numeric',
-            'force'             => 'nullable|boolean', // user confirmed duplicate warning
+            'force'             => 'nullable|boolean',
         ]);
 
         $workerId = auth()->id();
         $today    = now()->toDateString();
 
-        // Already clocked in right now
         if (TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->exists()) {
             return response()->json(['message' => 'You already have an active clock-in. Please clock out first.'], 422);
         }
@@ -161,7 +158,6 @@ class TimeController extends Controller
         if ($assignment->assigned_date !== $today) return response()->json(['message' => 'This job is not assigned for today.'], 422);
         if ($assignment->worker_id !== $workerId)  return response()->json(['message' => 'Unauthorized.'], 403);
 
-        // Duplicate check — same job already completed today
         if (!$request->force) {
             $alreadyDone = TimeLog::where('worker_id', $workerId)
                 ->where('job_assignment_id', $assignment->id)
@@ -177,7 +173,6 @@ class TimeController extends Controller
             }
         }
 
-        // Best-effort location check
         $locationMsg = null;
         if ($request->filled('lat') && $request->filled('lng') && $assignment->job->postcode) {
             try {
@@ -191,12 +186,14 @@ class TimeController extends Controller
             }
         }
 
+        $clockInTime = now();
+
         $log = TimeLog::create([
             'worker_id'         => $workerId,
             'service_job_id'    => $assignment->service_job_id,
             'job_assignment_id' => $assignment->id,
-            'clock_in_at'       => now(),
-            'clock_in_photo'    => $this->savePhoto($request->photo, 'clockin', $workerId),
+            'clock_in_at'       => $clockInTime,
+            'clock_in_photo'    => $this->savePhoto($request->photo, 'clockin', $workerId, $clockInTime->format('d M Y h:i A'), 'Clock In'),
             'clock_in_lat'      => $request->lat,
             'clock_in_lng'      => $request->lng,
             'location_note'     => $locationMsg,
@@ -220,14 +217,14 @@ class TimeController extends Controller
         $request->validate(['photo' => 'required|string']);
 
         $workerId = auth()->id();
-        $log = TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->firstOrFail();
+        $log      = TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->firstOrFail();
 
         $clockOut   = now();
         $totalHours = round($log->clock_in_at->diffInMinutes($clockOut) / 60, 2);
 
         $log->update([
             'clock_out_at'    => $clockOut,
-            'clock_out_photo' => $this->savePhoto($request->photo, 'clockout', $workerId),
+            'clock_out_photo' => $this->savePhoto($request->photo, 'clockout', $workerId, $clockOut->format('d M Y h:i A'), 'Clock Out'),
             'total_hours'     => $totalHours,
         ]);
 
@@ -249,16 +246,13 @@ class TimeController extends Controller
     {
         $currentUser = auth()->user();
         if ($currentUser->hasRole('Worker')) {
-            $workerId = $currentUser->id;
+            $workerId       = $currentUser->id;
             $selectedWorker = null;
         } else {
             $workerId = $request->query('worker_id');
-
             if ($workerId) {
                 $selectedWorker = User::byRole('Worker')->find($workerId);
-                if (!$selectedWorker) {
-                    abort(404, 'Worker not found');
-                }
+                if (!$selectedWorker) abort(404, 'Worker not found');
             } else {
                 $selectedWorker = null;
             }
@@ -269,7 +263,7 @@ class TimeController extends Controller
 
         [$start, $end, $label] = $this->timesheetRange($mode, $offset);
 
-        $logs = collect();
+        $logs       = collect();
         $totalHours = 0.0;
         $breakdown  = collect();
 
@@ -302,12 +296,9 @@ class TimeController extends Controller
             $workerId = $currentUser->id;
         } else {
             $workerId = $request->query('worker_id', $currentUser->id);
-
             if ($workerId != $currentUser->id) {
                 $worker = User::byRole('Worker')->find($workerId);
-                if (!$worker) {
-                    abort(404, 'Worker not found');
-                }
+                if (!$worker) abort(404, 'Worker not found');
             }
         }
 
@@ -328,7 +319,6 @@ class TimeController extends Controller
 
         foreach ($logs as $log) {
             $jobTitle = $log->job ? $log->job->job_title : '';
-
             $jobTitle = str_replace('"', '""', $jobTitle);
             if (str_contains($jobTitle, ',') || str_contains($jobTitle, '"') || str_contains($jobTitle, "\n")) {
                 $jobTitle = '"' . $jobTitle . '"';
@@ -360,14 +350,75 @@ class TimeController extends Controller
         ]);
     }
 
-    private function savePhoto(string $base64, string $prefix, int $workerId): ?string
+    public function adminEdit(Request $request, $id)
+    {
+        $request->validate([
+            'clock_in_at'     => 'required|date',
+            'clock_out_at'    => 'nullable|date|after:clock_in_at',
+            'clock_in_lat'    => 'nullable|numeric',
+            'clock_in_lng'    => 'nullable|numeric',
+            'location_note'   => 'nullable|string|max:255',
+            'clock_in_photo'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'clock_out_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+        ], [
+            'clock_out_at.after' => 'Clock out time must be after clock in time.',
+        ]);
+
+        $log        = TimeLog::findOrFail($id);
+        $clockIn    = Carbon::parse($request->clock_in_at);
+        $clockOut   = $request->clock_out_at ? Carbon::parse($request->clock_out_at) : null;
+        $totalHours = $clockOut ? round($clockIn->diffInMinutes($clockOut) / 60, 2) : null;
+
+        $data = [
+            'clock_in_at'  => $clockIn,
+            'clock_out_at' => $clockOut,
+            'clock_in_lat' => $request->clock_in_lat,
+            'clock_in_lng' => $request->clock_in_lng,
+            'total_hours'  => $totalHours,
+            'status'       => 'approved',
+        ];
+
+        if ($request->hasFile('clock_in_photo')) {
+            $base64 = 'data:image/' . $request->file('clock_in_photo')->extension() . ';base64,' . base64_encode($request->file('clock_in_photo')->get());
+            $data['clock_in_photo'] = $this->savePhoto($base64, 'clockin', $log->worker_id, $clockIn->format('d M Y h:i A'), 'Clock In');
+        }
+
+        if ($request->hasFile('clock_out_photo')) {
+            $base64 = 'data:image/' . $request->file('clock_out_photo')->extension() . ';base64,' . base64_encode($request->file('clock_out_photo')->get());
+            $data['clock_out_photo'] = $this->savePhoto($base64, 'clockout', $log->worker_id, $clockOut?->format('d M Y h:i A'), 'Clock Out');
+        }
+
+        $log->update($data);
+
+        return redirect()->back()->with('success', 'Time log updated successfully.');
+    }
+
+    private function savePhoto(string $base64, string $prefix, int $workerId, ?string $timestamp = null, string $label = ''): ?string
     {
         if (!$base64) return null;
         $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $base64));
         $file = $prefix . '_' . $workerId . '_' . mt_rand(10000000, 99999999) . '.webp';
         $path = public_path('uploads/time-logs/');
         if (!file_exists($path)) mkdir($path, 0755, true);
-        Image::make($data)->encode('webp', 60)->save($path . $file);
+
+        $img       = Image::make($data);
+        $timestamp = $timestamp ?? now()->format('d M Y h:i A');
+        $width     = $img->width();
+        $height    = $img->height();
+
+        $img->rectangle(0, $height - 40, $width, $height, function ($draw) {
+            $draw->background('rgba(0, 0, 0, 0.5)');
+        });
+
+        $img->text(($label ? $label . '  ' : '') . $timestamp, $width / 2, $height - 13, function ($font) {
+            $font->file(public_path('resources/backend/fonts/arial.ttf'));
+            $font->size(18);
+            $font->color('#ffffff');
+            $font->align('center');
+            $font->valign('middle');
+        });
+
+        $img->encode('webp', 60)->save($path . $file);
         return '/uploads/time-logs/' . $file;
     }
 
@@ -397,54 +448,13 @@ class TimeController extends Controller
     private function timesheetRange(string $mode, int $offset): array
     {
         return match ($mode) {
-            'daily'   => [now()->addDays($offset)->startOfDay(),   now()->addDays($offset)->endOfDay(),   now()->addDays($offset)->format('D, M d Y')],
-            'monthly' => [now()->addMonths($offset)->startOfMonth(),now()->addMonths($offset)->endOfMonth(),now()->addMonths($offset)->format('F Y')],
+            'daily'   => [now()->addDays($offset)->startOfDay(),    now()->addDays($offset)->endOfDay(),    now()->addDays($offset)->format('D, M d Y')],
+            'monthly' => [now()->addMonths($offset)->startOfMonth(), now()->addMonths($offset)->endOfMonth(), now()->addMonths($offset)->format('F Y')],
             default   => [
                 now()->addWeeks($offset)->startOfWeek(),
                 now()->addWeeks($offset)->endOfWeek(),
                 now()->addWeeks($offset)->startOfWeek()->format('M d') . ' - ' . now()->addWeeks($offset)->endOfWeek()->format('M d, Y'),
             ],
         };
-    }
-
-    public function adminEdit(Request $request, $id)
-    {
-        $request->validate([
-            'clock_in_at'     => 'required|date',
-            'clock_out_at'    => 'nullable|date|after:clock_in_at',
-            'clock_in_lat'    => 'nullable|numeric',
-            'clock_in_lng'    => 'nullable|numeric',
-            'location_note'   => 'nullable|string|max:255',
-            'clock_in_photo'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-            'clock_out_photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-        ], [
-            'clock_out_at.after' => 'Clock out time must be after clock in time.',
-        ]);
-
-        $log        = TimeLog::findOrFail($id);
-        $clockIn    = Carbon::parse($request->clock_in_at);
-        $clockOut   = $request->clock_out_at ? Carbon::parse($request->clock_out_at) : null;
-        $totalHours = $clockOut ? round($clockIn->diffInMinutes($clockOut) / 60, 2) : null;
-
-        $data = [
-            'clock_in_at'   => $clockIn,
-            'clock_out_at'  => $clockOut,
-            'clock_in_lat'  => $request->clock_in_lat,
-            'clock_in_lng'  => $request->clock_in_lng,
-            'total_hours'   => $totalHours,
-        ];
-
-        if ($request->hasFile('clock_in_photo')) {
-            $base64 = 'data:image/' . $request->file('clock_in_photo')->extension() . ';base64,' . base64_encode($request->file('clock_in_photo')->get());
-            $data['clock_in_photo'] = $this->savePhoto($base64, 'clockin', $log->worker_id);
-        }
-
-        if ($request->hasFile('clock_out_photo')) {
-            $base64 = 'data:image/' . $request->file('clock_out_photo')->extension() . ';base64,' . base64_encode($request->file('clock_out_photo')->get());
-            $data['clock_out_photo'] = $this->savePhoto($base64, 'clockout', $log->worker_id);
-        }
-        $log->update($data);
-
-        return redirect()->back()->with('success', 'Time log updated successfully.');
     }
 }

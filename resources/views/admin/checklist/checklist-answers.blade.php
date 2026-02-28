@@ -40,7 +40,7 @@
                         @if($item->type === 'yes_no')
                             <div class="d-flex gap-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="answers[{{ $item->id }}]" value="yes" {{ $existing?->answer === 'yes' ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="radio" name="answers[{{ $item->id }}]" value="yes" {{ $existing?->answer === 'yes' ? 'checked' : '' }} {{ $item->is_required ? 'required' : '' }}>
                                     <label class="form-check-label">Yes</label>
                                 </div>
                                 <div class="form-check">
@@ -74,11 +74,10 @@
                                          data-src="{{ $existing->photo_path }}">
                                 </div>
                             @endif
-                            <input type="file" class="form-control" name="photos[{{ $item->id }}]" accept="image/*">
+                            <input type="file" class="form-control" name="photos[{{ $item->id }}]" accept="image/*" {{ ($item->is_required && !$existing?->photo_path) ? 'required' : '' }}>
 
                         @else
-                            {{-- text_input --}}
-                            <textarea class="form-control" name="answers[{{ $item->id }}]" rows="2" placeholder="Enter answer...">{{ $existing?->answer }}</textarea>
+                            <textarea class="form-control" name="answers[{{ $item->id }}]" rows="2" placeholder="Enter answer..." {{ $item->is_required ? 'required' : '' }}>{{ $existing?->answer }}</textarea>
                         @endif
                     </div>
                     @endforeach

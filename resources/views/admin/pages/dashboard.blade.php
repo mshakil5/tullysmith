@@ -2,14 +2,13 @@
 @section('title', 'Dashboard')
 
 @push('css')
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css" rel="stylesheet">
 <style>
-    .fc { background:#fff; border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.07); }
-    .fc-toolbar-title { font-size:1rem !important; font-weight:700; }
-    .fc-button { background:#405189 !important; border-color:#405189 !important; border-radius:8px !important; font-size:0.8rem !important; box-shadow:none !important; }
-    .fc-button:hover { background:#333f6b !important; border-color:#333f6b !important; }
-    .fc-daygrid-day-frame { min-height:120px; }
-    .fc-event { cursor:pointer; border-radius:6px; font-size:0.8rem; font-weight:600; padding:4px 6px; }
+    .fc-event { cursor:pointer;}
+    .fc-event:hover {
+        background-color: inherit !important;
+        border-color: inherit !important;
+    }
 </style>
 @endpush
 
@@ -26,9 +25,9 @@
         <div class="col-xl-3 col-md-6">
             <div class="card card-animate shadow-sm">
                 <div class="card-body">
-                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Total Staff</p>
+                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Total Workers</p>
                     <div class="d-flex align-items-end justify-content-between mt-4">
-                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $totalStaff }}</h4>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $totalWorker }}</h4>
                         <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-soft-primary rounded fs-3"><i class="bx bx-user text-primary"></i></span></div>
                     </div>
                 </div>
@@ -71,12 +70,15 @@
 </div>
 
 <div class="container-fluid">
-    <div id="calendar"></div>
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
 </div>
 @endhasanyrole
 
 @role('Worker')
-<div class="container-fluid mb-3"><h4>My Dashboard</h4></div>
 <div class="container-fluid">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -180,7 +182,7 @@
 @endsection
 
 @section('script')
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
 <script>
 $(function () {
 

@@ -12,7 +12,7 @@ class JobAssignmentController extends Controller
 {
     public function index()
     {
-        $jobs    = ServiceJob::whereIn('status', ['active', 'pending'])->select('id', 'job_title', 'job_id')->latest()->get();
+        $jobs    = ServiceJob::whereIn('status', ['active', 'pending', 'completed'])->select('id', 'job_title', 'job_id')->latest()->get();
         $workers = User::byRole('Worker')->select('id', 'name')->get();
         return view('admin.job_assignments.index', compact('jobs', 'workers'));
     }
@@ -98,7 +98,7 @@ class JobAssignmentController extends Controller
 
         if ($this->hasTimeConflict($workerId, $assignedDate, $startTime, $endTime)) {
             return response()->json([
-                'message' => 'This staff member is already assigned during this time slot on the selected date.'
+                'message' => 'This worker is already assigned during this time slot on the selected date.'
             ], 422);
         }
 
@@ -134,7 +134,7 @@ class JobAssignmentController extends Controller
 
         if ($this->hasTimeConflict($workerId, $assignedDate, $startTime, $endTime, $id)) {
             return response()->json([
-                'message' => 'This staff member is already assigned during this time slot on the selected date.'
+                'message' => 'This worker is already assigned during this time slot on the selected date.'
             ], 422);
         }
 

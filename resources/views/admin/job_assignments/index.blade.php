@@ -2,21 +2,13 @@
 @section('title', 'Job Assignments')
 
 @push('css')
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css" rel="stylesheet">
 <style>
-    .fc { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
-    .fc-toolbar-title { font-size: 1rem !important; font-weight: 700; }
-    .fc-button { background: #405189 !important; border-color: #405189 !important; border-radius: 8px !important; font-size: 0.8rem !important; box-shadow: none !important; }
-    .fc-button:hover { background: #333f6b !important; border-color: #333f6b !important; }
-    .fc-col-header-cell { background: #f8fafc; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 0 !important; color: #64748b; font-weight: 700; }
-    .fc-daygrid-day-number { font-size: 1rem; font-weight: 700; color: #1e293b; padding: 8px 12px !important; }
-    .fc-day-today .fc-daygrid-day-number { color: #405189; background: #e8ecf5; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
-    .fc-daygrid-day.fc-day-today { background: #f0f3fa !important; }
-    .fc-daygrid-day-frame { min-height: 150px; }
-    .fc-daygrid-day-top { justify-content: center; padding-top: 6px; }
-    .fc-event { background: #f1f5f9 !important; color: #1e293b !important; border-left: 4px solid #405189 !important; border-radius: 8px !important; padding: 6px 8px !important; font-size: 0.8rem !important; font-weight: 600; }
-    .fc-event:hover { background: #405189 !important; color: #ffffff !important; transform: translateY(-1px); }
-    .fc-event-title { font-weight: 600; }
+    .fc-event { cursor:pointer;}
+    .fc-event:hover {
+        background-color: inherit !important;
+        border-color: inherit !important;
+    }
     .add-btn-cell { display: flex; justify-content: center; margin: 4px 4px 2px 4px; }
     .add-btn-cell button { border: 1.5px dashed #cbd5e1; color: #94a3b8; border-radius: 8px; width: 90%; font-size: 1rem; padding: 2px 0; background: transparent; transition: border-color 0.15s, color 0.15s; }
     .add-btn-cell button:hover { border-color: #405189; color: #405189; background: #f0f3fa; }
@@ -49,9 +41,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Staff Member <span class="text-danger">*</span></label>
+                                <label class="form-label">Worker <span class="text-danger">*</span></label>
                                 <select name="worker_id" id="worker_id" class="form-control select2">
-                                    <option value="">Select staff</option>
+                                    <option value="">Select worker</option>
                                     @foreach($workers as $worker)
                                         <option value="{{ $worker->id }}">{{ $worker->name }}</option>
                                     @endforeach
@@ -85,12 +77,16 @@
 </div>
 
 <div class="container-fluid">
-    <div id="calendar"></div>
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
 </div>
 @endsection
 
 @section('script')
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
 <script>
 $(function () {
 

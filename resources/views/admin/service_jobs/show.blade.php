@@ -427,7 +427,7 @@ $(function() {
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>${note.created_by}</strong>
-                                    <span class="badge bg-${note.status === 'approved' ? 'success' : note.status === 'rejected' ? 'danger' : 'warning'} ms-1">${note.status}</span>
+                                    <span class="badge d-none bg-${note.status === 'approved' ? 'success' : note.status === 'rejected' ? 'danger' : 'warning'} ms-1">${note.status}</span>
                                     <p class="mb-2 text-muted" style="font-size: 12px;">${note.created_at}</p>
                                     <p class="mb-0">${note.note}</p>
                                 </div>
@@ -578,7 +578,7 @@ $(function() {
                         <div class="border rounded p-3 mb-2 d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>${doc.title ?? doc.type}</strong>
-                                <span class="badge bg-${doc.status === 'approved' ? 'success' : doc.status === 'rejected' ? 'danger' : 'warning'} ms-1">${doc.status}</span>
+                                <span class="badge d-none bg-${doc.status === 'approved' ? 'success' : doc.status === 'rejected' ? 'danger' : 'warning'} ms-1">${doc.status}</span>
                                 <div class="text-muted" style="font-size: 13px;">
                                     ${doc.type} • ${doc.created_by} • ${doc.created_at}
                                 </div>

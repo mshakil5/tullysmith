@@ -19,7 +19,8 @@ class ServiceJobChecklistController extends Controller
         $assignment = ServiceJobChecklist::create([
             'service_job_id' => $request->service_job_id,
             'checklist_id' => $request->checklist_id,
-            'status' => auth()->user()->creation_status,
+            'status' => 'pending',
+            // 'status' => auth()->user()->creation_status,
             'assigned_by'    => Auth::id(),
         ]);
 
@@ -28,7 +29,15 @@ class ServiceJobChecklistController extends Controller
 
     public function destroy($id)
     {
-        $assignment = ServiceJobChecklist::findOrFail($id);
+        $assignment = ServiceJobChecklist::with('answers')->findOrFail($id);
+
+        foreach ($assignment->answers as $answer) {
+            if ($answer->photo_path && file_exists(public_path($answer->photo_path))) {
+                unlink(public_path($answer->photo_path));
+            }
+            $answer->delete();
+        }
+
         $assignment->delete();
 
         return response()->json(['success' => true, 'message' => 'Checklist removed successfully']);

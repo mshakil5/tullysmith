@@ -78,6 +78,7 @@
                                     <option value="active">Active</option>
                                     <option value="pending">Pending</option>
                                     <option value="completed">Completed</option>
+                                    <option value="confirmed">Confirmed</option>
                                 </select>
                             </div>
 

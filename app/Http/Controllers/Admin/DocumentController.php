@@ -35,7 +35,6 @@ class DocumentController extends Controller
 
         $uploadedFile->move($destinationPath, $fileName);
 
-        // save like category style
         $docPath = '/uploads/documents/' . $fileName;
 
         $doc = Document::create([
