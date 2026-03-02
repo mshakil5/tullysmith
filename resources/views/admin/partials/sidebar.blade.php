@@ -129,6 +129,13 @@
                         <span>Approvals</span>
                     </a>
                 </li>
+                
+                <li class="nav-item">
+                    <a href="{{ route('reports.index') }}" class="nav-link {{ Route::is('reports.index') ? 'active' : '' }}">
+                        <i class="ri-bar-chart-2-line"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
 
                 <li class="nav-item">
                     <a href="{{ route('client.index') }}" class="nav-link {{ Route::is('client.index') ? 'active' : '' }}">

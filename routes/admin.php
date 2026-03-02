@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\JobAssignmentController;
 use App\Http\Controllers\Admin\NoteController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceJobChecklistController;
 use App\Http\Controllers\Admin\ServiceJobController;
@@ -100,6 +101,12 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/update', [ChecklistController::class, 'update'])->name('update');
         Route::delete('/{id}', [ChecklistController::class, 'destroy'])->name('delete');
         Route::post('/status', [ChecklistController::class, 'toggleStatus'])->name('toggleStatus');
+    });
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/data', [ReportController::class, 'data'])->name('data');
+        Route::get('/export', [ReportController::class, 'export'])->name('export');
     });
 
     // Roles
