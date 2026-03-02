@@ -646,7 +646,6 @@ $(function() {
                                 .split(' ')
                                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                                 .join(' ');
-                            
                             itemsHtml += `
                                 <div class="ps-3 mb-2 pb-2 border-start border-2">
                                     <div class="d-flex align-items-start gap-2">
@@ -673,6 +672,23 @@ $(function() {
                                 <div class="accordion-body">
                                     ${itemsHtml}
                                     <p class="card-text text-muted mb-3" style="font-size: 13px;">${checklist.description ?? ''}</p>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Show At</label>
+                                        <div class="d-flex gap-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input show-at-radio" type="radio" name="show_at_${checklist.id}" value="clock_in" checked>
+                                                <label class="form-check-label">Clock In</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input show-at-radio" type="radio" name="show_at_${checklist.id}" value="clock_out">
+                                                <label class="form-check-label">Clock Out</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input show-at-radio" type="radio" name="show_at_${checklist.id}" value="both">
+                                                <label class="form-check-label">Both</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <button class="btn btn-sm btn-primary w-100 assignChecklistBtn" data-checklist-id="${checklist.id}">
                                         <i class="ri-check-line me-1"></i> Select This Checklist
                                     </button>
@@ -692,21 +708,28 @@ $(function() {
     $(document).on('click', '.assignChecklistBtn', function(e) {
         e.preventDefault();
         let checklistId = $(this).data('checklist-id');
+        let showAt = $(`input[name="show_at_${checklistId}"]:checked`).val();
+        let label = showAt === 'clock_in' ? 'Clock In' : showAt === 'clock_out' ? 'Clock Out' : 'Both (2 entries will be created)';
 
-        $.post("{{ route('checklist.service-job.store') }}", {
-            service_job_id: jobId,
-            checklist_id: checklistId
-        }, function(res) {
-            if (res.success) {
-                $('#assignChecklistModal').modal('hide');
-                loadChecklists();
-                loadChecklistsForSelection();
-                showSuccess(res.message);
-            } else {
-                showError(res.message);
-            }
-        }).fail(function(xhr) {
-            showError(xhr.responseJSON?.message || 'Error assigning checklist');
+        showConfirm(`Assign this checklist at: <strong>${label}</strong>?`).then(result => {
+            if (!result.isConfirmed) return;
+
+            $.post("{{ route('checklist.service-job.store') }}", {
+                service_job_id: jobId,
+                checklist_id: checklistId,
+                show_at: showAt
+            }, function(res) {
+                if (res.success) {
+                    $('#assignChecklistModal').modal('hide');
+                    loadChecklists();
+                    loadChecklistsForSelection();
+                    showSuccess(res.message);
+                } else {
+                    showError(res.message);
+                }
+            }).fail(function(xhr) {
+                showError(xhr.responseJSON?.message || 'Error assigning checklist');
+            });
         });
     });
 

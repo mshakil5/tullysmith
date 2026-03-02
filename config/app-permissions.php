@@ -78,6 +78,8 @@ return [
         'time.stats',
         'time.timesheet',
         'time.export',
+        'time.checklistQuestions',
+        'time.saveClockChecklistAnswers',
 
         // Contacts
         // 'contacts.index',

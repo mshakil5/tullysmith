@@ -11,6 +11,11 @@
                 @if($assignment->answers->count() > 0)
                     <span class="badge bg-success ms-2">{{ $assignment->answers->count() }} answered</span>
                 @endif
+                @if($assignment->show_at === 'clock_in')
+                    <span class="badge bg-success ms-2"><i class="ri-login-circle-line me-1"></i>Clock In</span>
+                @elseif($assignment->show_at === 'clock_out')
+                    <span class="badge bg-warning text-dark ms-2"><i class="ri-logout-circle-line me-1"></i>Clock Out</span>
+                @endif
             </button>
         </h2>
         <div id="cc{{ $index }}" class="accordion-collapse collapse {{ $index === 0 ? 'show' : '' }}">

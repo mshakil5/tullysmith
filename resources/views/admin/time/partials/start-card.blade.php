@@ -11,9 +11,10 @@
             @foreach($todayAssignments as $assignment)
             <div class="job-select-item border rounded p-3 mb-2"
                  style="cursor:pointer;transition:border-color 0.15s,background 0.15s;"
-                 data-id="{{ $assignment->id }}"
-                 data-start="{{ $assignment->start_time ? \Carbon\Carbon::parse($assignment->start_time)->format('H:i') : '' }}"
-                 data-end="{{ $assignment->end_time ? \Carbon\Carbon::parse($assignment->end_time)->format('H:i') : '' }}">
+                    data-id="{{ $assignment->id }}"
+                    data-job-id="{{ $assignment->service_job_id }}"
+                    data-start="{{ $assignment->start_time ? \Carbon\Carbon::parse($assignment->start_time)->format('H:i') : '' }}"
+                    data-end="{{ $assignment->end_time ? \Carbon\Carbon::parse($assignment->end_time)->format('H:i') : '' }}">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-0 fw-semibold">{{ $assignment->job->job_title }}</h6>

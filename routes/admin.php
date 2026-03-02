@@ -60,6 +60,8 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/{id}/admin-edit', [TimeController::class, 'adminEdit'])->name('adminEdit');
         Route::get('/worker-data',     [TimeController::class, 'workerData'])->name('workerData');
         Route::post('/manual-clock-in',[TimeController::class, 'manualClockIn'])->name('manualClockIn');
+        Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
+        Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
     });
 
     Route::prefix('job-assignment')->name('jobAssignment.')->group(function () {

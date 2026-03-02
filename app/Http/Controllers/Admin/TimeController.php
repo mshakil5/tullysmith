@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChecklistAnswer;
 use App\Models\JobAssignment;
+use App\Models\ServiceJobChecklist;
 use App\Models\TimeLog;
 use App\Models\User;
 use Carbon\Carbon;
@@ -456,5 +458,100 @@ class TimeController extends Controller
                 now()->addWeeks($offset)->startOfWeek()->format('M d') . ' - ' . now()->addWeeks($offset)->endOfWeek()->format('M d, Y'),
             ],
         };
+    }
+
+    public function getClockChecklists(Request $request)
+    {
+        $request->validate([
+            'service_job_id' => 'required|exists:service_jobs,id',
+            'type'           => 'required|in:clock_in,clock_out',
+        ]);
+
+        $checklists = ServiceJobChecklist::where('service_job_id', $request->service_job_id)
+            ->where('show_at', $request->type)
+            ->with(['checklist.items', 'answers' => function ($q) {
+                $q->where('answered_by', auth()->id());
+            }, 'answers.answeredBy'])
+            ->get();
+
+        if ($checklists->isEmpty()) {
+            return response()->json(['has_checklists' => false]);
+        }
+
+        $html = view('admin.checklist.clock-checklist', compact('checklists'))->render();
+
+        return response()->json([
+            'has_checklists' => true,
+            'html'           => $html,
+        ]);
+    }
+
+    public function saveClockChecklistAnswers(Request $request)
+    {
+        $answers = $request->input('answers', []);   // [assignment_id => [item_id => answer]]
+        $photos  = $request->file('photos', []);     // [assignment_id => [item_id => file]]
+
+        foreach ($answers as $assignmentId => $items) {
+            foreach ($items as $itemId => $answer) {
+                ChecklistAnswer::updateOrCreate(
+                    [
+                        'service_job_checklist_id' => $assignmentId,
+                        'checklist_item_id'        => $itemId,
+                    ],
+                    [
+                        'answer'      => $answer,
+                        'answered_by' => auth()->id(),
+                    ]
+                );
+            }
+        }
+
+        foreach ($photos as $assignmentId => $items) {
+            foreach ($items as $itemId => $file) {
+                $filename = 'checklist_' . $assignmentId . '_' . $itemId . '_' . mt_rand(10000000, 99999999) . '.webp';
+                $path     = public_path('uploads/checklist-answers/');
+                if (!file_exists($path)) mkdir($path, 0755, true);
+                Image::make($file)->encode('webp', 75)->save($path . $filename);
+                $photoPath = '/uploads/checklist-answers/' . $filename;
+
+                ChecklistAnswer::updateOrCreate(
+                    [
+                        'service_job_checklist_id' => $assignmentId,
+                        'checklist_item_id'        => $itemId,
+                    ],
+                    [
+                        'answer'      => $photoPath,
+                        'photo_path'  => $photoPath,
+                        'answered_by' => auth()->id(),
+                    ]
+                );
+            }
+        }
+
+        $assignmentIds = array_keys($answers + $photos);
+        $missing = [];
+
+        foreach ($assignmentIds as $assignmentId) {
+            $assignment = ServiceJobChecklist::with('checklist.items', 'answers')->find($assignmentId);
+            if (!$assignment) continue;
+
+            $answeredItemIds = $assignment->answers->pluck('checklist_item_id')->toArray();
+
+            foreach ($assignment->checklist->items as $item) {
+                if ($item->is_required && !in_array($item->id, $answeredItemIds)) {
+                    $missing[] = $item->question;
+                }
+            }
+        }
+
+        if (!empty($missing)) {
+            return response()->json([
+                'success' => false,
+                'missing' => $missing,
+                'message' => 'Some required questions are unanswered.',
+            ], 422);
+        }
+
+        return response()->json(['success' => true]);
     }
 }

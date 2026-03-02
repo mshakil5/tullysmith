@@ -92,6 +92,29 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="checklistModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checklistModalTitle">Complete Checklist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="clockChecklistForm" enctype="multipart/form-data">
+                    @csrf
+                    <div id="clockChecklistContent"></div>
+                    <div class="d-grid mt-3">
+                        <button type="submit" class="btn btn-primary" id="checklistProceedBtn">
+                            <i class="ri-check-line me-1"></i> Save & Proceed
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endrole
 
 @unlessrole('Worker')
@@ -212,14 +235,16 @@ $(function () {
 
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 
-    var selectedAssignmentId = null;
-    var selectedStartTime    = null;
-    var selectedEndTime      = null;
-    var capturedPhoto        = null;
+    var selectedAssignmentId  = null;
+    var selectedStartTime     = null;
+    var selectedEndTime       = null;
+    var selectedServiceJobId  = null;
+    var capturedPhoto         = null;
     var userLat = null, userLng = null;
     var stream  = null;
-    var isClockOut   = false;
-    var forceClockIn = false;
+    var isClockOut        = false;
+    var forceClockIn      = false;
+    var pendingClockAction = null;
 
     // ── Photo view modal ──────────────────────────────────────────────────
     $(document).on('click', '.photo-thumb', function () {
@@ -231,9 +256,10 @@ $(function () {
     $(document).on('click', '.job-select-item', function () {
         $('.job-select-item').removeClass('border-primary').css('background', '');
         $(this).addClass('border-primary').css('background', 'var(--vz-light)');
-        selectedAssignmentId = $(this).data('id');
-        selectedStartTime    = $(this).data('start') || null;
-        selectedEndTime      = $(this).data('end')   || null;
+        selectedAssignmentId  = $(this).data('id');
+        selectedServiceJobId  = $(this).data('job-id') || null;
+        selectedStartTime     = $(this).data('start')  || null;
+        selectedEndTime       = $(this).data('end')    || null;
     });
 
     // ── London time helpers ───────────────────────────────────────────────
@@ -277,7 +303,7 @@ $(function () {
         if (selectedEndTime) {
             var nowMins = londonMinutes(), endMins = hhmm24toMins(selectedEndTime);
             if (nowMins < endMins - 15) {
-                showConfirm('Your shift ends at ' + formatTime12(selectedEndTime) + ' but it\'s only ' + londonTimeFormatted() + 'Clock out early?')
+                showConfirm('Your shift ends at ' + formatTime12(selectedEndTime) + ' but it\'s only ' + londonTimeFormatted() + ' Clock out early?')
                     .then(function(r) { if (r.isConfirmed) startClockOutFlow(); });
                 return;
             }
@@ -285,8 +311,89 @@ $(function () {
         startClockOutFlow();
     });
 
-    function startClockInFlow()  { isClockOut = false; $('#cameraModalTitle').text('Clock In — Take Photo');  openCamera(); }
-    function startClockOutFlow() { isClockOut = true;  $('#cameraModalTitle').text('Clock Out — Take Photo'); openCamera(); }
+    // ── Clock flows with checklist check ─────────────────────────────────
+    function startClockInFlow() {
+        if (!selectedServiceJobId) {
+            isClockOut = false;
+            $('#cameraModalTitle').text('Clock In — Take Photo');
+            openCamera();
+            return;
+        }
+        $.get("{{ route('time.checklistQuestions') }}", { service_job_id: selectedServiceJobId, type: 'clock_in' }, function(res) {
+            if (res.has_checklists) {
+                pendingClockAction = 'clock_in';
+                $('#checklistModalTitle').text('Clock In Checklist');
+                $('#clockChecklistContent').html(res.html);
+                $('#checklistProceedBtn').text('Save & Clock In');
+                new bootstrap.Modal(document.getElementById('checklistModal')).show();
+            } else {
+                isClockOut = false;
+                $('#cameraModalTitle').text('Clock In — Take Photo');
+                openCamera();
+            }
+        }).fail(function() { showError('Failed to load checklists.'); });
+    }
+
+    function startClockOutFlow() {
+        var jobId = selectedServiceJobId || $('#clockOutBtn').data('job-id') || null;
+        if (!jobId) {
+            isClockOut = true;
+            $('#cameraModalTitle').text('Clock Out — Take Photo');
+            openCamera();
+            return;
+        }
+        $.get("{{ route('time.checklistQuestions') }}", { service_job_id: jobId, type: 'clock_out' }, function(res) {
+            if (res.has_checklists) {
+                pendingClockAction = 'clock_out';
+                $('#checklistModalTitle').text('Clock Out Checklist');
+                $('#clockChecklistContent').html(res.html);
+                $('#checklistProceedBtn').text('Save & Clock Out');
+                new bootstrap.Modal(document.getElementById('checklistModal')).show();
+            } else {
+                isClockOut = true;
+                $('#cameraModalTitle').text('Clock Out — Take Photo');
+                openCamera();
+            }
+        }).fail(function() { showError('Failed to load checklists.'); });
+    }
+
+    // ── Checklist form submit ─────────────────────────────────────────────
+    $('#clockChecklistForm').on('submit', function(e) {
+        e.preventDefault();
+        var btn = $('#checklistProceedBtn');
+        btn.prop('disabled', true).html('<i class="ri-loader-4-line"></i> Saving...');
+        var fd = new FormData(this);
+        $.ajax({
+            url: "{{ route('time.saveClockChecklistAnswers') }}",
+            method: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function() {
+                bootstrap.Modal.getInstance(document.getElementById('checklistModal')).hide();
+                btn.prop('disabled', false).html('<i class="ri-check-line me-1"></i> Save & Proceed');
+                if (pendingClockAction === 'clock_in') {
+                    isClockOut = false;
+                    $('#cameraModalTitle').text('Clock In — Take Photo');
+                    openCamera();
+                } else if (pendingClockAction === 'clock_out') {
+                    isClockOut = true;
+                    $('#cameraModalTitle').text('Clock Out — Take Photo');
+                    openCamera();
+                }
+                pendingClockAction = null;
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="ri-check-line me-1"></i> Save & Proceed');
+                var res = xhr.responseJSON;
+                if (res?.missing?.length) {
+                    showError('Required questions missing:<br>' + res.missing.map(function(q) { return '• ' + q; }).join('<br>'));
+                } else {
+                    showError(res?.message || 'Failed to save answers.');
+                }
+            }
+        });
+    });
 
     // ── Camera ────────────────────────────────────────────────────────────
     function openCamera() {
@@ -382,6 +489,7 @@ $(function () {
                 $('#statsWrapper').html(res.stats_html);
                 prependEntry(res.entry_html, res.log_id);
                 selectedAssignmentId = null;
+                selectedServiceJobId = null;
                 forceClockIn = false;
             },
             error: function(xhr) { showError(xhr.responseJSON?.message ?? 'Error clocking in.'); resetConfirmBtn(); }
@@ -422,6 +530,7 @@ $(function () {
         $('#locBadgeText').text(text);
     }
 
+    // ── Admin section ─────────────────────────────────────────────────────
     var adminWorkerId = null;
 
     $('#adminWorkerSelect').on('change', function () {
@@ -447,7 +556,6 @@ $(function () {
         });
     });
 
-    // ── Clock In As Admin button click ───────────────────────────────────
     $(document).on('click', '.admin-clockin-btn', function () {
         var assignmentId = $(this).data('assignment-id');
         var jobTitle     = $(this).data('job-title');
