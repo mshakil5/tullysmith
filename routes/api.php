@@ -10,11 +10,22 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ServiceJobChecklistController;
 use App\Http\Controllers\Api\ServiceJobController;
+use App\Http\Controllers\Api\TimeController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthContoller::class, 'login']);
 
 Route::group(['middleware' => ['auth:api']], function () {
+    Route::get('/dashboard', [AuthContoller::class, 'dashboard']);
+
+    Route::prefix('time')->name('api.time.')->group(function () {
+        Route::get('/', [TimeController::class, 'index'])->name('index');
+        Route::post('/clock-in', [TimeController::class, 'clockIn'])->name('clockIn');
+        Route::post('/clock-out', [TimeController::class, 'clockOut'])->name('clockOut');
+        Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
+        Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
+        Route::get('/timesheet', [TimeController::class, 'timesheet'])->name('timesheet');
+    });
 
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
