@@ -31,9 +31,9 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::post('/', [EmployeeController::class, 'store']);
         Route::get('/{id}', [EmployeeController::class, 'show']);
-        Route::post('/{id}', [EmployeeController::class, 'update']);
+        Route::put('/{id}', [EmployeeController::class, 'update']);
         Route::delete('/{id}', [EmployeeController::class, 'destroy']);
-        Route::post('/{id}/toggle-status', [EmployeeController::class, 'toggleStatus']);
+        Route::post('/status', [EmployeeController::class, 'toggleStatus']);
     });
 
     Route::prefix('role')->group(function () {
