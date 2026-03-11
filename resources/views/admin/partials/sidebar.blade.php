@@ -5,7 +5,7 @@
                 <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="22">
             </span>
             <span class="logo-lg">
-                <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="25">
+                <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="50">
             </span>
         </a>
         <a href="{{ route('dashboard') }}" class="logo logo-light">
@@ -101,13 +101,6 @@
                 </li>
 
                 @hasanyrole('Super Admin|Admin')
-
-                <li class="nav-item d-none">
-                    <a href="{{ route('contacts.index') }}" class="nav-link {{ Route::is('contacts.index') ? 'active' : '' }}">
-                        <i class="ri-mail-open-line"></i>
-                        <span>Contact Messages</span>
-                    </a>
-                </li>
 
                 <li class="nav-item">
                     <a href="{{ route('jobAssignment.index') }}" class="nav-link {{ Route::is('jobAssignment.index')  ? 'active' : '' }}">

@@ -56,13 +56,13 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/{id}/items', [ChecklistController::class, 'items']);
     });
 
-    Route::prefix('client')->group(function () {
+    Route::prefix('client')->name('client.')->group(function () {
         Route::get('/', [ClientController::class, 'index']);
         Route::post('/', [ClientController::class, 'store']);
         Route::get('/{id}', [ClientController::class, 'show']);
-        Route::post('/{id}', [ClientController::class, 'update']);
+        Route::put('/{id}', [ClientController::class, 'update']);
         Route::delete('/{id}', [ClientController::class, 'destroy']);
-        Route::post('/{id}/toggle-status', [ClientController::class, 'toggleStatus']);
+        Route::post('/status', [ClientController::class, 'toggleStatus']);
     });
 
     Route::prefix('project')->group(function () {

@@ -22,11 +22,12 @@ class AuthContoller extends Controller
         }
 
         $user = Auth::user();
+        $role = $user->getRoleNames()->first();
 
-        if (!$user->hasRole('Worker')) {
+        if (!$role) {
             Auth::logout();
             return response()->json([
-                'message' => 'Only workers can login.',
+                'message' => 'No role assigned.',
                 'error' => 'Unauthorized'
             ], 403);
         }
@@ -36,7 +37,9 @@ class AuthContoller extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'token' => $token,
-            'userId' => $user->id
+            'userId' => $user->id,
+            'role' => $role,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
         ], 200);
     }
 
