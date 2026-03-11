@@ -6,8 +6,6 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\NoteController;
-use App\Http\Controllers\Api\ProjectController;
-use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ServiceJobChecklistController;
 use App\Http\Controllers\Api\ServiceJobController;
 use App\Http\Controllers\Api\TimeController;
@@ -18,15 +16,6 @@ Route::post('login', [AuthContoller::class, 'login']);
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/dashboard', [AuthContoller::class, 'dashboard']);
 
-    Route::prefix('time')->name('api.time.')->group(function () {
-        Route::get('/', [TimeController::class, 'index'])->name('index');
-        Route::post('/clock-in', [TimeController::class, 'clockIn'])->name('clockIn');
-        Route::post('/clock-out', [TimeController::class, 'clockOut'])->name('clockOut');
-        Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
-        Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
-        Route::get('/timesheet', [TimeController::class, 'timesheet'])->name('timesheet');
-    });
-
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::post('/', [EmployeeController::class, 'store']);
@@ -36,13 +25,13 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::post('/status', [EmployeeController::class, 'toggleStatus']);
     });
 
-    Route::prefix('role')->group(function () {
-        Route::get('/', [RoleController::class, 'index']);
-        Route::post('/', [RoleController::class, 'store']);
-        Route::get('/permissions', [RoleController::class, 'permissions']);
-        Route::get('/{id}', [RoleController::class, 'show']);
-        Route::post('/{id}', [RoleController::class, 'update']);
-        Route::delete('/{id}', [RoleController::class, 'destroy']);
+    Route::prefix('time')->name('api.time.')->group(function () {
+        Route::get('/', [TimeController::class, 'index'])->name('index');
+        Route::post('/clock-in', [TimeController::class, 'clockIn'])->name('clockIn');
+        Route::post('/clock-out', [TimeController::class, 'clockOut'])->name('clockOut');
+        Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
+        Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
+        Route::get('/timesheet', [TimeController::class, 'timesheet'])->name('timesheet');
     });
 
     Route::prefix('checklist')->group(function () {
@@ -63,14 +52,6 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::put('/{id}', [ClientController::class, 'update']);
         Route::delete('/{id}', [ClientController::class, 'destroy']);
         Route::post('/status', [ClientController::class, 'toggleStatus']);
-    });
-
-    Route::prefix('project')->group(function () {
-        Route::get('/', [ProjectController::class, 'index']);
-        Route::post('/', [ProjectController::class, 'store']);
-        Route::get('/{id}', [ProjectController::class, 'show']);
-        Route::post('/{id}', [ProjectController::class, 'update']);
-        Route::delete('/{id}', [ProjectController::class, 'destroy']);
     });
 
     Route::prefix('job')->group(function () {
