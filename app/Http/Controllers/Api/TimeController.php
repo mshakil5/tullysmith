@@ -283,7 +283,7 @@ class TimeController extends Controller
             'clock_in_time'         => $log->clock_in_at?->format('h:i A'),
             'clock_out_time'        => $log->clock_out_at?->format('h:i A'),
             'total_hours'           => $log->total_hours,
-            'total_hours_formatted' => $log->total_hours ? number_format($log->total_hours, 1) . 'h' : null,
+            'total_hours_formatted' => $log->total_hours ? number_format($log->total_hours, 2) . 'h' : null,
             'clock_in_photo'        => $log->clock_in_photo  ? url($log->clock_in_photo)  : $placeholder,
             'clock_out_photo'       => $log->clock_out_photo ? url($log->clock_out_photo) : null,
             'clock_in_lat'          => $log->clock_in_lat,
