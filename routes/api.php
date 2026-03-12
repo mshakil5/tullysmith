@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\AuthContoller;
 use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\ClientController;
@@ -58,12 +59,18 @@ Route::group(['middleware' => ['auth:api']], function () {
     });
 
     Route::prefix('time')->name('api.time.')->group(function () {
-        Route::get('/', [TimeController::class, 'index'])->name('index');
-        Route::post('/clock-in', [TimeController::class, 'clockIn'])->name('clockIn');
-        Route::post('/clock-out', [TimeController::class, 'clockOut'])->name('clockOut');
-        Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
-        Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
-        Route::get('/timesheet', [TimeController::class, 'timesheet'])->name('timesheet');
+        Route::get('/', [TimeController::class, 'index']);
+        Route::post('/clock-in', [TimeController::class, 'clockIn']);
+        Route::post('/clock-out', [TimeController::class, 'clockOut']);
+        Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists']);
+        Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers']);
+        Route::get('/timesheet', [TimeController::class, 'timesheet']);
+    });
+
+    Route::prefix('approvals')->name('api.approvals.')->group(function () {
+        Route::get('/', [ApprovalController::class, 'index']);
+        Route::get('/{type}/{id}', [ApprovalController::class, 'show']);
+        Route::post('/{type}/{id}/action', [ApprovalController::class, 'action']);
     });
 
 });
