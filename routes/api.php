@@ -24,6 +24,15 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::delete('/{id}', [EmployeeController::class, 'destroy']);
         Route::post('/status', [EmployeeController::class, 'toggleStatus']);
     });
+    
+    Route::prefix('checklist')->group(function () {
+        Route::get('/', [ChecklistController::class, 'index']);
+        Route::post('/', [ChecklistController::class, 'store']);
+        Route::post('/status', [ChecklistController::class, 'toggleStatus']);
+        Route::get('/{id}', [ChecklistController::class, 'show']);
+        Route::put('/{id}', [ChecklistController::class, 'update']);
+        Route::delete('/{id}', [ChecklistController::class, 'destroy']);
+    });
 
     Route::prefix('time')->name('api.time.')->group(function () {
         Route::get('/', [TimeController::class, 'index'])->name('index');
@@ -32,17 +41,6 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
         Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
         Route::get('/timesheet', [TimeController::class, 'timesheet'])->name('timesheet');
-    });
-
-    Route::prefix('checklist')->group(function () {
-        Route::get('/', [ChecklistController::class, 'index']);
-        Route::post('/', [ChecklistController::class, 'store']);
-        Route::get('/active', [ChecklistController::class, 'activeList']);
-        Route::get('/{id}', [ChecklistController::class, 'show']);
-        Route::post('/{id}', [ChecklistController::class, 'update']);
-        Route::delete('/{id}', [ChecklistController::class, 'destroy']);
-        Route::post('/{id}/toggle-status', [ChecklistController::class, 'toggleStatus']);
-        Route::get('/{id}/items', [ChecklistController::class, 'items']);
     });
 
     Route::prefix('client')->name('client.')->group(function () {
