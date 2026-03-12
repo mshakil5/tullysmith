@@ -5,9 +5,9 @@ use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EmployeeController;
+use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ServiceJobChecklistController;
-use App\Http\Controllers\Api\ServiceJobController;
 use App\Http\Controllers\Api\TimeController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,12 +52,21 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::post('/status', [ClientController::class, 'toggleStatus']);
     });
 
-    Route::prefix('job')->group(function () {
-        Route::get('/', [ServiceJobController::class, 'index']);
-        Route::post('/', [ServiceJobController::class, 'store']);
-        Route::get('/{id}', [ServiceJobController::class, 'show']);
-        Route::post('/{id}', [ServiceJobController::class, 'update']);
-        Route::delete('/{id}', [ServiceJobController::class, 'destroy']);
+    Route::prefix('jobs')->group(function () {
+        Route::get('/', [JobController::class, 'index']);
+        Route::post('/', [JobController::class, 'store']);
+        Route::get('/{id}', [JobController::class, 'show']);
+        Route::put('/{id}', [JobController::class, 'update']);
+        Route::delete('/{id}', [JobController::class, 'destroy']);
+        
+        Route::get('/{id}/detail', [JobController::class, 'detail']);
+        Route::post('/{id}/notes', [JobController::class, 'storeNote']);
+        Route::delete('/{id}/notes/{noteId}', [JobController::class, 'deleteNote']);
+        Route::post('/{id}/documents', [JobController::class, 'storeDocument']);
+        Route::delete('/{id}/documents/{docId}', [JobController::class, 'deleteDocument']);
+        Route::post('/{id}/checklists', [JobController::class, 'assignChecklist']);
+        Route::delete('/{id}/checklists/{assignmentId}', [JobController::class, 'removeChecklist']);
+        Route::post('/checklists/{assignmentId}/answers', [JobController::class, 'saveAnswers']);
     });
 
     Route::prefix('note')->group(function () {

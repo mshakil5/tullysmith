@@ -212,12 +212,27 @@ class ChecklistController extends Controller
         }
 
         foreach ($photos as $itemId => $file) {
-            $data     = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', file_get_contents($file)));
             $filename = 'checklist_' . $id . '_' . $itemId . '_' . mt_rand(10000000, 99999999) . '.webp';
             $path     = public_path('uploads/checklist-answers/');
-            if (!file_exists($path)) mkdir($path, 0755, true);
+
+            if (!file_exists($path)) {
+                mkdir($path, 0755, true);
+            }
+
             Image::make($file)->encode('webp', 75)->save($path . $filename);
+
             $photoPath = '/uploads/checklist-answers/' . $filename;
+
+            $existing = ChecklistAnswer::where('service_job_checklist_id', $assignment->id)
+                ->where('checklist_item_id', $itemId)
+                ->first();
+
+            if ($existing && $existing->photo_path) {
+                $oldFile = public_path($existing->photo_path);
+                if (file_exists($oldFile)) {
+                    unlink($oldFile);
+                }
+            }
 
             ChecklistAnswer::updateOrCreate(
                 [
