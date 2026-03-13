@@ -499,7 +499,7 @@ $(function () {
     function doClockOut() {
         $.ajax({
             url: "{{ route('time.clockOut') }}", method:'POST', contentType:'application/json',
-            data: JSON.stringify({ photo:capturedPhoto }),
+            data: JSON.stringify({ photo:capturedPhoto, lat:userLat, lng:userLng }),
             success: function(res) {
                 showSuccess(res.message);
                 $('#cameraModal').modal('hide');

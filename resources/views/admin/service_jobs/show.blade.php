@@ -280,12 +280,21 @@
                                             </div>
                                         </div>
 
-                                        @if($log->clock_in_lat && $log->clock_in_lng)
-                                        <div class="mt-2">
-                                            <a href="https://maps.google.com/?q={{ $log->clock_in_lat }},{{ $log->clock_in_lng }}" target="_blank" class="btn btn-sm btn-outline-secondary w-100">
-                                                <i class="ri-map-pin-line me-1"></i> View Location
-                                            </a>
-                                        </div>
+                                        @if($log->clock_in_lat && $log->clock_in_lng || $log->clock_out_lat && $log->clock_out_lng)
+                                            <div class="mt-2 d-flex gap-2">
+                                                @if($log->clock_in_lat && $log->clock_in_lng)
+                                                <a href="https://maps.google.com/?q={{ $log->clock_in_lat }},{{ $log->clock_in_lng }}" 
+                                                target="_blank" class="btn btn-sm btn-outline-secondary flex-fill">
+                                                    <i class="ri-map-pin-line me-1"></i> Clock In Location
+                                                </a>
+                                                @endif
+                                                @if($log->clock_out_lat && $log->clock_out_lng)
+                                                <a href="https://maps.google.com/?q={{ $log->clock_out_lat }},{{ $log->clock_out_lng }}" 
+                                                target="_blank" class="btn btn-sm btn-outline-primary flex-fill">
+                                                    <i class="ri-map-pin-2-line me-1"></i> Clock Out Location
+                                                </a>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
                                 </div>

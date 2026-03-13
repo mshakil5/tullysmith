@@ -216,7 +216,11 @@ class TimeController extends Controller
 
     public function clockOut(Request $request)
     {
-        $request->validate(['photo' => 'required|string']);
+        $request->validate([
+            'photo' => 'required|string',
+            'lat'   => 'nullable|numeric',
+            'lng'   => 'nullable|numeric',
+        ]);
 
         $workerId = auth()->id();
         $log      = TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->firstOrFail();
@@ -227,6 +231,8 @@ class TimeController extends Controller
         $log->update([
             'clock_out_at'    => $clockOut,
             'clock_out_photo' => $this->savePhoto($request->photo, 'clockout', $workerId, $clockOut->format('d M Y h:i A'), 'Clock Out'),
+            'clock_out_lat'   => $request->lat,
+            'clock_out_lng'   => $request->lng,
             'total_hours'     => $totalHours,
         ]);
 
@@ -376,6 +382,8 @@ class TimeController extends Controller
             'clock_out_at' => $clockOut,
             'clock_in_lat' => $request->clock_in_lat,
             'clock_in_lng' => $request->clock_in_lng,
+            'clock_out_lat' => $request->clock_out_lat,
+            'clock_out_lng' => $request->clock_out_lng,
             'total_hours'  => $totalHours,
             'status'       => 'approved',
         ];

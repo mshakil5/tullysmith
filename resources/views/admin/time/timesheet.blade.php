@@ -208,13 +208,21 @@
                                                                         <input type="datetime-local" name="clock_out_at" class="form-control"
                                                                             value="{{ $log->clock_out_at ? $log->clock_out_at->format('Y-m-d\TH:i') : '' }}">
                                                                     </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label fw-semibold">Latitude</label>
-                                                                        <input type="number" step="any" name="clock_in_lat" class="form-control" value="{{ $log->clock_in_lat ?? '' }}">
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label fw-semibold">Clock-In Latitude</label>
+                                                                        <input type="number" step="any" name="clock_in_lat" class="form-control" value="{{ $log->clock_in_lat ?? '' }}" placeholder="e.g. 51.5074">
                                                                     </div>
-                                                                    <div class="col-md-6">
-                                                                        <label class="form-label fw-semibold">Longitude</label>
-                                                                        <input type="number" step="any" name="clock_in_lng" class="form-control" value="{{ $log->clock_in_lng ?? '' }}">
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label fw-semibold">Clock-In Longitude</label>
+                                                                        <input type="number" step="any" name="clock_in_lng" class="form-control" value="{{ $log->clock_in_lng ?? '' }}" placeholder="e.g. -0.1278">
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label fw-semibold">Clock-Out Latitude</label>
+                                                                        <input type="number" step="any" name="clock_out_lat" class="form-control" value="{{ $log->clock_out_lat ?? '' }}" placeholder="e.g. 51.5074">
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label fw-semibold">Clock-Out Longitude</label>
+                                                                        <input type="number" step="any" name="clock_out_lng" class="form-control" value="{{ $log->clock_out_lng ?? '' }}" placeholder="e.g. -0.1278">
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <label class="form-label fw-semibold">Clock-In Photo</label>
