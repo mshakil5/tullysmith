@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\AuthContoller;
+use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -71,6 +72,13 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/', [ApprovalController::class, 'index']);
         Route::get('/{type}/{id}', [ApprovalController::class, 'show']);
         Route::post('/{type}/{id}/action', [ApprovalController::class, 'action']);
+    });
+
+    Route::prefix('calendar')->name('calendar.')->group(function () {
+        Route::get('/', [CalendarController::class, 'index'])->name('index');
+        Route::post('/', [CalendarController::class, 'store'])->name('store');
+        Route::put('/{id}', [CalendarController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CalendarController::class, 'destroy'])->name('delete');
     });
 
 });
