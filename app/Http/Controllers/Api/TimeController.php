@@ -7,6 +7,7 @@ use App\Models\ChecklistAnswer;
 use App\Models\JobAssignment;
 use App\Models\ServiceJobChecklist;
 use App\Models\TimeLog;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -249,24 +250,44 @@ class TimeController extends Controller
 
     public function timesheet(Request $request)
     {
-        $workerId = auth()->id();
-        $mode     = $request->input('mode', 'weekly');
-        $offset   = (int) $request->input('offset', 0);
+        $currentUser = auth()->user();
+
+        if ($currentUser->hasRole('Worker')) {
+            $workerId = $currentUser->id;
+        } else {
+            $workerId = $request->input('worker_id');
+        }
+
+        $mode   = $request->input('mode', 'weekly');
+        $offset = (int) $request->input('offset', 0);
 
         [$start, $end, $label] = $this->timesheetRange($mode, $offset);
 
-        $logs = TimeLog::with('job:id,job_title')
-            ->where('worker_id', $workerId)
-            ->whereBetween('clock_in_at', [$start, $end])
-            ->orderByDesc('clock_in_at')
-            ->get();
+        $logs       = collect();
+        $totalHours = 0.0;
+
+        if ($workerId) {
+            $logs = TimeLog::with('job:id,job_title')
+                ->where('worker_id', $workerId)
+                ->whereBetween('clock_in_at', [$start, $end])
+                ->orderByDesc('clock_in_at')
+                ->get();
+
+            $totalHours = round($logs->whereNotNull('clock_out_at')->sum('total_hours'), 2);
+        }
+
+        $workers = $currentUser->hasRole('Worker')
+            ? collect()
+            : User::byRole('Worker')->select('id', 'name')->orderBy('name')->get();
 
         return response()->json([
             'label'      => $label,
             'start'      => $start->toDateString(),
             'end'        => $end->toDateString(),
-            'totalHours' => round($logs->whereNotNull('clock_out_at')->sum('total_hours'), 2),
+            'totalHours' => $totalHours,
             'logs'       => $logs->map(fn($l) => $this->formatLog($l)),
+            'workers'    => $workers,
+            'is_worker'  => $currentUser->hasRole('Worker'),
         ]);
     }
 
