@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminTimeController;
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\AuthContoller;
 use App\Http\Controllers\Api\CalendarController;
@@ -66,6 +67,13 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists']);
         Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers']);
         Route::get('/timesheet', [TimeController::class, 'timesheet']);
+    });
+
+    Route::prefix('admin/time')->name('api.admin.time.')->group(function () {
+        Route::get('/workers', [AdminTimeController::class, 'workers']);
+        Route::get('/worker-data', [AdminTimeController::class, 'workerData']);
+        Route::post('/manual-clock-in', [AdminTimeController::class, 'manualClockIn']);
+        Route::post('/clock-out', [AdminTimeController::class, 'clockOut']);
     });
 
     Route::prefix('approvals')->name('api.approvals.')->group(function () {
