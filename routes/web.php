@@ -26,6 +26,8 @@ Auth::routes();
 
 Route::get('/', [HomeController::class, 'dashboard'])->name('home');
 
+Route::view('/privacy-policy', 'admin.pages.privacy');
+
 Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
 
 Route::group(['prefix' =>'client/', 'middleware' => ['auth', 'is_client', 'verified']], function(){

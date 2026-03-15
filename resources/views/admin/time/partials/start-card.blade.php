@@ -12,6 +12,7 @@
             <div class="job-select-item border rounded p-3 mb-2"
                  style="cursor:pointer;transition:border-color 0.15s,background 0.15s;"
                     data-id="{{ $assignment->id }}"
+                    data-postcode="{{ $assignment->job->postcode }}"
                     data-job-id="{{ $assignment->service_job_id }}"
                     data-start="{{ $assignment->start_time ? \Carbon\Carbon::parse($assignment->start_time)->format('H:i') : '' }}"
                     data-end="{{ $assignment->end_time ? \Carbon\Carbon::parse($assignment->end_time)->format('H:i') : '' }}">

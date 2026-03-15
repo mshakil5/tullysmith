@@ -20,7 +20,7 @@
         </div>
         @role('Worker')
         <hr>
-        <button class="btn btn-danger w-100" id="clockOutBtn" data-job-id="{{ $log->service_job_id }}">
+        <button class="btn btn-danger w-100" id="clockOutBtn" data-job-id="{{ $log->service_job_id }}" data-postcode="{{ $log->job->postcode ?? '' }}">
             <i class="ri-stop-fill me-1"></i> Clock Out
         </button>
         @endrole

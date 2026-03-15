@@ -242,27 +242,25 @@ $(function () {
     var capturedPhoto         = null;
     var userLat = null, userLng = null;
     var stream  = null;
-    var isClockOut        = false;
-    var forceClockIn      = false;
+    var isClockOut         = false;
+    var forceClockIn       = false;
+    var forceLocation      = false;
     var pendingClockAction = null;
 
-    // ── Photo view modal ──────────────────────────────────────────────────
     $(document).on('click', '.photo-thumb', function () {
         $('#photoModalImg').attr('src', $(this).data('src'));
         $('#photoModalLabel').text($(this).data('label'));
     });
 
-    // ── Job selection ─────────────────────────────────────────────────────
     $(document).on('click', '.job-select-item', function () {
         $('.job-select-item').removeClass('border-primary').css('background', '');
         $(this).addClass('border-primary').css('background', 'var(--vz-light)');
-        selectedAssignmentId  = $(this).data('id');
-        selectedServiceJobId  = $(this).data('job-id') || null;
-        selectedStartTime     = $(this).data('start')  || null;
-        selectedEndTime       = $(this).data('end')    || null;
+        selectedAssignmentId = $(this).data('id');
+        selectedServiceJobId = $(this).data('job-id')  || null;
+        selectedStartTime    = $(this).data('start')   || null;
+        selectedEndTime      = $(this).data('end')     || null;
     });
 
-    // ── London time helpers ───────────────────────────────────────────────
     function londonMinutes() {
         var s = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date());
         var p = s.split(':');
@@ -283,35 +281,77 @@ $(function () {
         return (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
     }
 
-    // ── Clock In ──────────────────────────────────────────────────────────
+    function haversineJS(lat1, lng1, lat2, lng2) {
+        var R    = 6371000;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLng = (lng2 - lng1) * Math.PI / 180;
+        var a    = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                   Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                   Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function checkLocation(postcode, type, onConfirm) {
+        var onProceed = type === 'clock_in' ? startClockInFlow : startClockOutFlow;
+        var action    = type === 'clock_in' ? 'clock in' : 'clock out';
+
+        if (!navigator.geolocation || !postcode) { onProceed(); return; }
+
+        showLoader();
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(postcode))
+                .then(function(r) { return r.json(); })
+                .then(function(geo) {
+                    Swal.close();
+                    if (geo.status === 200) {
+                        var dist = haversineJS(pos.coords.latitude, pos.coords.longitude, geo.result.latitude, geo.result.longitude);
+                        if (dist > 100) {
+                            showConfirm('You are ' + Math.round(dist) + 'm away from the job site. Do you want to ' + action + ' anyway?')
+                                .then(function(r) {
+                                    if (r.isConfirmed) {
+                                        if (onConfirm) onConfirm();
+                                        onProceed();
+                                    }
+                                });
+                            return;
+                        }
+                    }
+                    onProceed();
+                })
+                .catch(function() { Swal.close(); onProceed(); });
+        }, function() { Swal.close(); onProceed(); }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+    }
+
     $(document).on('click', '#clockInBtn', function () {
         if (!selectedAssignmentId) { showError('Please select a job first.'); return; }
+
+        var postcode = $('.job-select-item.border-primary').data('postcode') || null;
 
         if (selectedStartTime) {
             var nowMins = londonMinutes(), startMins = hhmm24toMins(selectedStartTime);
             if (nowMins < startMins - 30) {
                 showConfirm('Your shift starts at ' + formatTime12(selectedStartTime) + ' but it\'s currently ' + londonTimeFormatted() + ' Clock in early?')
-                    .then(function(r) { if (r.isConfirmed) startClockInFlow(); });
+                    .then(function(r) { if (r.isConfirmed) checkLocation(postcode, 'clock_in', function() { forceLocation = true; }); });
                 return;
             }
         }
-        startClockInFlow();
+        checkLocation(postcode, 'clock_in', function() { forceLocation = true; });
     });
 
-    // ── Clock Out ─────────────────────────────────────────────────────────
     $(document).on('click', '#clockOutBtn', function () {
+        var postcode = $('.job-select-item.border-primary').data('postcode') || $('#clockOutBtn').data('postcode') || null;
+
         if (selectedEndTime) {
             var nowMins = londonMinutes(), endMins = hhmm24toMins(selectedEndTime);
             if (nowMins < endMins - 15) {
                 showConfirm('Your shift ends at ' + formatTime12(selectedEndTime) + ' but it\'s only ' + londonTimeFormatted() + ' Clock out early?')
-                    .then(function(r) { if (r.isConfirmed) startClockOutFlow(); });
+                    .then(function(r) { if (r.isConfirmed) checkLocation(postcode, 'clock_out', null); });
                 return;
             }
         }
-        startClockOutFlow();
+        checkLocation(postcode, 'clock_out', null);
     });
 
-    // ── Clock flows with checklist check ─────────────────────────────────
     function startClockInFlow() {
         if (!selectedServiceJobId) {
             isClockOut = false;
@@ -357,7 +397,6 @@ $(function () {
         }).fail(function() { showError('Failed to load checklists.'); });
     }
 
-    // ── Checklist form submit ─────────────────────────────────────────────
     $('#clockChecklistForm').on('submit', function(e) {
         e.preventDefault();
         var btn = $('#checklistProceedBtn');
@@ -395,7 +434,6 @@ $(function () {
         });
     });
 
-    // ── Camera ────────────────────────────────────────────────────────────
     function openCamera() {
         stopStream();
         capturedPhoto = null;
@@ -439,7 +477,6 @@ $(function () {
         if (v) v.srcObject = null;
     }
 
-    // ── Capture ───────────────────────────────────────────────────────────
     $('#captureBtn').on('click', function () {
         var v = document.getElementById('cameraPreview'), c = document.getElementById('photoCanvas');
         c.width = v.videoWidth || 640; c.height = v.videoHeight || 480;
@@ -453,7 +490,6 @@ $(function () {
         stopStream();
     });
 
-    // ── Retake ────────────────────────────────────────────────────────────
     $('#retakeBtn').on('click', function () {
         capturedPhoto = null;
         $('#photoPreview').hide();
@@ -463,7 +499,6 @@ $(function () {
         startCamera();
     });
 
-    // ── Confirm ───────────────────────────────────────────────────────────
     $('#confirmPhotoBtn').on('click', function () {
         if (!capturedPhoto) { showError('Please take a photo first.'); return; }
         $(this).prop('disabled', true).html('<i class="ri-loader-4-line"></i> Submitting…');
@@ -473,7 +508,7 @@ $(function () {
     function doClockIn() {
         $.ajax({
             url: "{{ route('time.clockIn') }}", method:'POST', contentType:'application/json',
-            data: JSON.stringify({ job_assignment_id:selectedAssignmentId, photo:capturedPhoto, lat:userLat, lng:userLng, force:forceClockIn }),
+            data: JSON.stringify({ job_assignment_id:selectedAssignmentId, photo:capturedPhoto, lat:userLat, lng:userLng, force:forceClockIn, force_location:forceLocation }),
             success: function(res) {
                 if (res.warning) {
                     $('#cameraModal').modal('hide');
@@ -490,7 +525,8 @@ $(function () {
                 prependEntry(res.entry_html, res.log_id);
                 selectedAssignmentId = null;
                 selectedServiceJobId = null;
-                forceClockIn = false;
+                forceClockIn  = false;
+                forceLocation = false;
             },
             error: function(xhr) { showError(xhr.responseJSON?.message ?? 'Error clocking in.'); resetConfirmBtn(); }
         });
@@ -530,18 +566,13 @@ $(function () {
         $('#locBadgeText').text(text);
     }
 
-    // ── Admin section ─────────────────────────────────────────────────────
     var adminWorkerId = null;
 
     $('#adminWorkerSelect').on('change', function () {
         adminWorkerId = $(this).val();
-        if (!adminWorkerId) {
-            $('#adminWorkerPanel').addClass('d-none');
-            return;
-        }
+        if (!adminWorkerId) { $('#adminWorkerPanel').addClass('d-none'); return; }
 
         $('#adminLoadingSpinner').removeClass('d-none');
-
         $.get("{{ route('time.workerData') }}", { worker_id: adminWorkerId }, function (res) {
             $('#adminWorkerName').text(res.worker_name);
             $('#manualWorkerName').text(res.worker_name);
@@ -566,13 +597,11 @@ $(function () {
         $('#manual_job_title').text(jobTitle);
         $('#manual_clock_in').val(today);
         $('#manual_clock_out').val('');
-
         $('#manualClockInModal').modal('show');
     });
 
     $('#manualClockInForm').on('submit', function (e) {
         e.preventDefault();
-
         showConfirm('Clock in this worker as Admin? This will create an official time entry.')
             .then(function (r) {
                 if (!r.isConfirmed) return;
@@ -589,7 +618,6 @@ $(function () {
                     success: function (res) {
                         showSuccess(res.message);
                         $('#manualClockInModal').modal('hide');
-
                         $.get("{{ route('time.workerData') }}", { worker_id: adminWorkerId }, function (res) {
                             $('#adminClockCardWrapper').html(res.active_card_html);
                             $('#adminStatsWrapper').html(res.stats_html);

@@ -200,3 +200,13 @@ $(document).ajaxError(function(event, jqxhr, settings, thrownError) {
         return false;
     }
 });
+
+window.showLoader = function () {
+    Swal.fire({
+        title: 'Loading',
+        html: '<p>Please wait...</p>',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => Swal.showLoading()
+    });
+};
