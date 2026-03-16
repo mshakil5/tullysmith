@@ -53,7 +53,7 @@ p{line-height:1.7;}
 <p>We implement reasonable security measures to protect stored data.</p>
 
 <h2>Contact</h2>
-<p>If you have questions, contact us at <strong>admin@tullysmiths.com</strong></p>
+<p>If you have questions, contact us at <strong>tullysmiths@outlook.com</strong></p>
 
 <div class="footer">
 © {{ date('Y') }} Tully Smiths. All rights reserved.
