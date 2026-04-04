@@ -192,8 +192,6 @@
                                         <th>#</th>
                                         <th>Worker</th>
                                         <th>Date</th>
-                                        <th>Start Time</th>
-                                        <th>End Time</th>
                                         <th>Note</th>
                                     </tr>
                                 </thead>
@@ -203,8 +201,6 @@
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $assignment->worker->name ?? '-' }}</td>
                                         <td>{{ $assignment->formatted_date }}</td>
-                                        <td>{{ $assignment->formatTime($assignment->start_time) ?? '-' }}</td>
-                                        <td>{{ $assignment->formatTime($assignment->end_time) ?? '-' }}</td>
                                         <td>{{ $assignment->note ?? '-' }}</td>
                                     </tr>
                                     @endforeach

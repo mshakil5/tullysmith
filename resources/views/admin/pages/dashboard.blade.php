@@ -139,7 +139,7 @@
 
 @role('Worker')
 <div class="container-fluid">
-    <div class="card">
+    <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">My Assignments</h5>
             <span class="badge bg-primary">{{ $myAssignments->count() }} Total</span>
@@ -163,17 +163,30 @@
                             <div>
                                 <p class="mb-0 fw-semibold text-dark" style="font-size:0.88rem;">{{ $tj['job_title'] }}</p>
                                 <p class="mb-0 text-muted" style="font-size:0.78rem;">{{ $tj['job_id'] }} · {{ $tj['client_name'] }}</p>
-                                @if($tj['address'])<p class="mb-0 text-muted" style="font-size:0.75rem;"><i class="ri-map-pin-line me-1"></i>{{ $tj['address'] }}</p>@endif
+                                @if($tj['address'])
+                                    <p class="mb-0 text-muted"><i class="ri-map-pin-line me-1"></i>{{ $tj['address'] }}</p>
+                                @endif
                             </div>
                             <div class="text-end ms-2">
-                                <span class="badge bg-{{ $tj['status'] === 'active' ? 'success' : ($tj['status'] === 'pending' ? 'warning' : 'secondary') }} mt-1" style="font-size:0.68rem;">{{ ucfirst($tj['status']) }}</span>
+                                @if($tj['assigned_date'] === $todayStr)
+                                    <a href="{{ route('time.index') }}" class="btn btn-sm btn-success d-block">Clock In</a>
+                                @endif
                             </div>
                         </div>
                     </a>
                     @endforeach
                 @endif
             </div>
-            <div id="myCalendar"></div>
+
+            {{-- Weekly Calendar for Worker --}}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">Weekly Assignments</h5>
+                </div>
+                <div class="card-body">
+                    <div id="workerCalendar"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -220,6 +233,7 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <a href="{{ route('time.index') }}" class="btn btn-success btn-sm">Clock In</a>
                 <a href="#" class="btn btn-primary btn-sm" id="myModalViewBtn">View Job</a>
                 <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Close</button>
             </div>
@@ -318,6 +332,18 @@ $(function () {
             eventClick: function (info) { openModal(info.event.extendedProps); }
         });
         myCalendar.render();
+    }
+
+    if (document.getElementById('workerCalendar')) {
+        var workerCalendar = new FullCalendar.Calendar(document.getElementById('workerCalendar'), {
+            initialView: 'dayGridWeek',
+            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
+            firstDay: 1,
+            height: 'auto',
+            events: @json($myAssignments ?? []),
+            eventClick: function (info) { openModal(info.event.extendedProps); }
+        });
+        workerCalendar.render();
     }
 
     function openFormNew(date) {

@@ -178,18 +178,25 @@ class TimeController extends Controller
         $locationMsg = null;
         if ($request->filled('lat') && $request->filled('lng') && $assignment->job->postcode) {
             try {
-                $geo = Http::timeout(5)->get('https://api.postcodes.io/postcodes/' . urlencode($assignment->job->postcode))->json();
-                if (($geo['status'] ?? null) === 200) {
-                    $dist = $this->haversine($request->lat, $request->lng, $geo['result']['latitude'], $geo['result']['longitude']);
+                $geo = Http::timeout(5)
+                    ->get('https://api.postcodes.io/postcodes/' . urlencode($assignment->job->postcode))
+                    ->json();
 
-                    if ($dist > 100 && !$request->force_location) {
+                if (($geo['status'] ?? null) === 200) {
+                    $dist = $this->haversine(
+                        $request->lat,
+                        $request->lng,
+                        $geo['result']['latitude'],
+                        $geo['result']['longitude']
+                    );
+
+                    if ($dist > 100) {
                         return response()->json([
-                            'warning' => true,
-                            'message' => 'You are ' . round($dist) . 'm away from the job site. You must be within 100m to clock in. Do you want to clock in anyway?',
-                        ], 200);
+                            'message' => 'You are ' . round($dist) . 'm away from the job site. You must be within 100m to clock in.',
+                        ], 422);
                     }
 
-                    $locationMsg = $dist <= 100 ? 'location_verified' : round($dist) . 'm from job site';
+                    $locationMsg = 'location_verified';
                 }
             } catch (\Exception $e) {
                 $locationMsg = 'location_check_failed';

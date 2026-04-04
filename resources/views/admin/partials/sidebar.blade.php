@@ -10,10 +10,10 @@
         </a>
         <a href="{{ route('dashboard') }}" class="logo logo-light">
             <span class="logo-sm">
-                <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="22">
+                <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="50">
             </span>
             <span class="logo-lg">
-                <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="25">
+                <img  src="{{ asset('uploads/company/' . $company->company_logo) }}" alt="" height="50">
             </span>
         </a>
         <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"

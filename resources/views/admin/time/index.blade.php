@@ -78,21 +78,6 @@
     </div>
 </div>
 
-{{-- Photo View Modal --}}
-<div class="modal fade" id="photoModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h6 class="modal-title mb-0" id="photoModalLabel">Photo</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-2">
-                <img id="photoModalImg" src="" class="w-100 rounded" />
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="modal fade" id="checklistModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -227,6 +212,21 @@
 </div>
 @endunlessrole
 
+{{-- Photo View Modal --}}
+<div class="modal fade" id="photoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title mb-0" id="photoModalLabel">Photo</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2">
+                <img id="photoModalImg" src="" class="w-100 rounded" />
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('script')
@@ -291,65 +291,45 @@ $(function () {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    function checkLocation(postcode, type, onConfirm) {
-        var onProceed = type === 'clock_in' ? startClockInFlow : startClockOutFlow;
-        var action    = type === 'clock_in' ? 'clock in' : 'clock out';
-
-        if (!navigator.geolocation || !postcode) { onProceed(); return; }
+    function checkLocation(postcode, type, onProceed) {
+        if (!navigator.geolocation || !postcode) {
+            showError('Location not available. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
+            return;
+        }
 
         showLoader();
         navigator.geolocation.getCurrentPosition(function(pos) {
             fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(postcode))
-                .then(function(r) { return r.json(); })
-                .then(function(geo) {
+                .then(r => r.json())
+                .then(geo => {
                     Swal.close();
                     if (geo.status === 200) {
                         var dist = haversineJS(pos.coords.latitude, pos.coords.longitude, geo.result.latitude, geo.result.longitude);
                         if (dist > 100) {
-                            showConfirm('You are ' + Math.round(dist) + 'm away from the job site. Do you want to ' + action + ' anyway?')
-                                .then(function(r) {
-                                    if (r.isConfirmed) {
-                                        if (onConfirm) onConfirm();
-                                        onProceed();
-                                    }
-                                });
+                            showError('You are too far (' + Math.round(dist) + 'm) from the job site. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
                             return;
                         }
+                        onProceed();
+                    } else {
+                        showError('Invalid job site postcode. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
                     }
-                    onProceed();
                 })
-                .catch(function() { Swal.close(); onProceed(); });
-        }, function() { Swal.close(); onProceed(); }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+                .catch(() => { Swal.close(); showError('Failed to verify location.'); });
+        }, function() {
+            Swal.close();
+            showError('Failed to get GPS location. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
+        }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
     }
 
     $(document).on('click', '#clockInBtn', function () {
         if (!selectedAssignmentId) { showError('Please select a job first.'); return; }
-
         var postcode = $('.job-select-item.border-primary').data('postcode') || null;
-
-        if (selectedStartTime) {
-            var nowMins = londonMinutes(), startMins = hhmm24toMins(selectedStartTime);
-            if (nowMins < startMins - 30) {
-                showConfirm('Your shift starts at ' + formatTime12(selectedStartTime) + ' but it\'s currently ' + londonTimeFormatted() + ' Clock in early?')
-                    .then(function(r) { if (r.isConfirmed) checkLocation(postcode, 'clock_in', function() { forceLocation = true; }); });
-                return;
-            }
-        }
-        checkLocation(postcode, 'clock_in', function() { forceLocation = true; });
+        checkLocation(postcode, 'clock_in', startClockInFlow);
     });
 
     $(document).on('click', '#clockOutBtn', function () {
         var postcode = $('.job-select-item.border-primary').data('postcode') || $('#clockOutBtn').data('postcode') || null;
-
-        if (selectedEndTime) {
-            var nowMins = londonMinutes(), endMins = hhmm24toMins(selectedEndTime);
-            if (nowMins < endMins - 15) {
-                showConfirm('Your shift ends at ' + formatTime12(selectedEndTime) + ' but it\'s only ' + londonTimeFormatted() + ' Clock out early?')
-                    .then(function(r) { if (r.isConfirmed) checkLocation(postcode, 'clock_out', null); });
-                return;
-            }
-        }
-        checkLocation(postcode, 'clock_out', null);
+        checkLocation(postcode, 'clock_out', startClockOutFlow);
     });
 
     function startClockInFlow() {
