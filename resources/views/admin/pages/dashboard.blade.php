@@ -4,23 +4,21 @@
 @push('css')
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css" rel="stylesheet">
 <style>
-    .fc-event { cursor:pointer;}
-    .fc-event:hover {
-        background-color: inherit !important;
-        border-color: inherit !important;
-    }
+    .fc-event { cursor: pointer; }
+    .fc-event:hover {  opacity: 0.9; }
+    .add-btn-cell { display: flex; justify-content: center; margin: 4px 4px 2px 4px; }
+    .add-btn-cell button { border: 1.5px dashed #cbd5e1; color: #94a3b8; border-radius: 8px; width: 90%; font-size: 1rem; padding: 2px 0; background: transparent; transition: border-color 0.15s, color 0.15s; }
+    .add-btn-cell button:hover { border-color: #405189; color: #405189; background: #f0f3fa; }
+    .fc-day-past .add-btn-cell button { display: none; }
+    #assignFormContainer { display: none; }
 </style>
 @endpush
 
 @section('content')
 
 @hasanyrole('Super Admin|Admin')
-<div class="container-fluid mb-3 d-flex justify-content-between align-items-center">
-    <h4>Dashboard</h4>
-    <a href="{{ route('jobAssignment.index') }}" class="btn btn-primary">Assign Job</a>
-</div>
 
-<div class="container-fluid">
+<div class="container-fluid mb-3">
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6">
             <div class="card card-animate shadow-sm">
@@ -30,6 +28,7 @@
                         <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $totalWorker }}</h4>
                         <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-soft-primary rounded fs-3"><i class="bx bx-user text-primary"></i></span></div>
                     </div>
+                    <a href="{{ route('employee.index') }}" class="text-primary small">View all workers →</a>
                 </div>
             </div>
         </div>
@@ -41,6 +40,7 @@
                         <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $activeJobs }}</h4>
                         <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-soft-success rounded fs-3"><i class="bx bx-briefcase-alt-2 text-success"></i></span></div>
                     </div>
+                    <a href="{{ route('serviceJob.index') }}" class="text-success small">View active jobs →</a>
                 </div>
             </div>
         </div>
@@ -52,6 +52,7 @@
                         <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $pendingJobs }}</h4>
                         <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-soft-warning rounded fs-3"><i class="bx bx-time-five text-warning"></i></span></div>
                     </div>
+                    <a href="{{ route('approvals.index') }}" class="text-warning small">View approvals →</a>
                 </div>
             </div>
         </div>
@@ -63,6 +64,60 @@
                         <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $todaysAssignments }}</h4>
                         <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-soft-info rounded fs-3"><i class="bx bx-calendar-check text-info"></i></span></div>
                     </div>
+                    <a href="{{ route('time.timesheet') }}" class="text-info small">View timesheets →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid mb-4">
+    <div id="assignFormContainer" class="row justify-content-center">
+        <div class="col-xl-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0" id="formCardTitle">New Assignment</h4>
+                    <button type="button" class="btn btn-light btn-sm" id="assignFormCloseBtn">Cancel</button>
+                </div>
+                <div class="card-body">
+                    <form id="assignForm">
+                        @csrf
+                        <input type="hidden" id="assignment_id" name="assignment_id">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Job <span class="text-danger">*</span></label>
+                                <select name="service_job_id" id="service_job_id" class="form-control select2">
+                                    <option value="">Select job</option>
+                                    @foreach($jobs as $job)
+                                        <option value="{{ $job->id }}">{{ $job->job_id }} — {{ $job->job_title }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Worker <span class="text-danger">*</span></label>
+                                <select name="worker_id" id="worker_id" class="form-control select2">
+                                    <option value="">Select worker</option>
+                                    @foreach($workers as $worker)
+                                        <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Assign Date <span class="text-danger">*</span></label>
+                                <input type="date" name="assigned_date" id="assigned_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Note</label>
+                                <textarea name="note" id="note" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-danger btn-sm" id="assignDeleteBtn" style="display:none!important;">Delete Assignment</button>
+                            <div class="ms-auto">
+                                <button type="button" class="btn btn-primary" id="assignSaveBtn">Save Assignment</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -71,11 +126,15 @@
 
 <div class="container-fluid">
     <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Job Assignments</h5>
+        </div>
         <div class="card-body">
             <div id="calendar"></div>
         </div>
     </div>
 </div>
+
 @endhasanyrole
 
 @role('Worker')
@@ -107,12 +166,6 @@
                                 @if($tj['address'])<p class="mb-0 text-muted" style="font-size:0.75rem;"><i class="ri-map-pin-line me-1"></i>{{ $tj['address'] }}</p>@endif
                             </div>
                             <div class="text-end ms-2">
-                                @if($tj['start_time'])
-                                <span class="badge bg-light text-dark" style="font-size:0.7rem;">
-                                    {{ \Carbon\Carbon::parse($tj['start_time'])->format('h:i A') }}
-                                    @if($tj['end_time']) — {{ \Carbon\Carbon::parse($tj['end_time'])->format('h:i A') }} @endif
-                                </span><br>
-                                @endif
                                 <span class="badge bg-{{ $tj['status'] === 'active' ? 'success' : ($tj['status'] === 'pending' ? 'warning' : 'secondary') }} mt-1" style="font-size:0.68rem;">{{ ucfirst($tj['status']) }}</span>
                             </div>
                         </div>
@@ -126,7 +179,6 @@
 </div>
 @endrole
 
-{{-- Shared Modal --}}
 <div id="myAssignmentModal" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -150,16 +202,12 @@
                         <p class="fw-semibold mb-0" id="myModalDate"></p>
                     </div>
                     <div class="col-6">
-                        <p class="text-muted mb-1 small">Time</p>
-                        <p class="fw-semibold mb-0" id="myModalTime"></p>
+                        <p class="text-muted mb-1 small">Status</p>
+                        <p class="mb-0" id="myModalStatus"></p>
                     </div>
                     <div class="col-12">
                         <p class="text-muted mb-1 small">Address</p>
                         <p class="fw-semibold mb-0" id="myModalAddress"></p>
-                    </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1 small">Status</p>
-                        <p class="mb-0" id="myModalStatus"></p>
                     </div>
                     <div class="col-6">
                         <p class="text-muted mb-1 small">Priority</p>
@@ -186,13 +234,21 @@
 <script>
 $(function () {
 
-    function formatTime12h(start, end) {
-        let fmt = t => t ? new Date('1970-01-01T' + t).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', hour12:true }) : '';
-        return start ? fmt(start) + (end ? ' — ' + fmt(end) : '') : '-';
+    $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
+
+    var isEdit = false;
+    var currentId = null;
+    var today = new Date().toISOString().split('T')[0];
+
+    function isPast(dateStr) { return dateStr < today; }
+
+    function formatDateLabel(dateInput) {
+        let d = typeof dateInput === 'string' ? new Date(dateInput + 'T00:00:00') : dateInput;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
     }
 
     function formatDate(d) {
-        return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+        return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
     }
 
     function statusBadge(val, map) {
@@ -208,22 +264,46 @@ $(function () {
         $('#myModalWorker').text(p.worker_name ?? '-');
         $('#myModalClient').text(p.client_name ?? '-');
         $('#myModalDate').text(p.assigned_date ? formatDate(p.assigned_date) : '-');
-        $('#myModalTime').text(formatTime12h(p.start_time, p.end_time));
         $('#myModalAddress').text(p.address || '-');
-        $('#myModalStatus').html(statusBadge(p.status, { active:'success', pending:'warning', draft:'secondary', completed:'primary' }));
-        $('#myModalPriority').html(statusBadge(p.priority, { low:'success', medium:'warning', high:'danger', urgent:'danger' }));
-        p.note ? $('#myModalNote').text(p.note) && $('#myModalNoteRow').show() : $('#myModalNoteRow').hide();
+        $('#myModalStatus').html(statusBadge(p.status, { active: 'success', pending: 'warning', draft: 'secondary', completed: 'primary' }));
+        $('#myModalPriority').html(statusBadge(p.priority, { low: 'success', medium: 'warning', high: 'danger', urgent: 'danger' }));
+        p.note ? ($('#myModalNote').text(p.note), $('#myModalNoteRow').show()) : $('#myModalNoteRow').hide();
         $('#myModalViewBtn').attr('href', '/admin/service-job/' + p.service_job_id);
         $('#myAssignmentModal').modal('show');
     }
 
     if (document.getElementById('calendar')) {
         var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth',
-            headerToolbar: { left:'prev', center:'title', right:'today next' },
+            initialView: 'dayGridWeek',
+            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
+            firstDay: 1,
             height: 'auto',
-            events: @json($assignments ?? []),
-            eventClick: function(info) { openModal(info.event.extendedProps); }
+            events: { url: "{{ route('assignment.data') }}", method: 'GET' },
+            dayCellDidMount: function (info) {
+                if (isPast(info.dateStr)) return;
+                var frame = info.el.querySelector('.fc-daygrid-day-frame');
+                var wrapper = document.createElement('div');
+                wrapper.className = 'add-btn-cell';
+                var btn = document.createElement('button');
+                btn.textContent = '+';
+                btn.addEventListener('click', function () { openFormNew(info.date); });
+                wrapper.appendChild(btn);
+                frame.prepend(wrapper);
+                var emptyMsg = document.createElement('div');
+                emptyMsg.className = 'no-assignment-msg';
+                emptyMsg.style.cssText = 'font-size:11px;color:#94a3b8;text-align:center;margin-top:25px;';
+                emptyMsg.innerText = 'No Assignment';
+                frame.appendChild(emptyMsg);
+            },
+            eventClick: function (info) {
+                openFormEdit(info.event.id, info.event.extendedProps);
+            },
+            eventDidMount: function (info) {
+                var p = info.event.extendedProps;
+                info.el.setAttribute('title', p.worker_name + ' | ' + p.job_title);
+                var dayEl = info.el.closest('.fc-daygrid-day-frame');
+                if (dayEl) { var msg = dayEl.querySelector('.no-assignment-msg'); if (msg) msg.style.display = 'none'; }
+            }
         });
         calendar.render();
     }
@@ -231,14 +311,105 @@ $(function () {
     if (document.getElementById('myCalendar')) {
         var myCalendar = new FullCalendar.Calendar(document.getElementById('myCalendar'), {
             initialView: 'dayGridMonth',
-            headerToolbar: { left:'prev', center:'title', right:'today next' },
+            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
             height: 'auto',
             firstDay: 1,
             events: @json($myAssignments ?? []),
-            eventClick: function(info) { openModal(info.event.extendedProps); }
+            eventClick: function (info) { openModal(info.event.extendedProps); }
         });
         myCalendar.render();
     }
+
+    function openFormNew(date) {
+        isEdit = false;
+        currentId = null;
+        $('#assignForm')[0].reset();
+        $('#assignment_id').val('');
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - offset * 60 * 1000);
+        $('#assigned_date').val(localDate.toISOString().split('T')[0]);
+        $('#service_job_id').val(null).trigger('change');
+        $('#worker_id').val(null).trigger('change');
+        $('#formCardTitle').text('New Assignment — ' + formatDateLabel(date));
+        $('#assignSaveBtn').text('Save Assignment');
+        $('#assignDeleteBtn').css('display', 'none');
+        $('#assignFormContainer').show(200);
+        $('html, body').animate({ scrollTop: 0 }, 300);
+    }
+
+    function openFormEdit(id, p) {
+        isEdit = true;
+        currentId = id;
+        $('#assignment_id').val(id);
+        $('#assigned_date').val(p.assigned_date);
+        $('#service_job_id').val(p.service_job_id).trigger('change');
+        $('#worker_id').val(p.worker_id).trigger('change');
+        $('#note').val(p.note ?? '');
+        $('#formCardTitle').text('Edit Assignment — ' + formatDateLabel(p.assigned_date));
+        $('#assignSaveBtn').text('Update Assignment');
+        $('#assignDeleteBtn').css('display', 'inline-block');
+        $('#assignFormContainer').show(200);
+        $('html, body').animate({ scrollTop: 0 }, 300);
+    }
+
+    $('#assignFormCloseBtn').click(function () {
+        $('#assignFormContainer').hide(200);
+        $('#assignForm')[0].reset();
+        isEdit = false;
+        currentId = null;
+    });
+
+    $('#assignSaveBtn').click(function () {
+        var fd = new FormData(document.getElementById('assignForm'));
+        var url = isEdit
+            ? "{{ url('/admin/dashboard/assignment') }}/" + currentId + "/update"
+            : "{{ route('assignment.store') }}";
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: fd,
+            contentType: false,
+            processData: false,
+            success: function (res) {
+                showSuccess(res.message);
+                $('#assignFormContainer').hide(200);
+                $('#assignForm')[0].reset();
+                isEdit = false;
+                currentId = null;
+                calendar.refetchEvents();
+            },
+            error: function (xhr) {
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    showError(Object.values(xhr.responseJSON.errors)[0][0]);
+                } else showError(xhr.responseJSON?.message ?? 'Error');
+            }
+        });
+    });
+
+    $('#assignDeleteBtn').click(function () {
+        if (!currentId) return;
+
+        showConfirm('Delete this assignment?').then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ url('/admin/dashboard/assignment') }}/" + currentId,
+                    method: 'DELETE',
+                    success: function (res) {
+                        showSuccess(res.message);
+                        $('#assignFormContainer').hide(200);
+                        $('#assignForm')[0].reset();
+                        isEdit = false;
+                        currentId = null;
+                        calendar.refetchEvents();
+                    },
+                    error: function (xhr) {
+                        showError(xhr.responseJSON?.message ?? 'Error');
+                    }
+                });
+            }
+        });
+    });
 
 });
 </script>

@@ -7,7 +7,6 @@ use App\Http\Controllers\Admin\CompanyDetailsController;
 use App\Http\Controllers\Admin\ContactController;
 use App\Http\Controllers\Admin\DocumentController;
 use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\JobAssignmentController;
 use App\Http\Controllers\Admin\NoteController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
@@ -19,6 +18,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permission.check']], function () {
     Route::get('/dashboard', [HomeController::class, 'adminHome'])->name('admin.dashboard');
+    Route::get('/dashboard/assignment-data', [HomeController::class, 'assignmentData'])->name('assignment.data');
+    Route::post('/dashboard/assignment', [HomeController::class, 'assignmentStore'])->name('assignment.store');
+    Route::post('/dashboard/assignment/{id}/update', [HomeController::class, 'assignmentUpdate'])->name('assignment.update');
+    Route::delete('/dashboard/assignment/{id}', [HomeController::class, 'assignmentDestroy'])->name('assignment.destroy');
 
     // Employee
     Route::prefix('employee')->name('employee.')->group(function () {
@@ -63,14 +66,6 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/manual-clock-in',[TimeController::class, 'manualClockIn'])->name('manualClockIn');
         Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
         Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
-    });
-
-    Route::prefix('job-assignment')->name('jobAssignment.')->group(function () {
-        Route::get('/', [JobAssignmentController::class, 'index'])->name('index');
-        Route::get('/data', [JobAssignmentController::class, 'data'])->name('data');
-        Route::post('/', [JobAssignmentController::class, 'store'])->name('store');
-        Route::post('/{id}/update', [JobAssignmentController::class, 'update'])->name('update');
-        Route::delete('/{id}', [JobAssignmentController::class, 'destroy'])->name('delete');
     });
 
     // Note

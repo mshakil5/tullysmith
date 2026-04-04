@@ -103,13 +103,6 @@
                 @hasanyrole('Super Admin|Admin')
 
                 <li class="nav-item">
-                    <a href="{{ route('jobAssignment.index') }}" class="nav-link {{ Route::is('jobAssignment.index')  ? 'active' : '' }}">
-                        <i class="ri-calendar-2-line"></i>
-                        <span>Calendar</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
                     <a href="{{ route('serviceJob.index') }}" class="nav-link {{ Route::is('serviceJob.index') || Route::is('serviceJob.show') ? 'active' : '' }}">
                         <i class="ri-briefcase-line"></i>
                         <span>Jobs</span>
