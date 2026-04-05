@@ -3,7 +3,6 @@
 use App\Http\Controllers\Api\AdminTimeController;
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\AuthContoller;
-use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmployeeController;
@@ -15,6 +14,10 @@ Route::post('login', [AuthContoller::class, 'login']);
 
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/dashboard', [AuthContoller::class, 'dashboard']);
+    Route::get('/dashboard/assignment-data', [AuthContoller::class, 'assignmentData']);
+    Route::post('/dashboard/assignment', [AuthContoller::class, 'assignmentStore']);
+    Route::post('/dashboard/assignment/{id}/update', [AuthContoller::class, 'assignmentUpdate']);
+    Route::delete('/dashboard/assignment/{id}', [AuthContoller::class, 'assignmentDestroy']);
 
     Route::prefix('employee')->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
@@ -80,13 +83,6 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/', [ApprovalController::class, 'index']);
         Route::get('/{type}/{id}', [ApprovalController::class, 'show']);
         Route::post('/{type}/{id}/action', [ApprovalController::class, 'action']);
-    });
-
-    Route::prefix('calendar')->name('calendar.')->group(function () {
-        Route::get('/', [CalendarController::class, 'index'])->name('index');
-        Route::post('/', [CalendarController::class, 'store'])->name('store');
-        Route::put('/{id}', [CalendarController::class, 'update'])->name('update');
-        Route::delete('/{id}', [CalendarController::class, 'destroy'])->name('delete');
     });
 
 });

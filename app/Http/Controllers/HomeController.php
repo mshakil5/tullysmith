@@ -75,14 +75,7 @@ class HomeController extends Controller
             'myAssignments', 'jobs', 'workers'
         ));
     }
-
-    private function hasConflict($workerId, $assignedDate, $excludeId = null)
-    {
-        $query = JobAssignment::where('worker_id', $workerId)->where('assigned_date', $assignedDate);
-        if ($excludeId) $query->where('id', '!=', $excludeId);
-        return $query->exists();
-    }
-
+    
     public function assignmentData(Request $request)
     {
         $assignments = JobAssignment::with('job:id,job_title,job_id', 'worker:id,name')
@@ -149,6 +142,13 @@ class HomeController extends Controller
     {
         JobAssignment::findOrFail($id)->delete();
         return response()->json(['message' => 'Assignment deleted successfully.']);
+    }
+
+    private function hasConflict($workerId, $assignedDate, $excludeId = null)
+    {
+        $query = JobAssignment::where('worker_id', $workerId)->where('assigned_date', $assignedDate);
+        if ($excludeId) $query->where('id', '!=', $excludeId);
+        return $query->exists();
     }
 
     public function userHome()
