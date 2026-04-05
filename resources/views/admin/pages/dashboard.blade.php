@@ -77,6 +77,9 @@
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0" id="formCardTitle">New Assignment</h4>
+                    <a href="#" id="viewJobBtn" class="btn btn-sm btn-info mt-2" target="_blank" style="display:none;">
+                        View Job Details
+                    </a>
                     <button type="button" class="btn btn-light btn-sm" id="assignFormCloseBtn">Cancel</button>
                 </div>
                 <div class="card-body">
@@ -359,6 +362,7 @@ $(function () {
         $('#formCardTitle').text('New Assignment — ' + formatDateLabel(date));
         $('#assignSaveBtn').text('Save Assignment');
         $('#assignDeleteBtn').css('display', 'none');
+        $('#viewJobBtn').hide();
         $('#assignFormContainer').show(200);
         $('html, body').animate({ scrollTop: 0 }, 300);
     }
@@ -374,6 +378,7 @@ $(function () {
         $('#formCardTitle').text('Edit Assignment — ' + formatDateLabel(p.assigned_date));
         $('#assignSaveBtn').text('Update Assignment');
         $('#assignDeleteBtn').css('display', 'inline-block');
+        $('#viewJobBtn').attr('href', '/admin/service-job/' + p.service_job_id).show();
         $('#assignFormContainer').show(200);
         $('html, body').animate({ scrollTop: 0 }, 300);
     }
