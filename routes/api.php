@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminTimeController;
+use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ApprovalController;
 use App\Http\Controllers\Api\AuthContoller;
 use App\Http\Controllers\Api\ChecklistController;
@@ -44,6 +45,15 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::put('/{id}', [ClientController::class, 'update']);
         Route::delete('/{id}', [ClientController::class, 'destroy']);
         Route::post('/status', [ClientController::class, 'toggleStatus']);
+    });
+
+    Route::prefix('announcements')->group(function () {
+        Route::get('/', [AnnouncementController::class, 'index']);
+        Route::post('/', [AnnouncementController::class, 'store']);
+        Route::get('/{id}', [AnnouncementController::class, 'show']);
+        Route::put('/{id}', [AnnouncementController::class, 'update']);
+        Route::delete('/{id}', [AnnouncementController::class, 'destroy']);
+        Route::post('/status', [AnnouncementController::class, 'toggleStatus']);
     });
 
     Route::prefix('jobs')->group(function () {
