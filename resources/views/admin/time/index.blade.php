@@ -239,13 +239,13 @@ $(function () {
     var selectedStartTime     = null;
     var selectedEndTime       = null;
     var selectedServiceJobId  = null;
+    var selectedPostcode      = null;
     var capturedPhoto         = null;
     var userLat = null, userLng = null;
     var stream  = null;
     var isClockOut         = false;
-    var forceClockIn       = false;
-    var forceLocation      = false;
     var pendingClockAction = null;
+    var activeLogPostcode = $('#clockOutBtn').data('postcode') || null;
 
     $(document).on('click', '.photo-thumb', function () {
         $('#photoModalImg').attr('src', $(this).data('src'));
@@ -259,27 +259,10 @@ $(function () {
         selectedServiceJobId = $(this).data('job-id')  || null;
         selectedStartTime    = $(this).data('start')   || null;
         selectedEndTime      = $(this).data('end')     || null;
+        selectedPostcode     = $(this).data('postcode') || null;
     });
 
-    function londonMinutes() {
-        var s = new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date());
-        var p = s.split(':');
-        return parseInt(p[0]) * 60 + parseInt(p[1]);
-    }
-
-    function londonTimeFormatted() {
-        return new Intl.DateTimeFormat('en-GB', { timeZone:'Europe/London', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date());
-    }
-
-    function hhmm24toMins(hhmm) {
-        var p = hhmm.split(':');
-        return parseInt(p[0]) * 60 + parseInt(p[1]);
-    }
-
-    function formatTime12(hhmm) {
-        var p = hhmm.split(':'), h = parseInt(p[0]), m = p[1];
-        return (h % 12 || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
-    }
+    // ─── Location helpers ─────────────────────────────────────────────────────
 
     function haversineJS(lat1, lng1, lat2, lng2) {
         var R    = 6371000;
@@ -291,45 +274,78 @@ $(function () {
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    function checkLocation(postcode, type, onProceed) {
-        if (!navigator.geolocation || !postcode) {
-            showError('Location not available. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
-            return;
-        }
+    function checkLocation(postcode, action) {
+        return new Promise(function(resolve, reject) {
+            if (!postcode) { resolve(); return; }
 
-        showLoader();
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(postcode))
-                .then(r => r.json())
-                .then(geo => {
+            if (!navigator.geolocation) {
+                showError('Your browser does not support GPS. Cannot ' + action + '.');
+                reject(); return;
+            }
+
+            showLoader('Checking your location…');
+
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(postcode))
+                        .then(function(r) { return r.json(); })
+                        .then(function(geo) {
+                            Swal.close();
+                            if (geo.status !== 200) {
+                                resolve(); return;
+                            }
+                            var dist = haversineJS(
+                                pos.coords.latitude, pos.coords.longitude,
+                                geo.result.latitude, geo.result.longitude
+                            );
+                            if (dist > 100) {
+                                showError(
+                                    'You are <strong>' + Math.round(dist) + 'm</strong> away from the job site.<br>' +
+                                    'You must be within 100m to ' + action + '.'
+                                );
+                                reject(); return;
+                            }
+                            resolve();
+                        })
+                        .catch(function() {
+                            Swal.close();
+                            resolve();
+                        });
+                },
+                function(err) {
                     Swal.close();
-                    if (geo.status === 200) {
-                        var dist = haversineJS(pos.coords.latitude, pos.coords.longitude, geo.result.latitude, geo.result.longitude);
-                        if (dist > 100) {
-                            showError('You are too far (' + Math.round(dist) + 'm) from the job site. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
-                            return;
-                        }
-                        onProceed();
+                    if (err.code === err.PERMISSION_DENIED) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Location Required',
+                            html: 'You must allow location access to ' + action + '.<br><br>' +
+                                  'Please enable it in your browser settings, then try again.',
+                            confirmButtonText: 'OK',
+                        });
                     } else {
-                        showError('Invalid job site postcode. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
+                        showError('Could not get your GPS location. Please ensure GPS is enabled and try again.');
                     }
-                })
-                .catch(() => { Swal.close(); showError('Failed to verify location.'); });
-        }, function() {
-            Swal.close();
-            showError('Failed to get GPS location. Cannot clock ' + (type === 'clock_in' ? 'in' : 'out') + '.');
-        }, { enableHighAccuracy:true, timeout:10000, maximumAge:0 });
+                    reject();
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        });
     }
 
     $(document).on('click', '#clockInBtn', function () {
         if (!selectedAssignmentId) { showError('Please select a job first.'); return; }
-        var postcode = $('.job-select-item.border-primary').data('postcode') || null;
-        checkLocation(postcode, 'clock_in', startClockInFlow);
+
+        checkLocation(selectedPostcode, 'clock in')
+            .then(function() { startClockInFlow(); })
+            .catch(function() {});
     });
 
     $(document).on('click', '#clockOutBtn', function () {
-        var postcode = $('.job-select-item.border-primary').data('postcode') || $('#clockOutBtn').data('postcode') || null;
-        checkLocation(postcode, 'clock_out', startClockOutFlow);
+        var postcode = $(this).data('postcode') || activeLogPostcode || null;
+
+        checkLocation(postcode, 'clock out')
+            .then(function() { startClockOutFlow(); })
+            .catch(function() {});
     });
 
     function startClockInFlow() {
@@ -431,7 +447,7 @@ $(function () {
             navigator.geolocation.getCurrentPosition(
                 function(p) { userLat = p.coords.latitude; userLng = p.coords.longitude; setLocBadge('success', 'Location found ✓'); },
                 function()  { setLocBadge('secondary', 'Location unavailable'); },
-                { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         } else {
             setLocBadge('secondary', 'GPS not supported');
@@ -441,7 +457,7 @@ $(function () {
     }
 
     function startCamera() {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment' }, audio:false })
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
             .then(function(s) {
                 stream = s;
                 var v = document.getElementById('cameraPreview');
@@ -487,35 +503,36 @@ $(function () {
 
     function doClockIn() {
         $.ajax({
-            url: "{{ route('time.clockIn') }}", method:'POST', contentType:'application/json',
-            data: JSON.stringify({ job_assignment_id:selectedAssignmentId, photo:capturedPhoto, lat:userLat, lng:userLng, force:forceClockIn, force_location:forceLocation }),
+            url: "{{ route('time.clockIn') }}", method: 'POST', contentType: 'application/json',
+            data: JSON.stringify({
+                job_assignment_id: selectedAssignmentId,
+                photo: capturedPhoto,
+                lat: userLat,
+                lng: userLng,
+            }),
             success: function(res) {
-                if (res.warning) {
-                    $('#cameraModal').modal('hide');
-                    showConfirm(res.message).then(function(r) {
-                        if (r.isConfirmed) { forceClockIn = true; startClockInFlow(); }
-                    });
-                    resetConfirmBtn();
-                    return;
-                }
                 showSuccess(res.message);
                 $('#cameraModal').modal('hide');
                 $('#clockCardWrapper').html(res.card_html);
                 $('#statsWrapper').html(res.stats_html);
                 prependEntry(res.entry_html, res.log_id);
+                // Store postcode for subsequent clock-out
+                activeLogPostcode = selectedPostcode;
                 selectedAssignmentId = null;
                 selectedServiceJobId = null;
-                forceClockIn  = false;
-                forceLocation = false;
+                selectedPostcode     = null;
             },
-            error: function(xhr) { showError(xhr.responseJSON?.message ?? 'Error clocking in.'); resetConfirmBtn(); }
+            error: function(xhr) {
+                showError(xhr.responseJSON?.message ?? 'Error clocking in.');
+                resetConfirmBtn();
+            }
         });
     }
 
     function doClockOut() {
         $.ajax({
-            url: "{{ route('time.clockOut') }}", method:'POST', contentType:'application/json',
-            data: JSON.stringify({ photo:capturedPhoto, lat:userLat, lng:userLng }),
+            url: "{{ route('time.clockOut') }}", method: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ photo: capturedPhoto, lat: userLat, lng: userLng }),
             success: function(res) {
                 showSuccess(res.message);
                 $('#cameraModal').modal('hide');
@@ -524,8 +541,12 @@ $(function () {
                 var $ex = $('.entry-item[data-log-id="' + res.log_id + '"]');
                 if ($ex.length) $ex.replaceWith(res.entry_html);
                 else prependEntry(res.entry_html, res.log_id);
+                activeLogPostcode = null;
             },
-            error: function(xhr) { showError(xhr.responseJSON?.message ?? 'Error clocking out.'); resetConfirmBtn(); }
+            error: function(xhr) {
+                showError(xhr.responseJSON?.message ?? 'Error clocking out.');
+                resetConfirmBtn();
+            }
         });
     }
 
