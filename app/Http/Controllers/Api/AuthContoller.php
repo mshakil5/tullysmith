@@ -50,8 +50,11 @@ class AuthContoller extends Controller
         $today    = now()->toDateString();
         $isWorker = $user->hasRole('Worker');
 
-        $activeJobs  = ServiceJob::where('status', 'active')->count();
-        $pendingJobs = ServiceJob::where('status', 'pending')->count();
+        $activeJobs    = ServiceJob::where('status', 'active')->count();
+        $pendingJobs   = ServiceJob::where('status', 'pending')->count();
+        $completedJobs = ServiceJob::where('status', 'completed')->count();
+        $totalClients  = User::where('user_type', 0)->count();
+        $totalEmployees = User::where('user_type', 1)->count();
 
         $mapAssignment = function ($a) {
             return [
@@ -93,12 +96,15 @@ class AuthContoller extends Controller
         $workers = User::byRole('Worker')->select('id', 'name')->get();
 
         return response()->json([
-            'today_jobs'   => $todayJobs,
-            'active_jobs'  => $activeJobs,
-            'pending_jobs' => $pendingJobs,
-            'assignments'  => $assignments,
-            'jobs'         => $jobs,
-            'workers'      => $workers,
+            'today_jobs'      => $todayJobs,
+            'active_jobs'     => $activeJobs,
+            'pending_jobs'    => $pendingJobs,
+            'completed_jobs'  => $completedJobs,
+            'total_clients'   => $totalClients,
+            'total_employees' => $totalEmployees,
+            'assignments'     => $assignments,
+            'jobs'            => $jobs,
+            'workers'         => $workers,
         ]);
     }
 
