@@ -147,10 +147,13 @@ class TimeController extends Controller
             'clock_out_at'    => $clockOut,
             'clock_out_photo' => $this->savePhoto($request->photo, 'clockout', $workerId, $clockOut->format('d M Y h:i A'), 'Clock Out'),
             'total_hours'     => $totalHours,
+            'clock_out_lat'    => $request->lat,
+            'clock_out_lng'    => $request->lng,
+            'location_note'    => $locationMsg,
         ]);
 
         return response()->json([
-            'message' => 'Clocked out. Total: ' . number_format($totalHours, 1) . 'h',
+            'message' => 'Clocked out. Total: ' . number_format($totalHours, 2) . 'h',
             'log'     => $this->formatLog($log->fresh()->load('job')),
         ]);
     }
