@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Announcement;
 use App\Models\JobAssignment;
 use App\Models\ServiceJob;
 use App\Models\User;
@@ -56,6 +57,23 @@ class AuthContoller extends Controller
         $totalClients  = User::where('user_type', 0)->count();
         $totalEmployees = User::where('user_type', 1)->count();
 
+        $announcements = Announcement::with('job:id,job_title,job_id')
+            ->where('status', 1)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>=', $today);
+            })
+            ->when($isWorker, function ($q) use ($user) {
+                $q->where(function ($q2) use ($user) {
+                    $q2->whereNull('service_job_id')
+                    ->orWhereHas('job.assignments', function ($q3) use ($user) {
+                        $q3->where('worker_id', $user->id);
+                    });
+                });
+            })
+            ->orderByRaw("FIELD(priority, 'high', 'medium', 'low')")
+            ->latest()
+            ->get();
+
         $mapAssignment = function ($a) {
             return [
                 'id'             => $a->id,
@@ -105,6 +123,8 @@ class AuthContoller extends Controller
             'assignments'     => $assignments,
             'jobs'            => $jobs,
             'workers'         => $workers,
+            'announcements'   => $announcements,
+            'announcements_count' => $announcements->count()
         ]);
     }
 
