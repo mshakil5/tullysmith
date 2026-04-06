@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Announcement;
 use App\Models\JobAssignment;
 use App\Models\ServiceJob;
 use App\Models\User;
@@ -38,6 +39,21 @@ class HomeController extends Controller
         $jobs    = ServiceJob::whereIn('status', ['active', 'pending', 'completed'])->select('id', 'job_title', 'job_id')->latest()->get();
         $workers = User::byRole('Worker')->select('id', 'name')->get();
 
+        $announcements = Announcement::with('job')
+            ->where('status', 1)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>=', $today);
+            })
+            ->where(function ($q) use ($workerId) {
+                $q->whereNull('service_job_id')
+                ->orWhereHas('job.assignments', function ($q2) use ($workerId) {
+                    $q2->where('worker_id', $workerId);
+                });
+            })
+            ->orderByRaw("FIELD(priority, 'high', 'medium', 'low')")
+            ->latest()
+            ->get();
+
         $mapAssignment = function ($a) {
             return [
                 'id'             => $a->id,
@@ -72,7 +88,7 @@ class HomeController extends Controller
 
         return view('admin.pages.dashboard', compact(
             'totalWorker', 'activeJobs', 'pendingJobs', 'todaysAssignments',
-            'myAssignments', 'jobs', 'workers'
+            'myAssignments', 'jobs', 'workers', 'announcements'
         ));
     }
     

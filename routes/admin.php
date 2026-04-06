@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\ApprovalController;
 use App\Http\Controllers\Admin\ChecklistController;
 use App\Http\Controllers\Admin\ClientController;
@@ -96,6 +97,15 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::post('/update', [ChecklistController::class, 'update'])->name('update');
         Route::delete('/{id}', [ChecklistController::class, 'destroy'])->name('delete');
         Route::post('/status', [ChecklistController::class, 'toggleStatus'])->name('toggleStatus');
+    });
+
+    Route::prefix('announcement')->name('announcement.')->group(function () {
+        Route::get('/', [AnnouncementController::class, 'index'])->name('index');
+        Route::post('/', [AnnouncementController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [AnnouncementController::class, 'edit'])->name('edit');
+        Route::post('/update', [AnnouncementController::class, 'update'])->name('update');
+        Route::delete('/{id}', [AnnouncementController::class, 'destroy'])->name('delete');
+        Route::post('/status', [AnnouncementController::class, 'toggleStatus'])->name('toggleStatus');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {

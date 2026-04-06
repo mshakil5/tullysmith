@@ -131,6 +131,13 @@
                 </li>
 
                 <li class="nav-item">
+                    <a href="{{ route('announcement.index') }}" class="nav-link {{ Route::is('announcement.index') ? 'active' : '' }}">
+                        <i class="ri-notification-badge-line"></i>
+                        <span>Announcements</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a href="{{ route('checklist.index') }}" class="nav-link {{ Route::is('checklist.index') ? 'active' : '' }}">
                         <i class="ri-checkbox-multiple-line"></i>
                         <span>Checklist</span>

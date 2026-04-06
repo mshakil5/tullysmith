@@ -19,6 +19,14 @@ return [
         'client.delete',
         'client.toggleStatus',
 
+        // Announcement
+        'announcement.index',
+        'announcement.store',
+        'announcement.edit',
+        'announcement.update',
+        'announcement.delete',
+        'announcement.toggleStatus',
+
         // Service Job
         'serviceJob.index',
         'serviceJob.store',
