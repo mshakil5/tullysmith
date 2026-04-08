@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\JobAssignment;
 use App\Models\ServiceJob;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class AnnouncementController extends Controller
@@ -45,6 +47,29 @@ class AnnouncementController extends Controller
 
         $announcement = Announcement::create($request->only('title', 'content', 'priority', 'service_job_id', 'expires_at'));
 
+        if ($announcement->service_job_id) {
+            $workerIds = JobAssignment::where('service_job_id', $announcement->service_job_id)
+                ->pluck('worker_id')
+                ->unique()
+                ->values()
+                ->all();
+
+            if (!empty($workerIds)) {
+                app(NotificationService::class)->sendToUsers(
+                    userIds: $workerIds,
+                    title:   'New Announcement',
+                    body:    $announcement->title,
+                    type:    'announcement',
+                );
+            }
+        } else {
+            app(NotificationService::class)->sendToAll(
+                title: 'New Announcement',
+                body:  $announcement->title,
+                type:  'announcement',
+            );
+        }
+
         return response()->json(['message' => 'Announcement created successfully.', 'announcement' => $announcement], 201);
     }
 
@@ -65,6 +90,29 @@ class AnnouncementController extends Controller
 
         $announcement = Announcement::findOrFail($id);
         $announcement->update($request->only('title', 'content', 'priority', 'service_job_id', 'expires_at'));
+
+        if ($announcement->service_job_id) {
+            $workerIds = JobAssignment::where('service_job_id', $announcement->service_job_id)
+                ->pluck('worker_id')
+                ->unique()
+                ->values()
+                ->all();
+
+            if (!empty($workerIds)) {
+                app(NotificationService::class)->sendToUsers(
+                    userIds: $workerIds,
+                    title:   'Announcement Updated',
+                    body:    $announcement->title,
+                    type:    'announcement',
+                );
+            }
+        } else {
+            app(NotificationService::class)->sendToAll(
+                title: 'Announcement Updated',
+                body:  $announcement->title,
+                type:  'announcement',
+            );
+        }
 
         return response()->json(['message' => 'Announcement updated successfully.', 'announcement' => $announcement]);
     }

@@ -18,53 +18,69 @@
 
 @if(isset($announcements) && $announcements->count())
 <div class="container-fluid mb-2">
+
     <div class="d-flex justify-content-end mb-2">
-        <button class="btn btn-light border position-relative" type="button" data-bs-toggle="collapse" data-bs-target="#announcementsPanel">
+        <button class="btn btn-light border position-relative"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#announcementsPanel">
+
             <i class="bx bx-bell fs-5"></i>
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:10px;">
+
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style="font-size:10px;">
                 {{ $announcements->count() }}
             </span>
         </button>
     </div>
-    <div class="collapse" id="announcementsPanel">
-        <div class="accordion" id="announcementsAccordion">
-            @foreach($announcements as $ann)
-            @php
-                $color = match($ann->priority) {
-                    'high'   => 'danger',
-                    'medium' => 'warning',
-                    'low'    => 'info',
-                    default  => 'secondary',
-                };
-            @endphp
-            <div class="accordion-item border-start border-4 border-{{ $color }} mb-2 shadow-sm">
-                <h2 class="accordion-header" id="annHeading{{ $ann->id }}">
-                    <button class="accordion-button collapsed py-2" type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#annCollapse{{ $ann->id }}"
-                        aria-expanded="false"
-                        aria-controls="annCollapse{{ $ann->id }}">
-                        <div class="d-flex align-items-center gap-2 flex-wrap w-100 me-3">
-                            <i class="bx bx-bell text-{{ $color }}"></i>
-                            <strong>{{ $ann->title }}</strong>
-                            <span class="badge bg-{{ $color }} {{ $color === 'warning' ? 'text-dark' : '' }}">{{ ucfirst($ann->priority) }}</span>
-                            @if($ann->job)
-                                <span class="badge bg-light text-dark border">{{ $ann->job->job_id }} — {{ $ann->job->job_title }}</span>
-                            @endif
-                        </div>
-                    </button>
-                </h2>
-                <div id="annCollapse{{ $ann->id }}" class="accordion-collapse collapse"
-                    aria-labelledby="annHeading{{ $ann->id }}"
-                    data-bs-parent="#announcementsAccordion">
-                    <div class="accordion-body pt-2">
-                        {!! nl2br(e($ann->content)) !!}
-                    </div>
+
+    <div class="collapse show" id="announcementsPanel">
+
+        @foreach($announcements as $ann)
+
+        @php
+        $color = match($ann->priority) {
+            'high'   => 'danger',
+            'medium' => 'warning',
+            'low'    => 'info',
+            default  => 'secondary',
+        };
+        @endphp
+
+        <div class="alert alert-{{ $color }} d-flex align-items-start gap-2 py-2 mb-2">
+
+            <i class="bx bx-bell fs-5 mt-1"></i>
+
+            <div class="flex-grow-1">
+
+                <div class="d-flex flex-wrap align-items-center gap-2">
+
+                    <strong>{{ $ann->title }}</strong>
+
+                    <span class="badge bg-{{ $color }} {{ $color === 'warning' ? 'text-dark' : '' }}">
+                        {{ ucfirst($ann->priority) }}
+                    </span>
+
+                    @if($ann->job)
+                    <span class="badge bg-light text-dark border">
+                        {{ $ann->job->job_id }} — {{ $ann->job->job_title }}
+                    </span>
+                    @endif
+
                 </div>
+
+                <div class="small mt-1 text-break">
+                    {!! nl2br(e($ann->content)) !!}
+                </div>
+
             </div>
-            @endforeach
+
         </div>
+
+        @endforeach
+
     </div>
+
 </div>
 @endif
 
