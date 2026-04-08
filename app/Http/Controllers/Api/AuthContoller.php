@@ -7,6 +7,8 @@ use App\Models\Announcement;
 use App\Models\JobAssignment;
 use App\Models\ServiceJob;
 use App\Models\User;
+use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -177,6 +179,13 @@ class AuthContoller extends Controller
 
         $assignment = JobAssignment::create($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
 
+        app(NotificationService::class)->sendToUser(
+            userId: $request->worker_id,
+            title:  'New Job Assigned',
+            body: "You have been assigned a new job (ID: " . ServiceJob::find($request->service_job_id)->job_id . ") on " . Carbon::parse($request->assigned_date)->format('d F Y') . ".",
+            type:   'job',
+        );
+
         return response()->json(['message' => 'Assignment created successfully.', 'id' => $assignment->id], 201);
     }
 
@@ -193,7 +202,15 @@ class AuthContoller extends Controller
             return response()->json(['message' => 'Wokrer already assigned on this date.'], 422);
         }
 
-        JobAssignment::findOrFail($id)->update($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
+        $assignment = JobAssignment::findOrFail($id);
+        $assignment->update($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
+
+        app(NotificationService::class)->sendToUser(
+            userId: $request->worker_id,
+            title:  'Job Assignment Updated',
+            body: "Your assignment for job (ID: " . ServiceJob::find($request->service_job_id)->job_id . ") has been updated to " . Carbon::parse($request->assigned_date)->format('d F Y') . ".",
+            type:   'job',
+        );
 
         return response()->json(['message' => 'Assignment updated successfully.']);
     }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ChecklistController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\TimeController;
 use Illuminate\Support\Facades\Route;
 
@@ -94,5 +95,11 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/{type}/{id}', [ApprovalController::class, 'show']);
         Route::post('/{type}/{id}/action', [ApprovalController::class, 'action']);
     });
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::post('/fcm-token', [NotificationController::class, 'saveFcmToken']);
+    Route::delete('/fcm-token', [NotificationController::class, 'deleteFcmToken']);
 
 });
