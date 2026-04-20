@@ -41,7 +41,7 @@ class EmployeeController extends Controller
                 ->make(true);
         }
 
-        $roles = Role::orderBy('name')->get();
+        $roles = Role::latest()->get();
 
         return view('admin.employee.index', compact('roles'));
     }

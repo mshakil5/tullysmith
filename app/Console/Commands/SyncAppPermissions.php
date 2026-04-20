@@ -19,13 +19,13 @@ class SyncAppPermissions extends Command
 
         $permissions = Config::get('app-permissions.permissions');
 
+        Permission::whereNotIn('name', $permissions)->where('guard_name', 'web')->delete();
+
         foreach ($permissions as $permissionName) {
-
             Permission::firstOrCreate([
-                'name' => $permissionName,
-                'guard_name' => 'web'
+                'name'       => $permissionName,
+                'guard_name' => 'web',
             ]);
-
             $this->info("✓ Synced: {$permissionName}");
         }
 

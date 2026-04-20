@@ -3,6 +3,13 @@
 return [
     'permissions' => [
 
+        // Admin + Assignment
+        'admin.dashboard',
+        'assignment.data',
+        'assignment.store',
+        'assignment.update',
+        'assignment.destroy',
+
         // Employee
         'employee.index',
         'employee.store',
@@ -78,7 +85,19 @@ return [
         'approvals.index',
         'approvals.show',
         'approvals.action',
-        
+
+        // Reports
+        'reports.index',
+        'reports.data',
+        'reports.export',
+
+        // Expenses
+        'expenses.index',
+        'expenses.store',
+        'expenses.edit',
+        'expenses.update',
+        'expenses.delete',
+
         // Time
         'time.index',
         'time.clockIn',
@@ -104,8 +123,5 @@ return [
         // 'admin.mail-body',
         // 'admin.home-footer',
         // 'admin.copyright',
-
-        // Dashboard
-        'admin.dashboard',
     ]
 ];

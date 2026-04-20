@@ -90,7 +90,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <small class="text-muted">{{ $assignment->answers->count() }} / {{ $assignment->checklist->items->count() }} answered</small>
                         <div class="d-flex gap-2">
-                            @hasanyrole('Super Admin|Admin')
+                            @hasanyrole('Super Admin|Line Manager')
                             <button type="button" class="btn btn-sm btn-soft-danger deleteChecklistBtn" data-id="{{ $assignment->id }}">
                                 <i class="ri-delete-bin-line me-1"></i> Remove
                             </button>

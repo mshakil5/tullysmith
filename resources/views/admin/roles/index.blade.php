@@ -209,6 +209,12 @@ $(function() {
                         $('input[name="permissions[]"][value="' + perm.name + '"]').prop('checked', true);
                     });
                 });
+                $('.module-checkbox').each(function() {
+                    let module = $(this).data('module');
+                    let total = $('.permission-checkbox[data-module="' + module + '"]').length;
+                    let checked = $('.permission-checkbox[data-module="' + module + '"]:checked').length;
+                    $(this).prop('checked', total === checked);
+                });
             }, 200);
 
             $('#addThisFormContainer').show();

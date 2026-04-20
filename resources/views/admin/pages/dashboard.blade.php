@@ -84,7 +84,7 @@
 </div>
 @endif
 
-@hasanyrole('Super Admin|Admin')
+@hasanyrole('Super Admin|Line Manager')
 
 <div class="container-fluid mb-3">
     <div class="row mb-4">
