@@ -16,7 +16,7 @@
     </div>
 
     <div class="row mb-3">
-        <div class="col-md-4">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-2">Client</p>
@@ -24,7 +24,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 d-none">
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-2">Duration</p>
@@ -32,7 +32,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 d-none">
             <div class="card">
                 <div class="card-body">
                     <p class="text-muted mb-2">Estimated Hours</p>
@@ -65,14 +65,14 @@
                         </span>
                     </a>
                 </li>
-                @hasanyrole('Super Admin|Admin')
+                @hasanyrole('Super Admin|Line Manager')
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#assignments" role="tab">
                         Assignments <span class="badge bg-primary ms-1">{{ $job->assignments->count() }}</span>
                     </a>
                 </li>
                 @endhasanyrole
-                @hasanyrole('Super Admin|Admin')
+                @hasanyrole('Super Admin|Line Manager')
                 <li class="nav-item">
                     <a class="nav-link" data-bs-toggle="tab" href="#timelogs" role="tab">
                         Time Logs <span class="badge bg-primary ms-1">{{ $job->timeLogs->count() }}</span>
@@ -167,7 +167,7 @@
                 <div class="tab-pane fade" id="checklists" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">Job Checklists (<span id="checklistsCount">0</span>)</h5>
-                        @hasanyrole('Super Admin|Admin')
+                        @hasanyrole('Super Admin|Line Manager')
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignChecklistModal">
                             Assign Checklist
                         </button>

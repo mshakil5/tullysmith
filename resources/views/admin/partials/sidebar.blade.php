@@ -100,7 +100,7 @@
                     </a>
                 </li>
 
-                @hasanyrole('Super Admin|Admin')
+                @hasanyrole('Super Admin|Line Manager')
 
                 <li class="nav-item">
                     <a href="{{ route('serviceJob.index') }}" class="nav-link {{ Route::is('serviceJob.index') || Route::is('serviceJob.show') ? 'active' : '' }}">
@@ -110,16 +110,17 @@
                 </li>
 
                 <li class="nav-item">
+                    <a href="{{ route('serviceJob.index', ['view' => 'confirmed']) }}"
+                    class="nav-link {{ request()->get('view') === 'confirmed' ? 'active' : '' }}">
+                        <i class="ri-checkbox-circle-line"></i>
+                        <span>Confirmed Jobs</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
                     <a href="{{ route('approvals.index') }}" class="nav-link {{ Route::is('approvals.index') ? 'active' : '' }}">
                         <i class="ri-file-list-3-line"></i>
                         <span>Approvals</span>
-                    </a>
-                </li>
-                
-                <li class="nav-item">
-                    <a href="{{ route('reports.index') }}" class="nav-link {{ Route::is('reports.index') ? 'active' : '' }}">
-                        <i class="ri-bar-chart-2-line"></i>
-                        <span>Reports</span>
                     </a>
                 </li>
 
@@ -152,6 +153,14 @@
                 </li>
 
                 <li class="nav-item">
+                    <a href="{{ route('expenses.index') }}"
+                    class="nav-link {{ Route::is('expenses.index') ? 'active' : '' }}">
+                        <i class="ri-wallet-3-line"></i>
+                        <span>Expenses</span>
+                    </a>
+                </li>
+
+                <li class="nav-item d-none">
                     <a href="{{ route('role.index') }}" class="nav-link {{ Route::is('role.index') ? 'active' : '' }}">
                         <i class="ri-shield-user-line"></i>
                         <span>Roles</span>
@@ -220,6 +229,15 @@
                     </div>
                 </li>
                 @endhasanyrole
+
+                @role('Super Admin')
+                <li class="nav-item">
+                    <a href="{{ route('reports.index') }}" class="nav-link {{ Route::is('reports.index') ? 'active' : '' }}">
+                        <i class="ri-bar-chart-2-line"></i>
+                        <span>Reports</span>
+                    </a>
+                </li>
+                @endrole
 
             </ul>
         </div>

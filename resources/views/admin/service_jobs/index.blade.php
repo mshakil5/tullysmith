@@ -1,7 +1,8 @@
 @extends('admin.pages.master')
-@section('title', 'Jobs')
+@section('title', $view === 'confirmed' ? 'Confirmed Jobs' : 'Jobs')
 @section('content')
 
+@if($view !== 'confirmed')
 <div class="container-fluid" id="newBtnSection">
     <div class="row mb-3">
         <div class="col-auto">
@@ -9,7 +10,9 @@
         </div>
     </div>
 </div>
+@endif
 
+@if($view !== 'confirmed')
 <div class="container-fluid" id="addThisFormContainer" style="display:none;">
     <div class="row justify-content-center">
         <div class="col-xl-10">
@@ -71,18 +74,16 @@
                                 <textarea class="form-control" id="instructions" name="instructions" rows="3"></textarea>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label">Status <span class="text-danger">*</span></label>
                                 <select id="status1" name="status" class="form-control">
                                     <option value="draft">Draft</option>
                                     <option value="active">Active</option>
-                                    <option value="pending">Pending</option>
                                     <option value="completed">Completed</option>
-                                    <option value="confirmed">Confirmed</option>
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label">Priority <span class="text-danger">*</span></label>
                                 <select id="priority" name="priority" class="form-control">
                                     <option value="low">Low</option>
@@ -92,17 +93,17 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-4">
+                            <div class="col-md-4 d-none">
                                 <label class="form-label">Estimated Hours</label>
                                 <input type="number" step="0.5" id="estimated_hours" name="estimated_hours" class="form-control">
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-6 d-none">
                                 <label class="form-label">Start Date</label>
                                 <input type="date" id="start_date" name="start_date" class="form-control">
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-6 d-none">
                                 <label class="form-label">End Date</label>
                                 <input type="date" id="end_date" name="end_date" class="form-control">
                             </div>
@@ -120,18 +121,21 @@
         </div>
     </div>
 </div>
+@endif
 
 <div class="container-fluid" id="contentContainer">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">Jobs</h4>
+            <h4 class="card-title mb-0">{{ $view === 'confirmed' ? 'Confirmed Jobs' : 'All Jobs' }}</h4>
+
+            @if($view !== 'confirmed')
             <select id="statusFilter" class="form-select w-auto">
                 <option value="">All Status</option>
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
-                <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
             </select>
+            @endif
         </div>
         <div class="card-body">
             <table id="serviceJobTable" class="table table-bordered table-striped">
@@ -145,9 +149,7 @@
                         <th>Postcode</th>
                         <th>Status</th>
                         <th>Priority</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Est Hours</th>
+                        <th>Expenses</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -156,6 +158,7 @@
     </div>
 </div>
 
+@if($view !== 'confirmed')
 <div class="modal fade" id="quickAddClientModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -189,6 +192,7 @@
         </div>
     </div>
 </div>
+@endif
 
 @endsection
 
@@ -200,6 +204,7 @@ $(function () {
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
+    @if($view !== 'confirmed')
     $('#quickAddClientBtn').click(function (e) {
         e.preventDefault();
         $('#quickClientForm')[0].reset();
@@ -229,14 +234,18 @@ $(function () {
             }
         });
     });
+    @endif
 
     var table = $('#serviceJobTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('serviceJob.index') }}",
+            url: "{{ route('serviceJob.index') }}" + window.location.search,
             data: function (d) {
+                d.view = "{{ $view }}";
+                @if($view !== 'confirmed')
                 d.status = $('#statusFilter').val();
+                @endif
             }
         },
         columns: [
@@ -248,13 +257,12 @@ $(function () {
             { data: 'postcode', name: 'postcode' },
             { data: 'status', name: 'status' },
             { data: 'priority', name: 'priority' },
-            { data: 'start_date', name: 'start_date' },
-            { data: 'end_date', name: 'end_date' },
-            { data: 'estimated_hours', name: 'estimated_hours', orderable: false, searchable: false },
+            { data: 'total_amount', name: 'total_amount', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false },
         ]
     });
 
+    @if($view !== 'confirmed')
     $('#statusFilter').on('change', function () {
         table.ajax.reload();
     });
@@ -332,6 +340,7 @@ $(function () {
             pagetop();
         });
     });
+    @endif
 
 });
 </script>

@@ -54,6 +54,12 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::get('/{id}', [ServiceJobController::class, 'show'])->name('show');
     });
 
+    Route::get('/expenses', [ServiceJobController::class, 'expenses'])->name('expenses.index');
+    Route::post('/expense/store', [ServiceJobController::class, 'storeExpense'])->name('expenses.store');
+    Route::get('/expense/{id}/edit', [ServiceJobController::class, 'editExpense'])->name('expenses.edit');
+    Route::post('/expense/update', [ServiceJobController::class, 'updateExpense'])->name('expenses.update');
+    Route::delete('/expense/{id}', [ServiceJobController::class, 'destroyExpense'])->name('expenses.delete');
+
     // Time
     Route::prefix('time')->name('time.')->group(function () {
         Route::get('/',            [TimeController::class, 'index'])->name('index');

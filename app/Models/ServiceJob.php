@@ -32,6 +32,14 @@ class ServiceJob extends Model
         return $this->hasMany(Document::class)->latest();
     }
 
+    public function totalExpenses()
+    {
+        return $this->documents()
+            ->whereIn('type', ['invoice', 'receipt'])
+            ->where('status', 'approved')
+            ->sum('amount');
+    }
+
     public function formattedStartDate()
     {
         return $this->start_date ? Carbon::parse($this->start_date)->format('d M Y') : '';
