@@ -137,6 +137,29 @@
                 <i class="ri-money-pound-circle-line me-2"></i>
                 {{ $job ? 'Job Expenses' : 'All Expenses' }}
             </h4>
+            <div class="row mb-2 align-items-end">
+
+                <div class="col-md-3">
+                    <label>From Date</label>
+                    <input type="date" id="from_date" class="form-control">
+                </div>
+
+                <div class="col-md-3">
+                    <label>To Date</label>
+                    <input type="date" id="to_date" class="form-control">
+                </div>
+
+                <div class="col-md-3">
+                    <button class="btn btn-primary mt-4" id="filterBtn">Filter</button>
+                    <button class="btn btn-light mt-4" id="resetBtn">Reset</button>
+                </div>
+
+                <div class="col-md-3 text-end">
+                    <h5 class="mb-0">Total</h5>
+                    <h3 id="grandTotal">£0.00</h3>
+                </div>
+
+            </div>
         </div>
         <div class="card-body">
             <table id="expensesTable" class="table table-bordered table-striped">
@@ -201,13 +224,42 @@ $(function () {
         ajax: {
             url: "{{ route('expenses.index') }}",
             data: function (d) {
-                if (jobId) {
-                    d.job_id = jobId;
-                }
+                if (jobId) d.job_id = jobId;
+                d.from_date = $('#from_date').val();
+                d.to_date = $('#to_date').val();
             }
         },
         columns: columns
     });
+
+    $('#filterBtn').click(function () {
+        table.ajax.reload();
+        loadTotal();
+    });
+
+    $('#resetBtn').click(function () {
+        $('#from_date').val('');
+        $('#to_date').val('');
+        table.ajax.reload();
+        loadTotal();
+    });
+
+    function loadTotal() {
+        $.ajax({
+            url: "{{ route('expenses.index') }}",
+            data: {
+                job_id: jobId,
+                from_date: $('#from_date').val(),
+                to_date: $('#to_date').val(),
+                total_only: 1
+            },
+            success: function (res) {
+                $('#grandTotal').text('£' + res.total);
+            }
+        });
+    }
+
+    loadTotal();
 
     $('#newBtn').click(function () {
         $('#createThisForm')[0].reset();

@@ -149,7 +149,7 @@ class TimeController extends Controller
             'total_hours'     => $totalHours,
             'clock_out_lat'    => $request->lat,
             'clock_out_lng'    => $request->lng,
-            'location_note'    => $locationMsg,
+            'location_note' => $log->location_note,
         ]);
 
         return response()->json([

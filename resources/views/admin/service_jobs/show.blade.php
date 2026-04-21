@@ -152,9 +152,11 @@
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">Job Documents</h5>
+                        @if($job->status === 'active' || auth()->user()->hasAnyRole(['Super Admin','Line Manager']))
                         <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
                             <i class="ri-upload-cloud-2-line me-1"></i> Upload
                         </button>
+                        @endif
                     </div>
 
                     <div id="documentsContainer">
@@ -392,7 +394,7 @@
 @section('script')
 
 <script>
-    var isAdminOrSuper = {{ auth()->user()->hasAnyRole(['Super Admin', 'Admin']) ? 'true' : 'false' }};
+    var isAdminOrSuper = {{ auth()->user()->hasAnyRole(['Super Admin', 'Line Manager']) ? 'true' : 'false' }};
 </script>
 
 <script>

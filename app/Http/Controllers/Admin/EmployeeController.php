@@ -118,7 +118,21 @@ class EmployeeController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+
+        if ($user->hasRole('Super Admin')) {
+            return response()->json([
+                'message' => 'Super Admin cannot be deleted.'
+            ], 422);
+        }
+
+        if ($user->jobAssignments()->exists()) {
+            return response()->json([
+                'message' => 'Employee has assigned jobs. Cannot delete.'
+            ], 422);
+        }
+
         $user->delete();
+
         return response()->json(['message' => 'Employee deleted successfully.']);
     }
 

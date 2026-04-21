@@ -23,6 +23,11 @@ class ServiceJobChecklist extends Model
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
+    public function hasAnswers()
+    {
+        return $this->answers()->exists();
+    }
+
     public function answers()
     {
         return $this->hasMany(ChecklistAnswer::class);

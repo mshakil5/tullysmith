@@ -240,55 +240,85 @@ class ServiceJobController extends Controller
 
     public function expenses(Request $request)
     {
-        if ($request->ajax()) {
-            $jobId = $request->job_id;
-            
-            $expenses = Document::with(['job:id,job_id,job_title', 'job.client:id,name', 'user:id,name'])
-                ->whereIn('type', ['invoice', 'receipt'])
-                ->where('status', 'approved')
-                ->when($jobId, fn($q) => $q->where('service_job_id', $jobId))
-                ->select(['id', 'service_job_id', 'created_by', 'type', 'title', 'amount', 'invoice_date', 'file', 'created_at'])
-                ->orderByDesc('invoice_date')
-                ->orderByDesc('created_at');
+        $query = Document::with([
+                'job:id,job_id,job_title',
+                'job.client:id,name',
+                'user:id,name'
+            ])
+            ->whereIn('type', ['invoice', 'receipt'])
+            ->where('status', 'approved')
+            ->select([
+                'id',
+                'service_job_id',
+                'created_by',
+                'type',
+                'title',
+                'amount',
+                'invoice_date',
+                'file',
+                'created_at'
+            ])
+            ->when($request->job_id, function ($q) use ($request) {
+                $q->where('service_job_id', $request->job_id);
+            })
+            ->when($request->from_date, function ($q) use ($request) {
+                $q->whereDate('invoice_date', '>=', $request->from_date);
+            })
+            ->when($request->to_date, function ($q) use ($request) {
+                $q->whereDate('invoice_date', '<=', $request->to_date);
+            })
+            ->orderByDesc('invoice_date')
+            ->orderByDesc('created_at');
 
-            return DataTables::of($expenses)
+        if ($request->has('total_only')) {
+            $total = (clone $query)->sum('amount');
+
+            return response()->json([
+                'total' => number_format($total, 2)
+            ]);
+        }
+
+        if ($request->ajax()) {
+            return DataTables::of($query)
                 ->addIndexColumn()
-                
+
                 ->addColumn('job', function ($row) {
-                    return '<a href="' . route('serviceJob.show', $row->service_job_id) . '" class="text-primary fw-semibold">' 
+                    return '<a href="' . route('serviceJob.show', $row->service_job_id) . '" class="text-primary fw-semibold">'
                         . ($row->job->job_id ?? 'N/A') . '</a><br>'
                         . '<small class="text-muted">' . ($row->job->job_title ?? '') . '</small>';
                 })
-                
+
                 ->addColumn('client', function ($row) {
                     return $row->job->client->name ?? '-';
                 })
-                
+
                 ->addColumn('type', function ($row) {
                     $color = $row->type === 'invoice' ? 'primary' : 'info';
                     return '<span class="badge bg-' . $color . '">' . ucfirst($row->type) . '</span>';
                 })
-                
+
                 ->addColumn('title', function ($row) {
                     return $row->title ?? '<span class="text-muted">Untitled</span>';
                 })
-                
+
                 ->addColumn('amount', function ($row) {
                     return '<strong class="text-success">£' . number_format($row->amount, 2) . '</strong>';
                 })
-                
+
                 ->addColumn('invoice_date', function ($row) {
-                    return $row->invoice_date ? Carbon::parse($row->invoice_date)->format('d M Y') : '-';
+                    return $row->invoice_date
+                        ? \Carbon\Carbon::parse($row->invoice_date)->format('d M Y')
+                        : '-';
                 })
-                
+
                 ->addColumn('created_by', function ($row) {
                     return $row->user->name ?? 'Unknown';
                 })
-                
+
                 ->addColumn('created_at', function ($row) {
                     return $row->created_at->format('d M Y, h:i A');
                 })
-                
+
                 ->addColumn('action', function ($row) {
                     return '
                         <div class="dropdown">
@@ -316,15 +346,18 @@ class ServiceJobController extends Controller
                             </ul>
                         </div>';
                 })
-                
+
                 ->rawColumns(['job', 'type', 'title', 'amount', 'action'])
                 ->make(true);
         }
 
         $jobId = $request->get('job_id');
         $job = null;
-        $jobs = ServiceJob::select('id', 'job_id', 'job_title')->orderByDesc('id')->get();
-        
+
+        $jobs = ServiceJob::select('id', 'job_id', 'job_title')
+            ->orderByDesc('id')
+            ->get();
+
         if ($jobId) {
             $job = ServiceJob::with('client')->findOrFail($jobId);
         }

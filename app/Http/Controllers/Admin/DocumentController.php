@@ -43,6 +43,7 @@ class DocumentController extends Controller
             'type' => $request->type,
             'title' => $request->title,
             'amount' => $amount,
+            'invoice_date' => in_array($request->type, ['invoice', 'receipt']) ? now()->format('Y-m-d') : null,
             'file' => $docPath,
             'status' => auth()->user()->creation_status,
         ]);

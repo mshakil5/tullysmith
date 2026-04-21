@@ -32,6 +32,11 @@ class User extends Authenticatable
         return $this->hasMany(ServiceJob::class, 'client_id');
     }
 
+    public function jobAssignments()
+    {
+        return $this->hasMany(JobAssignment::class, 'worker_id');
+    }
+
     public function getUserRole()
     {
         return $this->roles()->first();
@@ -49,6 +54,6 @@ class User extends Authenticatable
     }
 
     // $workers   = User::byRole('Worker')->get();
-    // $supervisors  = User::byRole('Supervisor')->get();
-    // $admins    = User::byRole('Admin')->get();
+    // $lineanagers  = User::byRole('Line Manager')->get();
+    // $superAdmins    = User::byRole('Super Admin')->get();
 }
