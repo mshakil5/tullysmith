@@ -115,9 +115,9 @@
         <div class="col-xl-3 col-md-6">
             <div class="card card-animate shadow-sm">
                 <div class="card-body">
-                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Pending Jobs</p>
+                    <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Draft Jobs</p>
                     <div class="d-flex align-items-end justify-content-between mt-4">
-                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $pendingJobs }}</h4>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ $draftJobs }}</h4>
                         <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-soft-warning rounded fs-3"><i class="bx bx-time-five text-warning"></i></span></div>
                     </div>
                     <a href="{{ route('approvals.index') }}" class="text-warning small">View approvals →</a>

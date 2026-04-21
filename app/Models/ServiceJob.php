@@ -12,6 +12,16 @@ class ServiceJob extends Model
 
     protected $guarded = [];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($job) {
+            $job->job_id = 'JOB-' . str_pad($job->id, 5, '0', STR_PAD_LEFT);
+            $job->save();
+        });
+    }
+
     public function client()
     {
         return $this->belongsTo(User::class, 'client_id');

@@ -35,7 +35,7 @@ class HomeController extends Controller
 
         $totalWorker       = User::byRole('Worker')->count();
         $activeJobs        = ServiceJob::where('status', 'active')->count();
-        $pendingJobs       = ServiceJob::where('status', 'pending')->count();
+        $draftJobs       = ServiceJob::where('status', 'draft')->count();
         $todaysAssignments = JobAssignment::where('assigned_date', $today)->count();
 
         $jobs    = ServiceJob::whereIn('status', ['active', 'pending', 'completed'])->select('id', 'job_title', 'job_id')->latest()->get();
@@ -89,7 +89,7 @@ class HomeController extends Controller
         ]));
 
         return view('admin.pages.dashboard', compact(
-            'totalWorker', 'activeJobs', 'pendingJobs', 'todaysAssignments',
+            'totalWorker', 'activeJobs', 'draftJobs', 'todaysAssignments',
             'myAssignments', 'jobs', 'workers', 'announcements'
         ));
     }

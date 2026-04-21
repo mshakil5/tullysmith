@@ -29,7 +29,7 @@ function showError(msg) {
 function showConfirm(message = 'Are you sure?') {
     return Swal.fire({
         title: message,
-        icon: 'warning',
+        icon: 'success',
         showCancelButton: true,
         confirmButtonText: 'Yes',
         cancelButtonText: 'Cancel'

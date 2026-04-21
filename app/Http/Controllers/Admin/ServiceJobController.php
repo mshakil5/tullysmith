@@ -42,15 +42,14 @@ class ServiceJobController extends Controller
                         ->whereIn('type', ['invoice', 'receipt'])
                         ->where('status', 'approved')
                         ->count();
-                    
-                    if ($count > 0) {
-                        return '<a href="' . route('expenses.index', ['job_id' => $row->id]) . '" class="btn btn-soft-primary btn-sm">
-                                    <i class="ri-money-pound-circle-line me-1"></i>' . $count . ' Invoice' . ($count > 1 ? 's' : '') . '
-                                    <span class="badge bg-primary ms-1">£' . number_format($total, 2) . '</span>
-                                </a>';
-                    }
-                    
-                    return '<span class="text-muted">£0.00</span>';
+
+                    $label = $count . ' Expense' . ($count == 1 ? '' : 's');
+
+                    return '<a href="' . route('expenses.index', ['job_id' => $row->id]) . '" class="btn btn-soft-primary btn-sm">
+                                <i class="ri-money-pound-circle-line me-1"></i>
+                                ' . $label . '
+                                <span class="badge bg-primary ms-1">£' . number_format($total, 2) . '</span>
+                            </a>';
                 })
                 ->addColumn('status', function ($row) {
                     $color = match ($row->status) {
@@ -220,7 +219,16 @@ class ServiceJobController extends Controller
 
     public function destroy($id)
     {
-        ServiceJob::findOrFail($id)->delete();
+        $job = ServiceJob::findOrFail($id);
+
+        if ($job->assignments()->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete. Job already assigned to workers.'
+            ], 422);
+        }
+
+        $job->delete();
+
         return response()->json(['message' => 'Job deleted successfully.']);
     }
 

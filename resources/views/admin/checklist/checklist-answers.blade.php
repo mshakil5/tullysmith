@@ -94,10 +94,10 @@
                             <button type="button" class="btn btn-sm btn-soft-danger deleteChecklistBtn" data-id="{{ $assignment->id }}">
                                 <i class="ri-delete-bin-line me-1"></i> Remove
                             </button>
-                            @endhasanyrole
                             <button type="submit" class="btn btn-sm btn-primary save-answers-btn">
                                 <i class="ri-save-line me-1"></i> Save Answers
                             </button>
+                            @endhasanyrole
                         </div>
                     </div>
                 </form>

@@ -27,6 +27,11 @@ class User extends Authenticatable
         ];
     }
 
+    public function serviceJobs()
+    {
+        return $this->hasMany(ServiceJob::class, 'client_id');
+    }
+
     public function getUserRole()
     {
         return $this->roles()->first();
