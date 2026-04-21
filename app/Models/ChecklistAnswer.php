@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class ChecklistAnswer extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'service_job_checklist_id',
         'checklist_item_id',
@@ -13,6 +17,20 @@ class ChecklistAnswer extends Model
         'answer',
         'photo_path',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logExcept(['created_at', 'updated_at'])
+            ->setDescriptionForEvent(function(string $eventName) {
+                return "ChecklistAnswer {$this->id} was {$eventName} by " 
+                    . (auth()->user()?->name ?? 'system');
+            })
+            ->useLogName('checklist_answer');
+    }
 
     public function item()
     {
