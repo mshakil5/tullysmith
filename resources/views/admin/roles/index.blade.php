@@ -5,7 +5,7 @@
 <div class="container-fluid" id="newBtnSection">
     <div class="row mb-3">
         <div class="col text-end">
-            <button class="btn btn-primary" id="newBtn">Add New Role</button>
+            <button class="btn btn-primary d-none" id="newBtn">Add New Role</button>
         </div>
     </div>
 </div>
@@ -55,7 +55,7 @@
                         <th>SL</th>
                         <th>Name</th>
                         <th>Permissions</th>
-                        <th>Action</th>
+                        {{-- <th>Action</th> --}}
                     </tr>
                 </thead>
             </table>
@@ -82,7 +82,7 @@ $(function() {
             {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
             {data: 'name', name: 'name'},
             {data: 'permissions_count', name: 'permissions_count', orderable: false, searchable: false},
-            {data: 'action', name: 'action', orderable: false, searchable: false},
+            // {data: 'action', name: 'action', orderable: false, searchable: false},
         ]
     });
 
