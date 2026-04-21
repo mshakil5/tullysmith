@@ -144,8 +144,19 @@ class JobController extends Controller
 
     public function destroy($id)
     {
-        ServiceJob::findOrFail($id)->delete();
-        return response()->json(['message' => 'Job deleted successfully.']);
+        $job = ServiceJob::findOrFail($id);
+
+        if ($job->assignments()->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete. Job already assigned to workers.'
+            ], 422);
+        }
+
+        $job->delete();
+
+        return response()->json([
+            'message' => 'Job deleted successfully.'
+        ]);
     }
 
     public function detail($id)

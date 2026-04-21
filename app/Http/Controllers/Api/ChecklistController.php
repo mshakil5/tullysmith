@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Checklist;
 use App\Models\ChecklistItem;
+use App\Models\ServiceJobChecklist;
 use Illuminate\Http\Request;
 
 class ChecklistController extends Controller
@@ -104,8 +105,22 @@ class ChecklistController extends Controller
     public function destroy($id)
     {
         $checklist = Checklist::findOrFail($id);
+
+        $hasAnswers = ServiceJobChecklist::where('checklist_id', $id)
+            ->whereHas('answers')
+            ->exists();
+
+        if ($hasAnswers) {
+            return response()->json([
+                'message' => 'Cannot delete. This checklist has submitted answers.'
+            ], 422);
+        }
+
         $checklist->delete();
-        return response()->json(['message' => 'Checklist deleted successfully.']);
+
+        return response()->json([
+            'message' => 'Checklist deleted successfully.'
+        ]);
     }
 
     public function toggleStatus(Request $request)

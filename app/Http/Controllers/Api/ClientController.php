@@ -79,8 +79,18 @@ class ClientController extends Controller
     public function destroy($id)
     {
         $client = User::where('user_type', 0)->findOrFail($id);
+
+        if ($client->serviceJobs()->exists()) {
+            return response()->json([
+                'message' => 'Cannot delete. Client has assigned jobs.'
+            ], 422);
+        }
+
         $client->delete();
-        return response()->json(['message' => 'Client deleted successfully.']);
+
+        return response()->json([
+            'message' => 'Client deleted successfully.'
+        ]);
     }
 
     public function toggleStatus(Request $request)
