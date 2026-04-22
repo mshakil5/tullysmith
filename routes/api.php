@@ -74,6 +74,14 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::post('/checklists/{assignmentId}/answers', [JobController::class, 'saveAnswers']);
     });
 
+    Route::prefix('expenses')->group(function () {
+        Route::get('/', [JobController::class, 'getAllExpenses']);
+        Route::post('/', [JobController::class, 'storeExpense']);
+        Route::get('/{id}', [JobController::class, 'getExpense']);
+        Route::put('/{id}', [JobController::class, 'updateExpense']);
+        Route::delete('/{id}', [JobController::class, 'deleteExpense']);
+    });
+
     Route::prefix('time')->name('api.time.')->group(function () {
         Route::get('/', [TimeController::class, 'index']);
         Route::post('/clock-in', [TimeController::class, 'clockIn']);

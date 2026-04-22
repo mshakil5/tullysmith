@@ -12,6 +12,11 @@ class ServiceJob extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'amount'       => 'float',
+        'invoice_date' => 'date',
+    ];
+
     protected static function boot()
     {
         parent::boot();
@@ -42,7 +47,7 @@ class ServiceJob extends Model
         return $this->hasMany(Document::class)->latest();
     }
 
-    public function totalExpenses()
+    public function totalExpenses(): float
     {
         return $this->documents()
             ->whereIn('type', ['invoice', 'receipt'])

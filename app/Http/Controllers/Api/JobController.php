@@ -20,36 +20,47 @@ class JobController extends Controller
     {
         $query = ServiceJob::with('client:id,name')
             ->select([
-                'id', 'job_id', 'job_title', 'client_id',
-                'address_line1', 'address_line2', 'city', 'postcode',
-                'status', 'priority', 'start_date', 'end_date',
-                'estimated_hours', 'created_at'
+                'id','job_id','job_title','client_id',
+                'address_line1','address_line2','city','postcode',
+                'status','priority','start_date','end_date',
+                'estimated_hours','created_at'
             ])
             ->orderByDesc('id');
 
+        if ($request->view === 'confirmed') {
+            $query->where('status', 'confirmed');
+        } else {
+            $query->where('status', '!=', 'confirmed');
+        }
+
         if ($request->search) {
             $query->where(function ($q) use ($request) {
-                $q->where('job_title', 'like', '%' . $request->search . '%')
-                ->orWhere('job_id', 'like', '%' . $request->search . '%')
-                ->orWhere('postcode', 'like', '%' . $request->search . '%')
-                ->orWhereHas('client', function ($cq) use ($request) {
-                    $cq->where('name', 'like', '%' . $request->search . '%');
-                });
+                $q->where('job_title', 'like', "%{$request->search}%")
+                ->orWhere('job_id', 'like', "%{$request->search}%")
+                ->orWhere('postcode', 'like', "%{$request->search}%")
+                ->orWhereHas('client', fn($cq) =>
+                    $cq->where('name', 'like', "%{$request->search}%")
+                );
             });
         }
 
-        if ($request->status) {
+        if ($request->status && $request->view !== 'confirmed') {
             $query->where('status', $request->status);
         }
 
         $jobs = $query->paginate(15);
 
         $jobs->getCollection()->transform(function ($job) {
-            $job->client_name = $job->client->name ?? '-';
+            $job->client_name    = $job->client->name ?? '-';
+            $job->total_expenses = $job->totalExpenses();
+            $job->expenses_count = $job->documents()
+                ->whereIn('type', ['invoice', 'receipt'])
+                ->where('status', 'approved')
+                ->count();
             return $job;
         });
 
-        $clients = User::where('user_type', 0)->select('id', 'name')->orderBy('name')->get();
+        $clients = User::where('user_type', 0)->select('id', 'name')->latest()->get();
 
         return response()->json([
             'data'      => $jobs->items(),
@@ -157,6 +168,125 @@ class JobController extends Controller
         return response()->json([
             'message' => 'Job deleted successfully.'
         ]);
+    }
+
+    public function getAllExpenses()
+    {
+        $query = Document::with(['job:id,job_id,job_title', 'user:id,name'])
+            ->whereIn('type', ['invoice', 'receipt'])
+            ->where('status', 'approved')
+            ->select(['id', 'service_job_id', 'created_by', 'type', 'title', 'amount', 'invoice_date', 'file', 'created_at']);
+
+        if (request()->has('job_id')) {
+            $query->where('service_job_id', request('job_id'));
+        }
+
+        $expenses = $query->orderByDesc('invoice_date')
+            ->orderByDesc('created_at')
+            ->get()
+            ->transform(function ($expense) {
+                $expense->created_by_name = $expense->user->name ?? 'Unknown';
+                $expense->job = $expense->job ? [
+                    'id'        => $expense->job->id,
+                    'job_id'    => $expense->job->job_id,
+                    'job_title' => $expense->job->job_title,
+                ] : null;
+                unset($expense->user);
+                return $expense;
+            });
+
+        return response()->json(['data' => $expenses]);
+    }
+
+    public function storeExpense(Request $request)
+    {
+        $request->validate([
+            'service_job_id' => 'required|exists:service_jobs,id',
+            'type'           => 'required|in:invoice,receipt',
+            'title'          => 'nullable|string|max:255',
+            'amount'         => 'required|numeric|min:0',
+            'invoice_date'   => 'required|date',
+            'file'           => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        $uploadedFile    = $request->file('file');
+        $fileName        = time() . '_' . $uploadedFile->getClientOriginalName();
+        $destinationPath = public_path('uploads/documents/');
+
+        if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
+
+        $uploadedFile->move($destinationPath, $fileName);
+
+        $expense = Document::create([
+            'service_job_id' => $request->service_job_id,
+            'created_by'     => auth()->id(),
+            'type'           => $request->type,
+            'title'          => $request->title,
+            'amount'         => $request->amount,
+            'invoice_date'   => $request->invoice_date,
+            'file'           => '/uploads/documents/' . $fileName,
+            'status'         => auth()->user()->getCreationStatusAttribute(),
+        ]);
+
+        return response()->json(['message' => 'Expense added successfully', 'data' => $expense], 201);
+    }
+
+    public function updateExpense(Request $request, $id)
+    {
+        $request->validate([
+            'service_job_id' => 'nullable|exists:service_jobs,id',
+            'type'           => 'required|in:invoice,receipt',
+            'title'          => 'nullable|string|max:255',
+            'amount'         => 'required|numeric|min:0',
+            'invoice_date'   => 'required|date',
+            'file'           => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        $expense = Document::findOrFail($id);
+        $docPath = $expense->file;
+
+        if ($request->hasFile('file')) {
+            if (file_exists(public_path($expense->file))) unlink(public_path($expense->file));
+
+            $uploadedFile    = $request->file('file');
+            $fileName        = time() . '_' . $uploadedFile->getClientOriginalName();
+            $destinationPath = public_path('uploads/documents/');
+
+            if (!file_exists($destinationPath)) mkdir($destinationPath, 0755, true);
+
+            $uploadedFile->move($destinationPath, $fileName);
+            $docPath = '/uploads/documents/' . $fileName;
+        }
+
+        $expense->update([
+            'service_job_id' => $request->service_job_id,
+            'type'           => $request->type,
+            'title'          => $request->title,
+            'amount'         => $request->amount,
+            'invoice_date'   => $request->invoice_date,
+            'file'           => $docPath,
+        ]);
+
+        return response()->json(['message' => 'Expense updated successfully', 'data' => $expense]);
+    }
+
+    public function getExpense($id)
+    {
+        $expense = Document::with('job:id,job_id,job_title')->findOrFail($id);
+        return response()->json($expense);
+    }
+
+    public function deleteExpense($id)
+    {
+        $expense = Document::findOrFail($id);
+        
+        if (file_exists(public_path($expense->file))) {
+            unlink(public_path($expense->file));
+        }
+        
+        $expense->delete();
+        
+        return response()->json(['message' => 'Expense deleted successfully']);
     }
 
     public function detail($id)

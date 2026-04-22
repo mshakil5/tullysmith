@@ -99,7 +99,7 @@ class TimeController extends Controller
                     if ($dist > 100 && !$request->force) {
                         return response()->json([
                             'warning' => true,
-                            'message' => 'You are ' . round($dist) . 'm away from the job site. You must be within 100m to clock in. Do you want to clock in anyway?',
+                            'message' => 'You are ' . round($dist) . 'm away from the job site. You must be within 100m to clock in.',
                         ], 200);
                     }
 

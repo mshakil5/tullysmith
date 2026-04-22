@@ -45,7 +45,7 @@ class User extends Authenticatable
     public function getCreationStatusAttribute()
     {
         $role = $this->getUserRole();
-        return ($role && (strtolower($role->name) === 'admin' || strtolower($role->name) === 'super admin')) ? 'approved' : 'pending';
+        return ($role && (strtolower($role->name) === 'super admin' || strtolower($role->name) === 'line manager')) ? 'approved' : 'pending';
     }
 
     public function scopeByRole($query, $roleName)
