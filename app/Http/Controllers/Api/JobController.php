@@ -181,6 +181,16 @@ class JobController extends Controller
             $query->where('service_job_id', request('job_id'));
         }
 
+        if (request()->has('search')) {
+            $search = request('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                ->orWhere('amount', 'like', "%{$search}%")
+                ->orWhereHas('job', fn($jq) => $jq->where('job_title', 'like', "%{$search}%")
+                    ->orWhere('job_id', 'like', "%{$search}%"));
+            });
+        }
+
         $expenses = $query->orderByDesc('invoice_date')
             ->orderByDesc('created_at')
             ->get()

@@ -143,6 +143,8 @@ class ReportController extends Controller
             'label'            => $label,
             'start'            => $start->format('d M Y'),
             'end'              => $end->format('d M Y'),
+            'start_date'       => $start->format('d M Y'),
+            'end_date'         => $end->format('d M Y'),
             'total_hours'      => $totalHours,
             'total_sessions'   => $totalSessions,
             'unique_workers'   => $uniqueWorkers,

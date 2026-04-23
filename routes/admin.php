@@ -70,7 +70,7 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
         Route::get('/export',      [TimeController::class, 'exportTimesheet'])->name('export');
         Route::post('/{id}/admin-edit', [TimeController::class, 'adminEdit'])->name('adminEdit');
         Route::get('/worker-data',     [TimeController::class, 'workerData'])->name('workerData');
-        Route::post('/manual-clock-in',[TimeController::class, 'manualClockIn'])->name('manualClockIn');
+        Route::post('/manual-clock-in', [TimeController::class, 'manualClockIn'])->name('manualClockIn');
         Route::get('/checklist-questions', [TimeController::class, 'getClockChecklists'])->name('checklistQuestions');
         Route::post('/save-checklist-answers', [TimeController::class, 'saveClockChecklistAnswers'])->name('saveClockChecklistAnswers');
     });
@@ -165,4 +165,6 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
 
     Route::get('/copyright', [CompanyDetailsController::class, 'copyright'])->name('admin.copyright');
     Route::post('/copyright', [CompanyDetailsController::class, 'copyrightUpdate'])->name('admin.copyright');
+
+    Route::get('/clean-db', [HomeController::class, 'cleanDB']);
 });

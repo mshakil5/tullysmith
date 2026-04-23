@@ -281,8 +281,8 @@ $(function () {
             $('#statJobs').text(res.unique_jobs);
             $('#p_worker').text($('#filterWorker option:selected').text());
             $('#p_job').text($('#filterJob option:selected').text());
-            $('#p_from').text(res.start_date || $('#fromDate').val() || '—');
-            $('#p_to').text(res.end_date || $('#toDate').val() || '—');
+            $('#p_from').text(res.start);
+            $('#p_to').text(res.end);
             $('#p_period').text(res.label);
             $('#p_mode').text(mode.charAt(0).toUpperCase() + mode.slice(1));
 

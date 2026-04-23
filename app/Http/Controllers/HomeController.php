@@ -10,6 +10,7 @@ use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -189,5 +190,36 @@ class HomeController extends Controller
     public function userHome()
     {
         return 'user';
+    }
+
+    public function cleanDB()
+    {
+        $tables = [
+            'activity_log',
+            'announcements',
+            'checklists',
+            'checklist_answers',
+            'checklist_items',
+            'contacts',
+            'documents',
+            'job_assignments',
+            'notes',
+            'notifications',
+            'service_jobs',
+            'service_job_checklists',
+            'sessions',
+            'time_logs',
+            'users',
+        ];
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        foreach ($tables as $table) {
+            DB::table($table)->truncate();
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        return "Cleaned successfully.";
     }
 }
