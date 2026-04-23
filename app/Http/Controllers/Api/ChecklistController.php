@@ -44,7 +44,7 @@ class ChecklistController extends Controller
         $checklist = Checklist::create([
             'title'       => $request->title,
             'description' => $request->description,
-            'is_active'   => $request->is_active ?? true,
+            'is_active'   => true,
         ]);
 
         foreach ($request->items as $item) {
