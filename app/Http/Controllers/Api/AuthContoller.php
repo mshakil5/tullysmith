@@ -42,6 +42,7 @@ class AuthContoller extends Controller
             'message' => 'Login successful.',
             'token' => $token,
             'userId' => $user->id,
+            'name' => $user->name,
             'role' => $role,
             'permissions' => $user->getAllPermissions()->pluck('name'),
         ], 200);
