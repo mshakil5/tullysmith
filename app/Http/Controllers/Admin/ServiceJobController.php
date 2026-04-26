@@ -24,9 +24,9 @@ class ServiceJobController extends Controller
                     'status', 'priority', 'start_date', 'end_date',
                     'estimated_hours', 'created_at'
                 ])
-                ->when($view === 'confirmed', fn($q) => $q->where('status', 'confirmed'))
-                ->when($view !== 'confirmed', fn($q) => $q->where('status', '!=', 'confirmed'))
-                ->when($request->status && $view !== 'confirmed', fn($q) => $q->where('status', $request->status))
+                ->when($view === 'archived', fn($q) => $q->where('status', 'archived'))
+                ->when($view !== 'archived', fn($q) => $q->where('status', '!=', 'archived'))
+                ->when($request->status && $view !== 'archived', fn($q) => $q->where('status', $request->status))
                 ->orderByDesc('id');
 
             return DataTables::of($jobs)
@@ -57,7 +57,7 @@ class ServiceJobController extends Controller
                         'active' => 'success',
                         'pending' => 'warning',
                         'completed' => 'primary',
-                        'confirmed' => 'info',
+                        'archived' => 'info',
                         default => 'dark',
                     };
                     return '<span class="badge bg-' . $color . '">' . ucfirst($row->status) . '</span>';
@@ -86,7 +86,7 @@ class ServiceJobController extends Controller
                 })
 
                 ->addColumn('action', function ($row) use ($view) {
-                    if ($view === 'confirmed') {
+                    if ($view === 'archived') {
                         return '
                             <a class="btn btn-soft-primary btn-sm" href="' . route('serviceJob.show', $row->id) . '">
                                 <i class="ri-eye-fill"></i> View
@@ -136,6 +136,7 @@ class ServiceJobController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'job_id' => 'required|string|unique:service_jobs,job_id|max:50',
             'job_title'      => 'required|string|max:255',
             'client_id'      => 'required|integer|exists:users,id',
             'description'    => 'nullable|string',
@@ -152,7 +153,7 @@ class ServiceJobController extends Controller
         ]);
 
         ServiceJob::create([
-            'job_id'          => 'JOB-' . time(),
+            'job_id'          => $request->job_id,
             'job_title'       => $request->job_title,
             'client_id'       => $request->client_id,
             'description'     => $request->description,
@@ -181,6 +182,7 @@ class ServiceJobController extends Controller
     {
         $request->validate([
             'id'             => 'required|exists:service_jobs,id',
+            'job_id' => 'sometimes|string|max:50',
             'job_title'      => 'required|string|max:255',
             'client_id'      => 'required|integer|exists:users,id',
             'description'    => 'nullable|string',
@@ -236,6 +238,13 @@ class ServiceJobController extends Controller
     {
         $job = ServiceJob::with('client', 'assignments.worker', 'timeLogs.worker')->findOrFail($id);
         return view('admin.service_jobs.show', compact('job'));
+    }
+
+    public function nextJobId()
+    {
+        $last = ServiceJob::orderByRaw("CAST(SUBSTRING(job_id, 5) AS UNSIGNED) DESC")->first();
+        $nextNum = $last ? ((int) substr($last->job_id, 4) + 1) : 1;
+        return response()->json(['next_job_id' => 'JOB-' . str_pad($nextNum, 5, '0', STR_PAD_LEFT)]);
     }
 
     public function expenses(Request $request)

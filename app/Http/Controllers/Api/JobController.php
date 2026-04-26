@@ -27,10 +27,10 @@ class JobController extends Controller
             ])
             ->orderByDesc('id');
 
-        if ($request->view === 'confirmed') {
-            $query->where('status', 'confirmed');
+        if ($request->view === 'archived') {
+            $query->where('status', 'archived');
         } else {
-            $query->where('status', '!=', 'confirmed');
+            $query->where('status', '!=', 'archived');
         }
 
         if ($request->search) {
@@ -44,7 +44,7 @@ class JobController extends Controller
             });
         }
 
-        if ($request->status && $request->view !== 'confirmed') {
+        if ($request->status && $request->view !== 'archived') {
             $query->where('status', $request->status);
         }
 

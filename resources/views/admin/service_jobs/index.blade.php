@@ -1,8 +1,8 @@
 @extends('admin.pages.master')
-@section('title', $view === 'confirmed' ? 'Confirmed Jobs' : 'Jobs')
+@section('title', $view === 'archived' ? 'Archived Jobs' : 'Jobs')
 @section('content')
 
-@if($view !== 'confirmed')
+@if($view !== 'archived')
 <div class="container-fluid" id="newBtnSection">
     <div class="row mb-3">
         <div class="col-auto">
@@ -12,7 +12,7 @@
 </div>
 @endif
 
-@if($view !== 'confirmed')
+@if($view !== 'archived')
 <div class="container-fluid" id="addThisFormContainer" style="display:none;">
     <div class="row justify-content-center">
         <div class="col-xl-10">
@@ -26,6 +26,11 @@
                         <input type="hidden" id="codeid" name="id">
 
                         <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label">Job ID <span class="text-danger">*</span></label>
+                                <input type="text" id="job_id" name="job_id" class="form-control" placeholder="e.g. JOB-00001">
+                            </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Job Title <span class="text-danger">*</span></label>
@@ -126,9 +131,9 @@
 <div class="container-fluid" id="contentContainer">
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="card-title mb-0">{{ $view === 'confirmed' ? 'Confirmed Jobs' : 'All Jobs' }}</h4>
+            <h4 class="card-title mb-0">{{ $view === 'archived' ? 'Archived Jobs' : 'All Jobs' }}</h4>
 
-            @if($view !== 'confirmed')
+            @if($view !== 'archived')
             <select id="statusFilter" class="form-select w-auto">
                 <option value="">All Status</option>
                 <option value="draft">Draft</option>
@@ -158,7 +163,7 @@
     </div>
 </div>
 
-@if($view !== 'confirmed')
+@if($view !== 'archived')
 <div class="modal fade" id="quickAddClientModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -204,7 +209,7 @@ $(function () {
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
     });
 
-    @if($view !== 'confirmed')
+    @if($view !== 'archived')
     $('#quickAddClientBtn').click(function (e) {
         e.preventDefault();
         $('#quickClientForm')[0].reset();
@@ -243,7 +248,7 @@ $(function () {
             url: "{{ route('serviceJob.index') }}" + window.location.search,
             data: function (d) {
                 d.view = "{{ $view }}";
-                @if($view !== 'confirmed')
+                @if($view !== 'archived')
                 d.status = $('#statusFilter').val();
                 @endif
             }
@@ -262,7 +267,7 @@ $(function () {
         ]
     });
 
-    @if($view !== 'confirmed')
+    @if($view !== 'archived')
     $('#statusFilter').on('change', function () {
         table.ajax.reload();
     });
@@ -275,6 +280,10 @@ $(function () {
         $('#addBtn').val('Create').text('Create');
         $('#addThisFormContainer').show(300);
         $('#newBtn').hide();
+
+        $.get("{{ route('serviceJob.nextJobId') }}", function(res) {
+            $('#job_id').val(res.next_job_id).prop('readonly', false);
+        });
     });
 
     $('#FormCloseBtn').click(function () {
@@ -332,6 +341,7 @@ $(function () {
             $('#estimated_hours').val(res.estimated_hours);
             $('#start_date').val(res.start_date);
             $('#end_date').val(res.end_date);
+            $('#job_id').val(res.job_id).prop('readonly', true);
 
             $('#cardTitle').text('Update Job');
             $('#addBtn').val('Update').text('Update');

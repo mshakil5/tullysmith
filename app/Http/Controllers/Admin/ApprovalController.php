@@ -47,12 +47,12 @@ class ApprovalController extends Controller
 
             $sjStatus = $status;
             if ($status === 'pending')  $sjStatus = 'completed';
-            if ($status === 'approved') $sjStatus = 'confirmed';
+            if ($status === 'approved') $sjStatus = 'archived';
             if ($status === 'rejected') $sjStatus = null;
 
             $serviceJobs = ServiceJob::with(['client:id,name'])
                 ->when($sjStatus, fn($q) => $q->where('status', $sjStatus))
-                ->when(!$sjStatus && $status === 'all', fn($q) => $q->whereIn('status', ['completed', 'confirmed']))
+                ->when(!$sjStatus && $status === 'all', fn($q) => $q->whereIn('status', ['completed', 'archived']))
                 ->when(!$sjStatus && $status !== 'all', fn($q) => $q->whereRaw('1=0'))
                 ->latest()
                 ->get(['id', 'job_id', 'job_title', 'client_id', 'status', 'start_date', 'end_date', 'created_at'])
@@ -63,7 +63,7 @@ class ApprovalController extends Controller
                     'job'        => $j->job_id ?? '',
                     'created_by' => $j->client->name ?? '',
                     'created_at' => $j->created_at->format('M d, H:i'),
-                    'status'     => $j->status === 'completed' ? 'pending' : ($j->status === 'confirmed' ? 'approved' : $j->status),
+                    'status'     => $j->status === 'completed' ? 'pending' : ($j->status === 'archived' ? 'approved' : $j->status),
                 ]);
 
             $items = $checklists->concat($timelogs)->concat($serviceJobs)
@@ -75,7 +75,7 @@ class ApprovalController extends Controller
 
             $approvedCount = ServiceJobChecklist::whereHas('answers')->where('status', 'approved')->count()
                 + TimeLog::whereNotNull('clock_out_at')->where('status', 'approved')->count()
-                + ServiceJob::where('status', 'confirmed')->count();
+                + ServiceJob::where('status', 'archived')->count();
 
             $rejectedCount = ServiceJobChecklist::whereHas('answers')->where('status', 'rejected')->count()
                 + TimeLog::whereNotNull('clock_out_at')->where('status', 'rejected')->count();
@@ -118,7 +118,7 @@ class ApprovalController extends Controller
         if ($type === 'servicejob') {
             $item = ServiceJob::findOrFail($id);
             $item->update([
-                'status' => $request->action === 'approved' ? 'confirmed' : 'active',
+                'status' => $request->action === 'approved' ? 'archived' : 'active',
             ]);
         } elseif ($type === 'timelog') {
             $item = TimeLog::findOrFail($id);
