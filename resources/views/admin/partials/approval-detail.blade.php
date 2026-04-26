@@ -8,7 +8,7 @@
         $title     = $item->job_title ?? '—';
         $jobTitle  = $item->job_id ?? '';
         $submitter = $item->client->name ?? '';
-        $status    = $item->status === 'completed' ? 'pending' : ($item->status === 'confirmed' ? 'approved' : $item->status);
+        $status    = $item->status === 'completed' ? 'pending' : ($item->status === 'archived' ? 'approved' : $item->status);
     } else {
         $title     = $item->checklist->title ?? '';
         $jobTitle  = $item->serviceJob->job_title ?? '';
@@ -152,7 +152,7 @@
         </div>
     @else
         <div class="alert alert-{{ $status === 'approved' ? 'success' : 'danger' }} mt-3 mb-0">
-            This item has been <strong>{{ $type === 'servicejob' ? ($status === 'approved' ? 'Confirmed' : 'Sent for Redo') : ucfirst($status) }}</strong>.
+            This item has been <strong>{{ $type === 'servicejob' ? ($status === 'approved' ? 'archived' : 'Sent for Redo') : ucfirst($status) }}</strong>.
             @if(isset($item->rejection_reason) && $item->rejection_reason)
                 <div class="mt-1">Reason: {{ $item->rejection_reason }}</div>
             @endif

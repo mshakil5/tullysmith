@@ -110,10 +110,10 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ route('serviceJob.index', ['view' => 'confirmed']) }}"
-                    class="nav-link {{ request()->get('view') === 'confirmed' ? 'active' : '' }}">
+                    <a href="{{ route('serviceJob.index', ['view' => 'archived']) }}"
+                    class="nav-link {{ request()->get('view') === 'archived' ? 'active' : '' }}">
                         <i class="ri-checkbox-circle-line"></i>
-                        <span>Confirmed Jobs</span>
+                        <span>Archived Jobs</span>
                     </a>
                 </li>
 

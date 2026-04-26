@@ -48,6 +48,7 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
     Route::prefix('service-job')->name('serviceJob.')->group(function () {
         Route::get('/', [ServiceJobController::class, 'index'])->name('index');
         Route::post('/', [ServiceJobController::class, 'store'])->name('store');
+        Route::get('/next-job-id', [ServiceJobController::class, 'nextJobId'])->name('nextJobId');
         Route::get('/{id}/edit', [ServiceJobController::class, 'edit'])->name('edit');
         Route::post('/update', [ServiceJobController::class, 'update'])->name('update');
         Route::delete('/{id}', [ServiceJobController::class, 'destroy'])->name('delete');
