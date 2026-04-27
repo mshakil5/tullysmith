@@ -248,7 +248,7 @@ class ReportController extends Controller
         [$start, $end, $label] = $this->resolveRange($request);
 
         $query = Document::with('job:id,job_title,job_id', 'job.client:id,name', 'user:id,name')
-            ->where('type', 'invoice')
+            ->whereIn('type', ['invoice', 'receipt'])
             ->where('status', 'approved')
             ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()]);
 
@@ -287,7 +287,7 @@ class ReportController extends Controller
         [$start, $end, $label] = $this->resolveRange($request);
 
         $query = Document::with('job:id,job_title,job_id', 'user:id,name')
-            ->where('type', 'invoice')
+            ->whereIn('type', ['invoice', 'receipt'])
             ->where('status', 'approved')
             ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()])
             ->orderBy('invoice_date');
