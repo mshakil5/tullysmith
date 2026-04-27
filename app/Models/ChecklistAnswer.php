@@ -36,6 +36,17 @@ class ChecklistAnswer extends Model
     {
         return $this->belongsTo(ChecklistItem::class, 'checklist_item_id');
     }
+
+    public function assignment()
+    {
+        return $this->belongsTo(ServiceJobChecklist::class, 'service_job_checklist_id');
+    }
+
+    public function serviceJobChecklist()
+    {
+        return $this->belongsTo(ServiceJobChecklist::class, 'service_job_checklist_id');
+    }
+
     public function answeredBy()
     {
         return $this->belongsTo(User::class, 'answered_by');

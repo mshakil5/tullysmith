@@ -116,9 +116,26 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('index');
-        Route::get('/data', [ReportController::class, 'data'])->name('data');
-        Route::get('/export', [ReportController::class, 'export'])->name('export');
+    
+        // Time Report
+        Route::prefix('time')->name('time.')->group(function () {
+            Route::get('/',       [ReportController::class, 'timeIndex'])->name('index');
+            Route::get('/data',   [ReportController::class, 'timeData'])->name('data');
+            Route::get('/export', [ReportController::class, 'timeExport'])->name('export');
+        });
+    
+        // Expense Report
+        Route::prefix('expense')->name('expense.')->group(function () {
+            Route::get('/',       [ReportController::class, 'expenseIndex'])->name('index');
+            Route::get('/data',   [ReportController::class, 'expenseData'])->name('data');
+            Route::get('/export', [ReportController::class, 'expenseExport'])->name('export');
+        });
+    
+        // Checklist Report
+        Route::prefix('checklist')->name('checklist.')->group(function () {
+            Route::get('/',     [ReportController::class, 'checklistIndex'])->name('index');
+            Route::get('/data', [ReportController::class, 'checklistData'])->name('data');
+        });
     });
 
     // Roles

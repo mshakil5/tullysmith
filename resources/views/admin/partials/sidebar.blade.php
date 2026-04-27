@@ -231,12 +231,31 @@
                 @endhasanyrole
 
                 @role('Super Admin')
-                <li class="nav-item">
-                    <a href="{{ route('reports.index') }}" class="nav-link {{ Route::is('reports.index') ? 'active' : '' }}">
-                        <i class="ri-bar-chart-2-line"></i>
-                        <span>Reports</span>
+                 <li class="nav-item">
+                    <a class="nav-link menu-link {{ Route::is('reports.*') ? 'active' : '' }}"
+                    href="#sidebarReports" data-bs-toggle="collapse" role="button"
+                    aria-expanded="{{ Route::is('reports.*') ? 'true' : 'false' }}"
+                    aria-controls="sidebarReports">
+                        <i class="ri-bar-chart-2-line"></i> <span>Reports</span>
                     </a>
-                </li>
+
+                    <div class="collapse menu-dropdown {{ Route::is('reports.*') ? 'show' : '' }}" id="sidebarReports">
+                        <ul class="nav nav-sm flex-column">
+                            <li class="nav-item">
+                                <a href="{{ route('reports.time.index') }}"
+                                class="nav-link {{ Route::is('reports.time.*') ? 'active' : '' }}">Time Report</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('reports.expense.index') }}"
+                                class="nav-link {{ Route::is('reports.expense.*') ? 'active' : '' }}">Expense Report</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('reports.checklist.index') }}"
+                                class="nav-link {{ Route::is('reports.checklist.*') ? 'active' : '' }}">Checklist Report</a>
+                            </li>
+                        </ul>
+                    </div>
+                 </li>
                 @endrole
 
             </ul>
