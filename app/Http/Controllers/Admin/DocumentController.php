@@ -66,21 +66,32 @@ class DocumentController extends Controller
     public function getDocuments($jobId)
     {
         $job = ServiceJob::findOrFail($jobId);
+        $user = auth()->user();
+        $role = strtolower($user->getUserRole()->name ?? '');
+        $isManager = in_array($role, ['super admin', 'line manager']);
 
         $docs = $job->documents()
             ->with('user:id,name')
+            ->where(function ($q) use ($isManager, $user) {
+                if ($isManager) {
+                    $q->where('status', 'approved');
+                } else {
+                    $q->where('status', 'approved')
+                    ->where('created_by', $user->id);
+                }
+            })
             ->get();
 
         return response()->json([
             'count' => $docs->count(),
             'documents' => $docs->map(function ($doc) {
                 return [
-                    'id' => $doc->id,
-                    'type' => $doc->type,
-                    'status' => $doc->status,
-                    'title' => $doc->title,
-                    'amount' => $doc->amount,
-                    'file_url' => $doc->file ? asset($doc->file) : null,
+                    'id'         => $doc->id,
+                    'type'       => $doc->type,
+                    'status'     => $doc->status,
+                    'title'      => $doc->title,
+                    'amount'     => $doc->amount,
+                    'file_url'   => $doc->file ? asset($doc->file) : null,
                     'created_by' => $doc->user->name ?? 'Unknown',
                     'created_at' => $doc->created_at->format('M d, H:i'),
                 ];

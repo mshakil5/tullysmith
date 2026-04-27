@@ -9,6 +9,11 @@
         $jobTitle  = $item->job_id ?? '';
         $submitter = $item->client->name ?? '';
         $status    = $item->status === 'completed' ? 'pending' : ($item->status === 'archived' ? 'approved' : $item->status);
+    } elseif ($type === 'document') {
+        $title     = $item->title ?? ucfirst($item->type);
+        $jobTitle  = $item->serviceJob->job_title ?? '';
+        $submitter = $item->user->name ?? '';
+        $status    = $item->status;
     } else {
         $title     = $item->checklist->title ?? '';
         $jobTitle  = $item->serviceJob->job_title ?? '';
@@ -104,6 +109,26 @@
         <a href="{{ route('serviceJob.show', $item->id) }}" target="_blank" class="btn btn-outline-primary w-100 mb-3">
             <i class="ri-external-link-line me-1"></i> View Full Job Details
         </a>
+
+    @elseif ($type === 'document')
+
+        <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-2">
+            <span class="text-muted">Type</span>
+            <span class="badge bg-info">{{ ucfirst($item->type) }}</span>
+        </div>
+
+        @if($item->amount)
+        <div class="d-flex justify-content-between align-items-center border rounded p-3 mb-2">
+            <span class="text-muted">Amount</span>
+            <strong class="text-primary">£{{ number_format($item->amount, 2) }}</strong>
+        </div>
+        @endif
+
+        @if($item->file)
+        <a href="{{ asset($item->file) }}" target="_blank" class="btn btn-outline-primary w-100 mb-3">
+            <i class="ri-download-2-line me-1"></i> View / Download File
+        </a>
+        @endif
 
     @else
 

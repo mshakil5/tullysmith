@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use App\Models\ServiceJob;
 use App\Models\ServiceJobChecklist;
 use App\Models\TimeLog;
@@ -66,19 +67,40 @@ class ApprovalController extends Controller
                     'status'     => $j->status === 'completed' ? 'pending' : ($j->status === 'archived' ? 'approved' : $j->status),
                 ]);
 
-            $items = $checklists->concat($timelogs)->concat($serviceJobs)
+            $documents = Document::with(['user:id,name', 'job:id,job_title'])
+                ->when($status && $status !== 'all', fn($q) => $q->where('status', $status))
+                ->latest()
+                ->get()
+                ->map(fn($d) => [
+                    'id'         => $d->id,
+                    'type'       => 'document',
+                    'title'      => $d->title ?? ucfirst($d->type),
+                    'job'        => $d->job->job_title ?? '',
+                    'created_by' => $d->user->name ?? 'Unknown',
+                    'created_at' => $d->created_at->format('M d, H:i'),
+                    'status'     => $d->status,
+                    'doc_type'   => $d->type,
+                    'amount'     => $d->amount,
+                    'file_url'   => $d->file ? asset($d->file) : null,
+                ]);
+
+
+            $items = $checklists->concat($timelogs)->concat($serviceJobs)->concat($documents)
                 ->sortByDesc('created_at')->values();
 
             $pendingCount  = ServiceJobChecklist::whereHas('answers')->where('status', 'pending')->count()
                 + TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
-                + ServiceJob::where('status', 'completed')->count();
+                + ServiceJob::where('status', 'completed')->count()
+                + Document::where('status', 'pending')->count();
 
             $approvedCount = ServiceJobChecklist::whereHas('answers')->where('status', 'approved')->count()
                 + TimeLog::whereNotNull('clock_out_at')->where('status', 'approved')->count()
-                + ServiceJob::where('status', 'archived')->count();
+                + ServiceJob::where('status', 'archived')->count()
+                + Document::where('status', 'approved')->count();
 
             $rejectedCount = ServiceJobChecklist::whereHas('answers')->where('status', 'rejected')->count()
-                + TimeLog::whereNotNull('clock_out_at')->where('status', 'rejected')->count();
+                + TimeLog::whereNotNull('clock_out_at')->where('status', 'rejected')->count()
+                + Document::where('status', 'rejected')->count();
 
             return response()->json([
                 'items'          => $items,
@@ -98,6 +120,8 @@ class ApprovalController extends Controller
             $item = TimeLog::with(['worker:id,name', 'job:id,job_title', 'assignment'])->findOrFail($id);
         } elseif ($type === 'servicejob') {
             $item = ServiceJob::with(['client:id,name'])->findOrFail($id);
+        } elseif ($type === 'document') {
+            $item = Document::with(['user:id,name', 'job:id,job_title'])->findOrFail($id);
         } else {
             $item = ServiceJobChecklist::with([
                 'serviceJob:id,job_title',
@@ -122,6 +146,12 @@ class ApprovalController extends Controller
             ]);
         } elseif ($type === 'timelog') {
             $item = TimeLog::findOrFail($id);
+            $item->update([
+                'status'           => $request->action,
+                'rejection_reason' => $request->action === 'rejected' ? $request->rejection_reason : null,
+            ]);
+        } elseif ($type === 'document') {
+            $item = Document::findOrFail($id);
             $item->update([
                 'status'           => $request->action,
                 'rejection_reason' => $request->action === 'rejected' ? $request->rejection_reason : null,
