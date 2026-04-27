@@ -14,7 +14,8 @@
             <div class="d-flex gap-2">
                 <a id="exportBtn" href="#" class="btn btn-soft-success btn-sm"><i
                         class="ri-download-2-line me-1"></i>Export CSV</a>
-                <button class="btn btn-soft-secondary btn-sm" onclick="window.print()"><i
+                <button class="btn btn-soft-secondary btn-sm"
+                    onclick="document.title='Time-Report-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); window.print(); setTimeout(()=>document.title='Time Report',500)"><i
                         class="ri-printer-line me-1"></i>Print</button>
             </div>
         </div>
@@ -33,7 +34,7 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-medium small">Job</label>
+                        <label class="form-label fw-medium small">Job Name</label>
                         <select id="filterJob" class="form-control select2">
                             <option value="">All Jobs</option>
                             @foreach ($jobs as $j)
@@ -85,13 +86,21 @@
                         <div style="font-size:12px;color:#666;margin-top:2px;">Generated:
                             {{ now()->format('d M Y, h:i A') }}</div>
                     </td>
-                    <td width="30%" style="text-align:right;vertical-align:top;">
-                        <div style="font-size:11px;color:#888;font-weight:600;">Date</div>
-                        <div style="font-size:14px;font-weight:600;" id="p_period_label">—</div>
-                        <div style="font-size:11px;color:#888;margin-top:6px;font-weight:600;">Worker</div>
-                        <div style="font-size:13px;font-weight:600;" id="p_worker_label">All Workers</div>
-                        <div style="font-size:11px;color:#888;margin-top:6px;font-weight:600;">Job</div>
-                        <div style="font-size:13px;font-weight:600;" id="p_job_label">All Jobs</div>
+                    <td width="30%" class="print-header-box" style="text-align:right;vertical-align:top;">
+
+                        <div class="print-header-title">Date</div>
+                        <div class="print-header-value" id="p_period_label">—</div>
+
+                        <div style="margin-top:6px;"></div>
+
+                        <div class="print-header-title">Worker</div>
+                        <div class="print-header-value" id="p_worker_label">All Workers</div>
+
+                        <div style="margin-top:6px;"></div>
+
+                        <div class="print-header-title">Job</div>
+                        <div class="print-header-value" id="p_job_label">All Jobs</div>
+
                     </td>
                 </tr>
             </table>
@@ -241,6 +250,25 @@
                 print-color-adjust: exact !important;
             }
         }
+
+        .print-header-box {
+            text-align: right;
+        }
+
+        .print-header-title {
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+            display: inline-block;
+            padding-bottom: 2px;
+        }
+
+        .print-header-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a2d52;
+            margin-top: 2px;
+        }
     </style>
 @endsection
 
@@ -271,7 +299,7 @@
                     '<span class="spinner-border spinner-border-sm"></span>');
                 $('#logsTable').html(
                     '<tr><td colspan="7" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>'
-                    );
+                );
                 $('#logsHead').html('');
                 $('#logsFoot').html('');
                 $('#exportBtn').attr('href', '{{ route('reports.time.export') }}?' + $.param(params()));

@@ -14,7 +14,8 @@
             <div class="d-flex gap-2">
                 <a id="exportBtn" href="#" class="btn btn-soft-success btn-sm"><i
                         class="ri-download-2-line me-1"></i>Export CSV</a>
-                <button class="btn btn-soft-secondary btn-sm" onclick="window.print()"><i
+                <button class="btn btn-soft-secondary btn-sm"
+                    onclick="document.title='Expense-Report-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); window.print(); setTimeout(()=>document.title='Time Report',500)"><i
                         class="ri-printer-line me-1"></i>Print</button>
             </div>
         </div>
@@ -24,7 +25,7 @@
             <div class="card-body">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-2">
-                        <label class="form-label fw-medium small">Job</label>
+                        <label class="form-label fw-medium small">Job Name</label>
                         <select id="filterJob" class="form-control select2">
                             <option value="">All Jobs</option>
                             @foreach ($jobs as $j)
@@ -325,7 +326,7 @@
                     '<span class="spinner-border spinner-border-sm"></span>');
                 $('#expensesTable').html(
                     '<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>'
-                    );
+                );
                 $('#exportBtn').attr('href', '{{ route('reports.expense.export') }}?' + $.param(params()));
 
                 $.get('{{ route('reports.expense.data') }}', params(), function(r) {
