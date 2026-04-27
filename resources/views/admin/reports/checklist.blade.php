@@ -152,19 +152,7 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0 report-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Worker</th>
-                            <th>Job</th>
-                            <th>Checklist</th>
-                            <th>Question</th>
-                            <th>Answer</th>
-                            <th class="text-center no-print">Photo</th>
-                        </tr>
-                    </thead>
+                    <thead id="answersHead"></thead>
                     <tbody id="answersTable"><tr><td colspan="9" class="text-center text-muted py-4">Loading...</td></tr></tbody>
                 </table>
             </div>
@@ -216,6 +204,7 @@ $(function() {
     function load() {
         $('#statAnswers,#statChecklists,#statWorkers,#statJobs').html('<span class="spinner-border spinner-border-sm"></span>');
         $('#answersTable').html('<tr><td colspan="9" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>');
+        $('#answersHead').html('');
 
         $.get('{{ route("reports.checklist.data") }}', params(), function(r) {
             $('#periodLabel').text(r.label);
@@ -229,9 +218,18 @@ $(function() {
             $('#statWorkers').text(r.unique_workers);
             $('#statJobs').text(r.unique_jobs);
 
-            // Checklist answers table
+            var isWorkerFiltered = $('#filterWorker').val() !== '';
+            var isJobFiltered    = $('#filterJob').val() !== '';
+            var totalCols = 6 + (!isWorkerFiltered ? 1 : 0) + (!isJobFiltered ? 1 : 0);
+
+            var theadHtml = '<tr><th>#</th><th>Date</th><th>Time</th>';
+            if (!isWorkerFiltered) theadHtml += '<th>Worker</th>';
+            if (!isJobFiltered)    theadHtml += '<th>Job</th>';
+            theadHtml += '<th>Checklist</th><th>Question</th><th>Answer</th><th class="text-center no-print">Photo</th></tr>';
+            $('#answersHead').html(theadHtml);
+
             if (!r.answers || !r.answers.length) {
-                $('#answersTable').html('<tr><td colspan="9" class="text-center text-muted py-4">No data for this period</td></tr>');
+                $('#answersTable').html('<tr><td colspan="' + totalCols + '" class="text-center text-muted py-4">No data for this period</td></tr>');
                 return;
             }
 
@@ -240,12 +238,10 @@ $(function() {
             r.answers.forEach(function(a, i) {
                 var isNewDate = a.date !== prevDate;
                 var rowClass  = isNewDate && i > 0 ? 'date-separator' : '';
-                
-                // Show at badge
+
                 var showAtLabel = a.show_at === 'clock_in' ? 'Clock In' : (a.show_at === 'clock_out' ? 'Clock Out' : 'Both');
                 var showAtClass = 'show-at-badge-' + a.show_at;
-                
-                // Answer display
+
                 var answerHtml = '';
                 if (a.type === 'photo' && a.photo) {
                     answerHtml = '<span class="badge bg-info">Photo</span>';
@@ -255,17 +251,17 @@ $(function() {
                 } else {
                     answerHtml = a.answer || '—';
                 }
-                
+
                 html += '<tr class="' + rowClass + '">' +
                     '<td class="text-muted small">' + (i + 1) + '</td>' +
                     '<td class="small fw-semibold">' + a.date + '</td>' +
-                    '<td class="small text-muted">' + a.time + '</td>' +
-                    '<td>' + a.worker + '</td>' +
-                    '<td><span class="fw-semibold">' + a.job + '</span><div class="text-muted small">' + a.job_id + '</div></td>' +
-                    '<td><span class="fw-semibold">' + a.checklist + '</span><div><span class="' + showAtClass + '">' + showAtLabel + '</span></div></td>' +
+                    '<td class="small text-muted">' + a.time + '</td>';
+                if (!isWorkerFiltered) html += '<td>' + a.worker + '</td>';
+                if (!isJobFiltered)    html += '<td><span class="fw-semibold">' + a.job + '</span><div class="text-muted small">' + a.job_id + '</div></td>';
+                html += '<td><span class="fw-semibold">' + a.checklist + '</span><div><span class="' + showAtClass + '">' + showAtLabel + '</span></div></td>' +
                     '<td class="small">' + a.question + '</td>' +
                     '<td>' + answerHtml + '</td>' +
-                    '<td class="text-center no-print">' + 
+                    '<td class="text-center no-print">' +
                         (a.photo ? '<a href="' + a.photo + '" target="_blank" class="btn btn-xs btn-soft-info"><i class="ri-image-line"></i></a>' : '—') +
                     '</td>' +
                 '</tr>';

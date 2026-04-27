@@ -23,7 +23,7 @@ class ReportController extends Controller
 
     private function getFilters()
     {
-        $workers = User::where('user_type', 1)->where('status', 1)->select('id', 'name', 'status')->latest()->get();
+        $workers = User::byRole('Worker')->where('status', 1)->select('id', 'name', 'status')->latest()->get();
         $jobs    = ServiceJob::select('id', 'job_title', 'job_id')->orderByDesc('id')->get();
         return compact('workers', 'jobs');
     }
