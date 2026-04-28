@@ -75,32 +75,34 @@
 
         {{-- Print Header --}}
         <div class="print-only mb-4">
-            <table width="100%" style="border-bottom:2px solid #1a2d52;padding-bottom:12px;margin-bottom:16px;">
+            <table width="100%" style="border-bottom:2px solid #1a2d52; padding-bottom:8px; margin-bottom:16px;">
                 <tr>
-                    <td width="70%">
+                    <td width="70%" style="vertical-align: bottom;">
                         @if ($company->company_logo)
                             <img src="{{ asset('uploads/company/' . $company->company_logo) }}" alt=""
                                 height="50" style="margin-bottom:6px;"><br>
                         @endif
-                        <div style="font-size:22px;font-weight:700;color:#1a2d52;letter-spacing:1px;">TIME REPORT</div>
-                        <div style="font-size:12px;color:#666;margin-top:2px;">Generated:
-                            {{ now()->format('d M Y, h:i A') }}</div>
+                        <div style="font-size:22px;font-weight:700;color:#1a2d52;letter-spacing:1px; line-height: 1.2;">TIME REPORT</div>
+                        <div style="font-size:12px;color:#666;margin-top:2px;">Generated: {{ now()->format('d M Y, h:i A') }}</div>
                     </td>
-                    <td width="30%" class="print-header-box" style="text-align:right;vertical-align:top;">
 
-                        <div class="print-header-title">Date</div>
-                        <div class="print-header-value" id="p_period_label">—</div>
+                    <td width="30%" class="print-header-box" style="text-align:right; vertical-align: bottom;">
+                        <div style="display: inline-block; text-align: left; padding-bottom: 4px;">
+                            <div class="mb-1">
+                                <span class="small fw-semibold" style="min-width: 55px; display: inline-block;">Date:</span>
+                                <span class="small fw-semibold" id="p_period_label">—</span>
+                            </div>
 
-                        <div style="margin-top:6px;"></div>
+                            <div class="mb-1">
+                                <span class="small fw-semibold" style="min-width: 55px; display: inline-block;">Worker:</span>
+                                <span class="small fw-semibold" id="p_worker_label">All Workers</span>
+                            </div>
 
-                        <div class="print-header-title">Worker</div>
-                        <div class="print-header-value" id="p_worker_label">All Workers</div>
-
-                        <div style="margin-top:6px;"></div>
-
-                        <div class="print-header-title">Job</div>
-                        <div class="print-header-value" id="p_job_label">All Jobs</div>
-
+                            <div class="mb-0"> 
+                                <span class="small fw-semibold" style="min-width: 55px; display: inline-block;">Job:</span>
+                                <span class="small fw-semibold" id="p_job_label">All Jobs</span>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             </table>
