@@ -40,37 +40,39 @@ class AnnouncementController extends Controller
         $request->validate([
             'title'          => 'required|string|max:255',
             'content'        => 'required|string',
-            'priority'       => 'required|in:low,medium,high',
             'service_job_id' => 'nullable|exists:service_jobs,id',
             'expires_at'     => 'nullable|date',
         ]);
 
-        $announcement = Announcement::create($request->only('title', 'content', 'priority', 'service_job_id', 'expires_at'));
+        $data = $request->only('title', 'content', 'service_job_id', 'expires_at');
+        $data['priority'] = 'medium'; // default
+
+        $announcement = Announcement::create($data);
 
         if ($announcement->service_job_id) {
             $workerIds = JobAssignment::where('service_job_id', $announcement->service_job_id)
-                ->pluck('worker_id')
-                ->unique()
-                ->values()
-                ->all();
+                ->pluck('worker_id')->unique()->values()->all();
 
             if (!empty($workerIds)) {
                 app(NotificationService::class)->sendToUsers(
                     userIds: $workerIds,
-                    title:   'New Announcement',
-                    body:    $announcement->title,
-                    type:    'announcement',
+                    title: 'New Announcement',
+                    body: $announcement->title,
+                    type: 'announcement',
                 );
             }
         } else {
             app(NotificationService::class)->sendToAll(
                 title: 'New Announcement',
-                body:  $announcement->title,
-                type:  'announcement',
+                body: $announcement->title,
+                type: 'announcement',
             );
         }
 
-        return response()->json(['message' => 'Announcement created successfully.', 'announcement' => $announcement], 201);
+        return response()->json([
+            'message' => 'Announcement created successfully.',
+            'announcement' => $announcement
+        ], 201);
     }
 
     public function show($id)
@@ -83,38 +85,41 @@ class AnnouncementController extends Controller
         $request->validate([
             'title'          => 'required|string|max:255',
             'content'        => 'required|string',
-            'priority'       => 'required|in:low,medium,high',
             'service_job_id' => 'nullable|exists:service_jobs,id',
             'expires_at'     => 'nullable|date',
         ]);
 
         $announcement = Announcement::findOrFail($id);
-        $announcement->update($request->only('title', 'content', 'priority', 'service_job_id', 'expires_at'));
+
+        $data = $request->only('title', 'content', 'service_job_id', 'expires_at');
+        $data['priority'] = 'medium';
+
+        $announcement->update($data);
 
         if ($announcement->service_job_id) {
             $workerIds = JobAssignment::where('service_job_id', $announcement->service_job_id)
-                ->pluck('worker_id')
-                ->unique()
-                ->values()
-                ->all();
+                ->pluck('worker_id')->unique()->values()->all();
 
             if (!empty($workerIds)) {
                 app(NotificationService::class)->sendToUsers(
                     userIds: $workerIds,
-                    title:   'Announcement Updated',
-                    body:    $announcement->title,
-                    type:    'announcement',
+                    title: 'Announcement Updated',
+                    body: $announcement->title,
+                    type: 'announcement',
                 );
             }
         } else {
             app(NotificationService::class)->sendToAll(
                 title: 'Announcement Updated',
-                body:  $announcement->title,
-                type:  'announcement',
+                body: $announcement->title,
+                type: 'announcement',
             );
         }
 
-        return response()->json(['message' => 'Announcement updated successfully.', 'announcement' => $announcement]);
+        return response()->json([
+            'message' => 'Announcement updated successfully.',
+            'announcement' => $announcement
+        ]);
     }
 
     public function destroy($id)

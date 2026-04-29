@@ -22,11 +22,11 @@
                             @csrf
                             <input type="hidden" id="codeid" name="id">
                             <div class="row g-3">
-                                <div class="col-md-8">
+                                <div class="col-md-12">
                                     <label class="form-label">Title <span class="text-danger">*</span></label>
                                     <input type="text" id="title" name="title" class="form-control">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-4 d-none">
                                     <label class="form-label">Priority <span class="text-danger">*</span></label>
                                     <select id="priority" name="priority" class="form-control">
                                         <option value="low">Low</option>
@@ -74,7 +74,7 @@
                         <tr>
                             <th>Sl</th>
                             <th>Title</th>
-                            <th>Priority</th>
+                            {{-- <th>Priority</th> --}}
                             <th>Job</th>
                             <th>Expires On</th>
                             <th>Status</th>
@@ -100,7 +100,7 @@
             columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'title',      name: 'title' },
-                { data: 'priority',   name: 'priority', orderable: false, searchable: false },
+                //{ data: 'priority',   name: 'priority', orderable: false, searchable: false },
                 { data: 'job',        name: 'job',      orderable: false, searchable: false },
                 { data: 'expires_at', name: 'expires_at' },
                 { data: 'status',     name: 'status',   orderable: false, searchable: false },
