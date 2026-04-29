@@ -57,10 +57,6 @@
 
                     <strong>{{ $ann->title }}</strong>
 
-                    <span class="badge bg-{{ $color }} {{ $color === 'warning' ? 'text-dark' : '' }}">
-                        {{ ucfirst($ann->priority) }}
-                    </span>
-
                     @if($ann->job)
                     <span class="badge bg-light text-dark border">
                         {{ $ann->job->job_id }} — {{ $ann->job->job_title }}

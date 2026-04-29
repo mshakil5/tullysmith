@@ -25,26 +25,21 @@ class JobController extends Controller
                 'status','priority','start_date','end_date',
                 'estimated_hours','created_at'
             ])
+            ->where('status', '!=', 'archived')
             ->orderByDesc('id');
-
-        if ($request->view === 'archived') {
-            $query->where('status', 'archived');
-        } else {
-            $query->where('status', '!=', 'archived');
-        }
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('job_title', 'like', "%{$request->search}%")
-                ->orWhere('job_id', 'like', "%{$request->search}%")
-                ->orWhere('postcode', 'like', "%{$request->search}%")
-                ->orWhereHas('client', fn($cq) =>
-                    $cq->where('name', 'like', "%{$request->search}%")
-                );
+                    ->orWhere('job_id', 'like', "%{$request->search}%")
+                    ->orWhere('postcode', 'like', "%{$request->search}%")
+                    ->orWhereHas('client', fn($cq) =>
+                        $cq->where('name', 'like', "%{$request->search}%")
+                    );
             });
         }
 
-        if ($request->status && $request->view !== 'archived') {
+        if ($request->status) {
             $query->where('status', $request->status);
         }
 
@@ -68,6 +63,55 @@ class JobController extends Controller
             'total'     => $jobs->total(),
             'clients'   => $clients,
         ]);
+    }
+
+    public function archived(Request $request)
+    {
+        $query = ServiceJob::with('client:id,name')
+            ->select([
+                'id','job_id','job_title','client_id',
+                'address_line1','address_line2','city','postcode',
+                'status','priority','start_date','end_date',
+                'estimated_hours','created_at'
+            ])
+            ->where('status', 'archived')
+            ->orderByDesc('id');
+
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('job_title', 'like', "%{$request->search}%")
+                    ->orWhere('job_id', 'like', "%{$request->search}%")
+                    ->orWhere('postcode', 'like', "%{$request->search}%")
+                    ->orWhereHas('client', fn($cq) =>
+                        $cq->where('name', 'like', "%{$request->search}%")
+                    );
+            });
+        }
+
+        $jobs = $query->paginate(15);
+
+        $jobs->getCollection()->transform(function ($job) {
+            $job->client_name    = $job->client->name ?? '-';
+            $job->total_expenses = $job->totalExpenses();
+            $job->expenses_count = $job->documents()
+                ->whereIn('type', ['invoice', 'receipt'])
+                ->where('status', 'approved')
+                ->count();
+            return $job;
+        });
+
+        return response()->json([
+            'data'      => $jobs->items(),
+            'last_page' => $jobs->lastPage(),
+            'total'     => $jobs->total(),
+        ]);
+    }
+
+    public function nextJobId()
+    {
+        $last = ServiceJob::orderByRaw("CAST(SUBSTRING(job_id, 5) AS UNSIGNED) DESC")->first();
+        $nextNum = $last ? ((int) substr($last->job_id, 4) + 1) : 1;
+        return response()->json(['next_job_id' => 'JOB-' . str_pad($nextNum, 5, '0', STR_PAD_LEFT)]);
     }
 
     public function store(Request $request)
