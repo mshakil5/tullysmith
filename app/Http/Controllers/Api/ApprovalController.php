@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Document;
 use App\Models\ServiceJob;
 use App\Models\ServiceJobChecklist;
 use App\Models\TimeLog;
@@ -39,6 +40,11 @@ class ApprovalController extends Controller
             ->latest()
             ->paginate($perPage);
 
+        $documents = Document::with(['user:id,name', 'job:id,job_title'])
+            ->when($status && $status !== 'all', fn($q) => $q->where('status', $status))
+            ->latest()
+            ->paginate($perPage);
+
         $mappedChecklists = collect($checklists->items())->map(fn($c) => [
             'id'         => $c->id,
             'type'       => 'checklist',
@@ -69,21 +75,40 @@ class ApprovalController extends Controller
             'status'     => $j->status === 'completed' ? 'pending' : ($j->status === 'archived' ? 'approved' : $j->status),
         ]);
 
-        $items = $mappedChecklists->concat($mappedTimelogs)->concat($mappedServiceJobs)
+        $mappedDocuments = collect($documents->items())->map(fn($d) => [
+            'id'         => $d->id,
+            'type'       => 'document',
+            'title'      => $d->title ?? ucfirst($d->type),
+            'job'        => $d->job->job_title ?? '',
+            'created_by' => $d->user->name ?? 'Unknown',
+            'created_at' => $d->created_at->format('M d, H:i'),
+            'status'     => $d->status,
+            'doc_type'   => $d->type,
+            'amount'     => $d->amount,
+            'file_url'   => $d->file ? asset($d->file) : null,
+        ]);
+
+        $items = $mappedChecklists->concat($mappedTimelogs)->concat($mappedServiceJobs)->concat($mappedDocuments)
             ->sortByDesc('created_at')->values();
 
         $lastPage = max($checklists->lastPage(), $timelogs->lastPage(), $serviceJobs->lastPage());
 
-        $pendingCount  = ServiceJobChecklist::whereHas('answers')->where('status', 'pending')->count()
-            + TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
-            + ServiceJob::where('status', 'completed')->count();
+        $pendingCount =
+            (int) ServiceJobChecklist::whereHas('answers')->where('status', 'pending')->count()
+            + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
+            + (int) ServiceJob::where('status', 'completed')->count()
+            + (int) Document::where('status', 'pending')->count();
 
-        $approvedCount = ServiceJobChecklist::whereHas('answers')->where('status', 'approved')->count()
-            + TimeLog::whereNotNull('clock_out_at')->where('status', 'approved')->count()
-            + ServiceJob::where('status', 'archived')->count();
+        $approvedCount =
+            (int) ServiceJobChecklist::whereHas('answers')->where('status', 'approved')->count()
+            + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'approved')->count()
+            + (int) ServiceJob::where('status', 'archived')->count()
+            + (int) Document::where('status', 'approved')->count();
 
-        $rejectedCount = ServiceJobChecklist::whereHas('answers')->where('status', 'rejected')->count()
-            + TimeLog::whereNotNull('clock_out_at')->where('status', 'rejected')->count();
+        $rejectedCount =
+            (int) ServiceJobChecklist::whereHas('answers')->where('status', 'rejected')->count()
+            + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'rejected')->count()
+            + (int) Document::where('status', 'rejected')->count();
 
         return response()->json([
             'items'          => $items,
@@ -116,7 +141,6 @@ class ApprovalController extends Controller
                 'clock_in_photo'  => $item->clock_in_photo ? asset($item->clock_in_photo) : null,
                 'clock_out_photo' => $item->clock_out_photo ? asset($item->clock_out_photo) : null,
             ]);
-
         } elseif ($type === 'servicejob') {
             $item = ServiceJob::with(['client:id,name'])->findOrFail($id);
 
@@ -133,7 +157,22 @@ class ApprovalController extends Controller
                 'start_date'       => $item->formattedStartDate(),
                 'end_date'         => $item->formattedEndDate(),
             ]);
+        }
+        if ($type === 'document') {
+            $item = Document::with(['user:id,name', 'job:id,job_title'])->findOrFail($id);
 
+            return response()->json([
+                'id'               => $item->id,
+                'type'             => 'document',
+                'title'            => $item->title ?? ucfirst($item->type),
+                'job'              => $item->job->job_title ?? '',
+                'submitted_by'     => $item->user->name ?? '',
+                'status'           => $item->status,
+                'rejection_reason' => $item->rejection_reason,
+                'doc_type'         => $item->type,
+                'amount'           => $item->amount,
+                'file_url'         => $item->file ? asset($item->file) : null,
+            ]);
         } else {
             $item = ServiceJobChecklist::with([
                 'serviceJob:id,job_title',

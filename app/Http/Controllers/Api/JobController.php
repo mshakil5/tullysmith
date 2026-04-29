@@ -20,10 +20,20 @@ class JobController extends Controller
     {
         $query = ServiceJob::with('client:id,name')
             ->select([
-                'id','job_id','job_title','client_id',
-                'address_line1','address_line2','city','postcode',
-                'status','priority','start_date','end_date',
-                'estimated_hours','created_at'
+                'id',
+                'job_id',
+                'job_title',
+                'client_id',
+                'address_line1',
+                'address_line2',
+                'city',
+                'postcode',
+                'status',
+                'priority',
+                'start_date',
+                'end_date',
+                'estimated_hours',
+                'created_at'
             ])
             ->where('status', '!=', 'archived')
             ->orderByDesc('id');
@@ -33,7 +43,9 @@ class JobController extends Controller
                 $q->where('job_title', 'like', "%{$request->search}%")
                     ->orWhere('job_id', 'like', "%{$request->search}%")
                     ->orWhere('postcode', 'like', "%{$request->search}%")
-                    ->orWhereHas('client', fn($cq) =>
+                    ->orWhereHas(
+                        'client',
+                        fn($cq) =>
                         $cq->where('name', 'like', "%{$request->search}%")
                     );
             });
@@ -69,10 +81,20 @@ class JobController extends Controller
     {
         $query = ServiceJob::with('client:id,name')
             ->select([
-                'id','job_id','job_title','client_id',
-                'address_line1','address_line2','city','postcode',
-                'status','priority','start_date','end_date',
-                'estimated_hours','created_at'
+                'id',
+                'job_id',
+                'job_title',
+                'client_id',
+                'address_line1',
+                'address_line2',
+                'city',
+                'postcode',
+                'status',
+                'priority',
+                'start_date',
+                'end_date',
+                'estimated_hours',
+                'created_at'
             ])
             ->where('status', 'archived')
             ->orderByDesc('id');
@@ -82,7 +104,9 @@ class JobController extends Controller
                 $q->where('job_title', 'like', "%{$request->search}%")
                     ->orWhere('job_id', 'like', "%{$request->search}%")
                     ->orWhere('postcode', 'like', "%{$request->search}%")
-                    ->orWhereHas('client', fn($cq) =>
+                    ->orWhereHas(
+                        'client',
+                        fn($cq) =>
                         $cq->where('name', 'like', "%{$request->search}%")
                     );
             });
@@ -117,6 +141,7 @@ class JobController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'job_id'          => 'required|string|max:20|unique:service_jobs,job_id',
             'job_title'       => 'required|string|max:255',
             'client_id'       => 'required|integer|exists:users,id',
             'description'     => 'nullable|string',
@@ -133,7 +158,7 @@ class JobController extends Controller
         ]);
 
         $job = ServiceJob::create([
-            'job_id'          => 'JOB-' . time(),
+            'job_id'          => $request->job_id,
             'job_title'       => $request->job_title,
             'client_id'       => $request->client_id,
             'description'     => $request->description,
@@ -229,9 +254,9 @@ class JobController extends Controller
             $search = request('search');
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                ->orWhere('amount', 'like', "%{$search}%")
-                ->orWhereHas('job', fn($jq) => $jq->where('job_title', 'like', "%{$search}%")
-                    ->orWhere('job_id', 'like', "%{$search}%"));
+                    ->orWhere('amount', 'like', "%{$search}%")
+                    ->orWhereHas('job', fn($jq) => $jq->where('job_title', 'like', "%{$search}%")
+                        ->orWhere('job_id', 'like', "%{$search}%"));
             });
         }
 
@@ -333,13 +358,13 @@ class JobController extends Controller
     public function deleteExpense($id)
     {
         $expense = Document::findOrFail($id);
-        
+
         if (file_exists(public_path($expense->file))) {
             unlink(public_path($expense->file));
         }
-        
+
         $expense->delete();
-        
+
         return response()->json(['message' => 'Expense deleted successfully']);
     }
 
@@ -356,15 +381,26 @@ class JobController extends Controller
             'created_at' => $n->created_at->format('M d, H:i'),
         ]);
 
-        $documents = $job->documents()->with('user:id,name')->get()->map(fn($d) => [
-            'id'         => $d->id,
-            'type'       => $d->type,
-            'title'      => $d->title,
-            'amount'     => $d->amount,
-            'file_url'   => $d->file ? asset($d->file) : null,
-            'created_by' => $d->user->name ?? 'Unknown',
-            'created_at' => $d->created_at->format('M d, H:i'),
-        ]);
+        $isWorker = $user->hasRole('worker');
+
+        $documents = $job->documents()->with('user:id,name')
+            ->where(function ($q) use ($user, $isWorker) {
+                if (!$isWorker) {
+                    $q->where('status', 'approved');
+                } else {
+                    $q->where('status', 'approved')
+                        ->where('created_by', $user->id);
+                }
+            })
+            ->get()->map(fn($d) => [
+                'id'         => $d->id,
+                'type'       => $d->type,
+                'title'      => $d->title,
+                'amount'     => $d->amount,
+                'file_url'   => $d->file ? asset($d->file) : null,
+                'created_by' => $d->user->name ?? 'Unknown',
+                'created_at' => $d->created_at->format('M d, H:i'),
+            ]);
 
         $checklists = ServiceJobChecklist::where('service_job_id', $id)
             ->with(['checklist.items', 'answers'])
@@ -502,27 +538,25 @@ class JobController extends Controller
         if (!file_exists($destPath)) mkdir($destPath, 0755, true);
         $uploadedFile->move($destPath, $fileName);
 
-        $doc = Document::create([
+        $user = Auth::user();
+        Document::create([
             'service_job_id' => $id,
-            'created_by'     => Auth::id(),
+            'created_by'     => $user->id,
             'type'           => $request->type,
             'title'          => $request->title,
             'amount'         => in_array($request->type, ['invoice', 'receipt']) ? $request->amount : null,
             'file'           => '/uploads/documents/' . $fileName,
-            'status'         => Auth::user()->creation_status,
+            'status'         => $user->creation_status,
         ]);
 
+        $isWorker = $user->hasRole('worker');
+        $message = $isWorker 
+            ? 'Document uploaded and pending approval'
+            : 'Document uploaded successfully';
+
         return response()->json([
-            'message'  => 'Document uploaded successfully',
-            'document' => [
-                'id'         => $doc->id,
-                'type'       => $doc->type,
-                'title'      => $doc->title,
-                'amount'     => $doc->amount,
-                'file_url'   => asset($doc->file),
-                'created_by' => Auth::user()->name,
-                'created_at' => $doc->created_at->format('M d, H:i'),
-            ]
+            'message' => $message,
+            'document' => []
         ], 201);
     }
 

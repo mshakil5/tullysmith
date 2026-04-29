@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\Document;
 use App\Models\JobAssignment;
 use App\Models\ServiceJob;
+use App\Models\ServiceJobChecklist;
+use App\Models\TimeLog;
 use App\Models\User;
 use App\Services\NotificationService;
 use Carbon\Carbon;
@@ -59,6 +62,11 @@ class AuthContoller extends Controller
         $completedJobs = ServiceJob::where('status', 'completed')->count();
         $totalClients  = User::where('user_type', 0)->count();
         $totalEmployees = User::where('user_type', 1)->count();
+        $pendingApprovals =
+            (int) ServiceJobChecklist::where('status', 'pending')->count()
+        + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
+        + (int) ServiceJob::where('status', 'completed')->count()
+        + (int) Document::where('status', 'pending')->count();
 
         $announcements = Announcement::with('job:id,job_title,job_id')
             ->where('status', 1)
@@ -123,6 +131,7 @@ class AuthContoller extends Controller
             'completed_jobs'  => $completedJobs,
             'total_clients'   => $totalClients,
             'total_employees' => $totalEmployees,
+            'pending_approvals' => $pendingApprovals,
             'assignments'     => $assignments,
             'jobs'            => $jobs,
             'workers'         => $workers,
