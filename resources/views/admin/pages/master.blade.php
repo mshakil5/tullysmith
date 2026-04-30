@@ -58,17 +58,18 @@
             </section>
         </div>
 
-        <footer class="footer d-none">
+        <footer class="footer">
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-sm-6">
-                        <script>
+                        {{-- <script>
                             document.write(new Date().getFullYear())
-                        </script> ©
+                        </script> © --}}
                     </div>
                     <div class="col-sm-6">
                         <div class="text-sm-end d-none d-sm-block">
-                            Design & Develop by
+                            Design & Develop by <a href="mentosoftware.co.uk/" target="_blank"
+                                class="text-decoration-underline">Mento Software</a>
                         </div>
                     </div>
                 </div>

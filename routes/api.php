@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TimeController;
 use Illuminate\Support\Facades\Route;
 
@@ -104,6 +105,13 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/', [ApprovalController::class, 'index']);
         Route::get('/{type}/{id}', [ApprovalController::class, 'show']);
         Route::post('/{type}/{id}/action', [ApprovalController::class, 'action']);
+    });
+
+    Route::prefix('reports')->group(function () {
+        Route::get('/filter-options',   [ReportController::class, 'filterOptions']);
+        Route::get('/time/pdf',         [ReportController::class, 'timePdf']);
+        Route::get('/expense/pdf',      [ReportController::class, 'expensePdf']);
+        Route::get('/checklist/pdf',    [ReportController::class, 'checklistPdf']);
     });
 
     Route::get('/notifications', [NotificationController::class, 'index']);
