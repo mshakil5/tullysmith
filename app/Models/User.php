@@ -50,7 +50,8 @@ class User extends Authenticatable
 
     public function scopeByRole($query, $roleName)
     {
-        return $query->whereHas('roles', fn($q) => $q->where('name', $roleName));
+        return $query->whereHas('roles', fn($q) => $q->where('name', $roleName))
+                    ->where('user_type', 1);
     }
 
     // $workers   = User::byRole('Worker')->get();
