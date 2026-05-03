@@ -20,7 +20,11 @@
     padding-bottom: 12px;
     margin-bottom: 20px;
   }
-  
+  .header-right { 
+        width: 40%; 
+        vertical-align: bottom; 
+        text-align: right; 
+    }
   .header-table { 
     width: 100%; 
     border-collapse: collapse;
@@ -204,18 +208,18 @@
         <div class="report-title">EXPENSE REPORT</div>
         <div class="generated">Generated: {{ $generated_at }}</div>
       </td>
-      <td class="header-right">
-        <div class="meta-box">
-          <div class="meta-row">
-            <span class="meta-label">Date:</span>
-            <span class="meta-value">{{ $label }}</span>
-          </div>
-          <div class="meta-row">
-            <span class="meta-label">Job:</span>
-            <span class="meta-value">{{ $job }}</span>
-          </div>
-        </div>
-      </td>
+    <td class="header-right">
+        <table style="border-collapse:collapse; margin-left:auto;">
+            <tr>
+                <td style="font-size:11px;font-weight:700;color:#374151;padding:3px 10px 3px 0;white-space:nowrap;">Date:</td>
+                <td style="font-size:11px;font-weight:700;color:#1f2937;padding:3px 0;white-space:nowrap;">{{ $label }}</td>
+            </tr>
+            <tr>
+                <td style="font-size:11px;font-weight:700;color:#374151;padding:3px 10px 3px 0;white-space:nowrap;">Job:</td>
+                <td style="font-size:11px;font-weight:700;color:#1f2937;padding:3px 0;white-space:nowrap;">{{ $job }}</td>
+            </tr>
+        </table>
+    </td>
     </tr>
   </table>
 </div>

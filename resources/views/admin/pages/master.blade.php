@@ -68,7 +68,7 @@
                     </div>
                     <div class="col-sm-6">
                         <div class="text-sm-end d-none d-sm-block">
-                            Design & Develop by <a href="mentosoftware.co.uk/" target="_blank"
+                            Design & Develop by <a href="https://mentosoftware.co.uk/" target="_blank"
                                 class="text-decoration-underline">Mento Software</a>
                         </div>
                     </div>

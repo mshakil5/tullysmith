@@ -136,6 +136,10 @@ Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permis
             Route::get('/',     [ReportController::class, 'checklistIndex'])->name('index');
             Route::get('/data', [ReportController::class, 'checklistData'])->name('data');
         });
+
+        Route::get('/reports/time/pdf',      [ReportController::class, 'timePdf'])->name('time.pdf');
+        Route::get('/reports/expense/pdf',   [ReportController::class, 'expensePdf'])->name('expense.pdf');
+        Route::get('/reports/checklist/pdf', [ReportController::class, 'checklistPdf'])->name('checklist.pdf');
     });
 
     // Roles

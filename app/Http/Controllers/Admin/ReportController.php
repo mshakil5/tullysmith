@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ChecklistAnswer;
+use App\Models\CompanyDetails;
 use App\Models\Document;
 use App\Models\ServiceJob;
 use App\Models\TimeLog;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
@@ -439,5 +441,155 @@ class ReportController extends Controller
             $words .= ' and ' . $convertLarge($pence) . ' Pence';
         }
         return $words . ' Only';
+    }
+
+    public function timePdf(Request $request)
+    {
+        [$start, $end, $label] = $this->resolveRange($request);
+
+        $workerFiltered = (bool) $request->worker_id;
+        $jobFiltered    = (bool) $request->job_id;
+
+        $query = TimeLog::with('job:id,job_title,job_id', 'worker:id,name')
+            ->whereBetween('clock_in_at', [$start, $end])
+            ->whereNotNull('clock_out_at');
+
+        if ($request->worker_id) $query->where('worker_id', $request->worker_id);
+        if ($request->job_id)    $query->where('service_job_id', $request->job_id);
+
+        $logs    = $query->orderBy('clock_in_at')->get();
+        $company = CompanyDetails::firstOrCreate();
+
+        $workerLabel = $workerFiltered
+            ? (User::find($request->worker_id)?->name ?? 'All Workers')
+            : 'All Workers';
+        $jobLabel = $jobFiltered
+            ? (ServiceJob::find($request->job_id)?->job_title ?? 'All Jobs')
+            : 'All Jobs';
+
+        $data = [
+            'company'        => $company,
+            'label'          => $label,
+            'worker'         => $workerLabel,
+            'job'            => $jobLabel,
+            'generated_at'   => now()->format('d M Y, h:i A'),
+            'total_hours'    => round($logs->sum('total_hours'), 2),
+            'workerFiltered' => $workerFiltered,
+            'jobFiltered'    => $jobFiltered,
+            'logs'           => $logs->map(fn($l) => [
+                'date'      => $l->clock_in_at->format('d M Y'),
+                'worker'    => $l->worker->name   ?? '—',
+                'job'       => $l->job->job_title ?? '—',
+                'job_id'    => $l->job->job_id    ?? '—',
+                'clock_in'  => $l->clock_in_at->format('h:i A'),
+                'clock_out' => $l->clock_out_at ? $l->clock_out_at->format('h:i A') : 'Active',
+                'hours'     => number_format($l->total_hours, 2),
+            ])->values(),
+        ];
+
+        return Pdf::loadView('api.reports.time_pdf', $data)
+            ->setPaper('a4', 'portrait')
+            ->stream('time_report_' . now()->format('d-M-Y') . '.pdf');
+    }
+
+    public function expensePdf(Request $request)
+    {
+        [$start, $end, $label] = $this->resolveRange($request);
+
+        $jobFiltered = (bool) $request->job_id;
+
+        $query = Document::with('job:id,job_title,job_id', 'user:id,name')
+            ->whereIn('type', ['invoice', 'receipt'])
+            ->where('status', 'approved')
+            ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()]);
+
+        if ($request->job_id) $query->where('service_job_id', $request->job_id);
+
+        $expenses    = $query->orderBy('invoice_date')->get();
+        $company     = CompanyDetails::firstOrCreate();
+        $totalAmount = $expenses->sum('amount');
+
+        $data = [
+            'company'      => $company,
+            'label'        => $label,
+            'job'          => $jobFiltered
+                ? (ServiceJob::find($request->job_id)?->job_title ?? 'All Jobs')
+                : 'All Jobs',
+            'generated_at' => now()->format('d M Y, h:i A'),
+            'total_amount' => number_format($totalAmount, 2),
+            'total_words'  => $this->numberToWords($totalAmount),
+            'jobFiltered'  => $jobFiltered,
+            'expenses'     => $expenses->map(fn($e) => [
+                'date'   => $e->invoice_date
+                    ? Carbon::parse($e->invoice_date)->format('d M Y') : '—',
+                'job'    => $e->job->job_title ?? '—',
+                'job_id' => $e->job->job_id    ?? '—',
+                'title'  => $e->title          ?? '—',
+                'amount' => number_format($e->amount, 2),
+            ])->values(),
+        ];
+
+        return Pdf::loadView('api.reports.expense_pdf', $data)
+            ->setPaper('a4', 'portrait')
+            ->stream('expense_report_' . now()->format('d-M-Y') . '.pdf');
+    }
+
+    public function checklistPdf(Request $request)
+    {
+        [$start, $end, $label] = $this->resolveRange($request);
+
+        $workerFiltered = (bool) $request->worker_id;
+        $jobFiltered    = (bool) $request->job_id;
+
+        $query = ChecklistAnswer::with([
+            'serviceJobChecklist.serviceJob:id,job_title,job_id',
+            'serviceJobChecklist.checklist:id,title',
+            'item:id,question,type',
+            'answeredBy:id,name',
+        ])
+        ->whereBetween('updated_at', [$start, $end])
+        ->whereHas('serviceJobChecklist', fn($q) => $q->where('status', 'approved'));
+
+        if ($request->job_id) {
+            $query->whereHas('serviceJobChecklist',
+                fn($q) => $q->where('service_job_id', $request->job_id));
+        }
+        if ($request->worker_id) {
+            $query->where('answered_by', $request->worker_id);
+        }
+
+        $answers = $query->orderBy('updated_at')->get();
+        $company = CompanyDetails::firstOrCreate();
+
+        $data = [
+            'company'        => $company,
+            'label'          => $label,
+            'worker'         => $workerFiltered
+                ? (User::find($request->worker_id)?->name ?? 'All Workers')
+                : 'All Workers',
+            'job'            => $jobFiltered
+                ? (ServiceJob::find($request->job_id)?->job_title ?? 'All Jobs')
+                : 'All Jobs',
+            'generated_at'   => now()->format('d M Y, h:i A'),
+            'total'          => $answers->count(),
+            'workerFiltered' => $workerFiltered,
+            'jobFiltered'    => $jobFiltered,
+            'answers'        => $answers->map(fn($a) => [
+                'date'        => $a->updated_at->format('d M Y'),
+                'time'        => $a->updated_at->format('h:i A'),
+                'worker'      => $a->answeredBy->name ?? '—',
+                'job'         => $a->serviceJobChecklist->serviceJob->job_title ?? '—',
+                'job_id'      => $a->serviceJobChecklist->serviceJob->job_id    ?? '—',
+                'checklist'   => $a->serviceJobChecklist->checklist->title       ?? '—',
+                'show_at_raw' => $a->serviceJobChecklist->show_at ?? 'both',
+                'question'    => $a->item->question ?? '—',
+                'type'        => $a->item->type     ?? 'text',
+                'answer'      => $a->answer,
+            ])->values(),
+        ];
+
+        return Pdf::loadView('api.reports.checklist_pdf', $data)
+            ->setPaper('a4', 'landscape')
+            ->stream('checklist_report_' . now()->format('d-M-Y') . '.pdf');
     }
 }

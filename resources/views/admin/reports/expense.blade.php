@@ -14,9 +14,9 @@
             <div class="d-flex gap-2">
                 <a id="exportBtn" href="#" class="btn btn-soft-success btn-sm"><i
                         class="ri-download-2-line me-1"></i>Export CSV</a>
-                <button class="btn btn-soft-secondary btn-sm"
-                    onclick="document.title='Expense-Report-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'); window.print(); setTimeout(()=>document.title='Time Report',500)"><i
-                        class="ri-printer-line me-1"></i>Print</button>
+                <button class="btn btn-soft-secondary btn-sm" id="printBtn">
+                    <i class="ri-file-pdf-line me-1"></i>PDF
+                </button>
             </div>
         </div>
 
@@ -73,8 +73,10 @@
                             <img src="{{ asset('uploads/company/' . $company->company_logo) }}" alt=""
                                 height="50" style="margin-bottom:6px;"><br>
                         @endif
-                        <div style="font-size:22px;font-weight:700;color:#1a2d52;letter-spacing:1px; line-height: 1.2;">EXPENSE REPORT</div>
-                        <div style="font-size:12px;color:#666;margin-top:2px;">Generated: {{ now()->format('d M Y, h:i A') }}</div>
+                        <div style="font-size:22px;font-weight:700;color:#1a2d52;letter-spacing:1px; line-height: 1.2;">
+                            EXPENSE REPORT</div>
+                        <div style="font-size:12px;color:#666;margin-top:2px;">Generated:
+                            {{ now()->format('d M Y, h:i A') }}</div>
                     </td>
 
                     <td width="30%" style="text-align:right; vertical-align: bottom;">
@@ -300,6 +302,9 @@
 @section('script')
     <script>
         $(function() {
+            $('#printBtn').on('click', function() {
+                window.open('{{ route('reports.expense.pdf') }}?' + $.param(params()), '_blank');
+            });
             var mode = 'weekly',
                 offset = 0;
 

@@ -35,8 +35,12 @@ class JobController extends Controller
                 'estimated_hours',
                 'created_at'
             ])
-            ->where('status', '!=', 'archived')
+            // ->where('status', '!=', 'archived')
             ->orderByDesc('id');
+
+            if (!$request->include_archived) {
+                $query->where('status', '!=', 'archived');
+            }
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -308,6 +312,16 @@ class JobController extends Controller
         ]);
 
         return response()->json(['message' => 'Expense added successfully', 'data' => $expense], 201);
+    }
+
+    public function expenseJobs()
+    {
+        $jobs = ServiceJob::select('id', 'job_id', 'job_title')
+            ->orderByDesc('id')
+            ->get();
+        return response()->json([
+            'data' => $jobs,
+        ]);
     }
 
     public function updateExpense(Request $request, $id)

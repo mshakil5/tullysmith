@@ -63,6 +63,7 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::post('/', [JobController::class, 'store']);
         Route::get('/archived', [JobController::class, 'archived']);
         Route::get('/next-id', [JobController::class, 'nextJobId']);
+        Route::get('/expense-jobs', [JobController::class, 'expenseJobs']);
         Route::get('/{id}', [JobController::class, 'show']);
         Route::put('/{id}', [JobController::class, 'update']);
         Route::delete('/{id}', [JobController::class, 'destroy']);
