@@ -5,12 +5,42 @@
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css" rel="stylesheet">
 <style>
     .fc-event { cursor: pointer; }
-    .fc-event:hover {  opacity: 0.9; }
+    .fc-event:hover { opacity: 0.9; }
     .add-btn-cell { display: flex; justify-content: center; margin: 4px 4px 2px 4px; }
     .add-btn-cell button { border: 1.5px dashed #cbd5e1; color: #94a3b8; border-radius: 8px; width: 90%; font-size: 1rem; padding: 2px 0; background: transparent; transition: border-color 0.15s, color 0.15s; }
     .add-btn-cell button:hover { border-color: #405189; color: #405189; background: #f0f3fa; }
     .fc-day-past .add-btn-cell button { display: none; }
     #assignFormContainer { display: none; }
+
+    /* Fix select2 width to stay inside col-md-4 */
+    #assignForm .select2-container { width: 100% !important; }
+    #assignForm .select2-container .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+    }
+    #assignForm .select2-container .select2-selection__rendered {
+        line-height: normal;
+        padding-left: 10px;
+        color: #212529;
+        font-size: 0.875rem;
+    }
+    #assignForm .select2-container .select2-selection__arrow { height: 36px; }
+
+    /* Dropdown option styles */
+    .opt-wrap { position: relative; padding-right: 85px; min-height: 36px; }
+    .opt-line1 { font-weight: 600; font-size: 0.85rem; color: #212529; }
+    .opt-line2 { font-size: 0.75rem; margin-top: 1px; }
+    .opt-badge { position: absolute; top: 0; right: 0; padding: 2px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: 600; white-space: nowrap; }
+    .badge-busy     { background: #fee2e2; color: #dc3545; }
+    .badge-avail    { background: #d1fae5; color: #198754; }
+    .badge-assigned { background: #fef3c7; color: #d97706; }
+    .badge-free     { background: #d1fae5; color: #198754; }
+    .text-busy      { color: #dc3545; }
+    .text-avail     { color: #198754; }
+    .text-assigned  { color: #d97706; }
 </style>
 @endpush
 
@@ -18,65 +48,27 @@
 
 @if(isset($announcements) && $announcements->count())
 <div class="container-fluid mb-2">
-
     <div class="d-flex justify-content-end mb-2">
-        <button class="btn btn-light border position-relative"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#announcementsPanel">
-
+        <button class="btn btn-light border position-relative" type="button" data-bs-toggle="collapse" data-bs-target="#announcementsPanel">
             <i class="bx bx-bell fs-5"></i>
-
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                style="font-size:10px;">
-                {{ $announcements->count() }}
-            </span>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:10px;">{{ $announcements->count() }}</span>
         </button>
     </div>
-
     <div class="collapse show" id="announcementsPanel">
-
         @foreach($announcements as $ann)
-
-        @php
-        $color = match($ann->priority) {
-            'high'   => 'danger',
-            'medium' => 'warning',
-            'low'    => 'info',
-            default  => 'secondary',
-        };
-        @endphp
-
+        @php $color = match($ann->priority) { 'high' => 'danger', 'medium' => 'warning', 'low' => 'info', default => 'secondary' }; @endphp
         <div class="alert alert-{{ $color }} d-flex align-items-start gap-2 py-2 mb-2">
-
             <i class="bx bx-bell fs-5 mt-1"></i>
-
             <div class="flex-grow-1">
-
                 <div class="d-flex flex-wrap align-items-center gap-2">
-
                     <strong>{{ $ann->title }}</strong>
-
-                    @if($ann->job)
-                    <span class="badge bg-light text-dark border">
-                        {{ $ann->job->job_id }} — {{ $ann->job->job_title }}
-                    </span>
-                    @endif
-
+                    @if($ann->job)<span class="badge bg-light text-dark border">{{ $ann->job->job_id }} — {{ $ann->job->job_title }}</span>@endif
                 </div>
-
-                <div class="small mt-1 text-break">
-                    {!! nl2br(e($ann->content)) !!}
-                </div>
-
+                <div class="small mt-1 text-break">{!! nl2br(e($ann->content)) !!}</div>
             </div>
-
         </div>
-
         @endforeach
-
     </div>
-
 </div>
 @endif
 
@@ -141,9 +133,7 @@
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0" id="formCardTitle">New Assignment</h4>
-                    <a href="#" id="viewJobBtn" class="btn btn-sm btn-info mt-2" target="_blank" style="display:none;">
-                        View Job Details
-                    </a>
+                    <a href="#" id="viewJobBtn" class="btn btn-sm btn-info mt-2" target="_blank" style="display:none;">View Job Details</a>
                     <button type="button" class="btn btn-light btn-sm" id="assignFormCloseBtn">Cancel</button>
                 </div>
                 <div class="card-body">
@@ -153,19 +143,23 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Job <span class="text-danger">*</span></label>
-                                <select name="service_job_id" id="service_job_id" class="form-control select2">
+                                <select name="service_job_id" id="service_job_id" style="width:100%;">
                                     <option value="">Select job</option>
                                     @foreach($jobs as $job)
-                                        <option value="{{ $job->id }}">{{ $job->job_id }} — {{ $job->job_title }}</option>
+                                        <option value="{{ $job->id }}" data-label="{{ $job->job_id }} — {{ $job->job_title }}">
+                                            {{ $job->job_id }} — {{ $job->job_title }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Worker <span class="text-danger">*</span></label>
-                                <select name="worker_id" id="worker_id" class="form-control select2">
+                                <select name="worker_id" id="worker_id" style="width:100%;">
                                     <option value="">Select worker</option>
                                     @foreach($workers as $worker)
-                                        <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                                        <option value="{{ $worker->id }}" data-name="{{ $worker->name }}">
+                                            {{ $worker->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -193,12 +187,8 @@
 
 <div class="container-fluid">
     <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Job Assignments</h5>
-        </div>
-        <div class="card-body">
-            <div id="calendar"></div>
-        </div>
+        <div class="card-header"><h5 class="mb-0">Job Assignments</h5></div>
+        <div class="card-body"><div id="calendar"></div></div>
     </div>
 </div>
 
@@ -230,9 +220,7 @@
                             <div>
                                 <p class="mb-0 fw-semibold text-dark" style="font-size:0.88rem;">{{ $tj['job_title'] }}</p>
                                 <p class="mb-0 text-muted" style="font-size:0.78rem;">{{ $tj['job_id'] }} · {{ $tj['client_name'] }}</p>
-                                @if($tj['address'])
-                                    <p class="mb-0 text-muted"><i class="ri-map-pin-line me-1"></i>{{ $tj['address'] }}</p>
-                                @endif
+                                @if($tj['address'])<p class="mb-0 text-muted"><i class="ri-map-pin-line me-1"></i>{{ $tj['address'] }}</p>@endif
                             </div>
                             <div class="text-end ms-2">
                                 @if($tj['assigned_date'] === $todayStr)
@@ -244,15 +232,9 @@
                     @endforeach
                 @endif
             </div>
-
-            {{-- Weekly Calendar for Worker --}}
             <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Weekly Assignments</h5>
-                </div>
-                <div class="card-body">
-                    <div id="workerCalendar"></div>
-                </div>
+                <div class="card-header"><h5 class="mb-0">Weekly Assignments</h5></div>
+                <div class="card-body"><div id="workerCalendar"></div></div>
             </div>
         </div>
     </div>
@@ -269,34 +251,13 @@
                         <p class="fw-bold fs-6 mb-0" id="myModalJobTitle"></p>
                         <p class="text-muted small mb-0" id="myModalJobId"></p>
                     </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1 small">Worker</p>
-                        <p class="fw-semibold mb-0" id="myModalWorker"></p>
-                    </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1 small">Client</p>
-                        <p class="fw-semibold mb-0" id="myModalClient"></p>
-                    </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1 small">Date</p>
-                        <p class="fw-semibold mb-0" id="myModalDate"></p>
-                    </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1 small">Status</p>
-                        <p class="mb-0" id="myModalStatus"></p>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-muted mb-1 small">Address</p>
-                        <p class="fw-semibold mb-0" id="myModalAddress"></p>
-                    </div>
-                    <div class="col-6">
-                        <p class="text-muted mb-1 small">Priority</p>
-                        <p class="mb-0" id="myModalPriority"></p>
-                    </div>
-                    <div class="col-12" id="myModalNoteRow" style="display:none;">
-                        <p class="text-muted mb-1 small">Note</p>
-                        <p class="fw-semibold mb-0" id="myModalNote"></p>
-                    </div>
+                    <div class="col-6"><p class="text-muted mb-1 small">Worker</p><p class="fw-semibold mb-0" id="myModalWorker"></p></div>
+                    <div class="col-6"><p class="text-muted mb-1 small">Client</p><p class="fw-semibold mb-0" id="myModalClient"></p></div>
+                    <div class="col-6"><p class="text-muted mb-1 small">Date</p><p class="fw-semibold mb-0" id="myModalDate"></p></div>
+                    <div class="col-6"><p class="text-muted mb-1 small">Status</p><p class="mb-0" id="myModalStatus"></p></div>
+                    <div class="col-12"><p class="text-muted mb-1 small">Address</p><p class="fw-semibold mb-0" id="myModalAddress"></p></div>
+                    <div class="col-6"><p class="text-muted mb-1 small">Priority</p><p class="mb-0" id="myModalPriority"></p></div>
+                    <div class="col-12" id="myModalNoteRow" style="display:none;"><p class="text-muted mb-1 small">Note</p><p class="fw-semibold mb-0" id="myModalNote"></p></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -317,9 +278,10 @@ $(function () {
 
     $.ajaxSetup({ headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') } });
 
-    var isEdit = false;
-    var currentId = null;
-    var today = new Date().toISOString().split('T')[0];
+    var allAssignments  = @json($allAssignments ?? []);
+    var isEdit          = false;
+    var currentId       = null;
+    var today           = new Date().toISOString().split('T')[0];
 
     function isPast(dateStr) { return dateStr < today; }
 
@@ -335,8 +297,139 @@ $(function () {
     function statusBadge(val, map) {
         if (!val) return '-';
         let color = map[val] ?? 'secondary';
-        let textClass = color === 'warning' ? 'text-dark' : '';
-        return `<span class="badge bg-${color} ${textClass}">${val.charAt(0).toUpperCase() + val.slice(1)}</span>`;
+        let tc = color === 'warning' ? 'text-dark' : '';
+        return `<span class="badge bg-${color} ${tc}">${val.charAt(0).toUpperCase() + val.slice(1)}</span>`;
+    }
+
+    function workerTemplate(option) {
+        if (!option.id) return option.text;
+        var workerName      = $(option.element).data('name') || option.text;
+        var selectedDate    = $('#assigned_date').val();
+        var currentAssignId = $('#assignment_id').val();
+        var busy = allAssignments.find(function (a) {
+            return String(a.worker_id) === String(option.id)
+                && a.assigned_date === selectedDate
+                && String(a.id) !== String(currentAssignId);
+        });
+        var badge = busy ? '<span class="opt-badge badge-busy">Busy</span>' : '<span class="opt-badge badge-avail">Available</span>';
+        var line2 = busy
+            ? '<div class="opt-line2 text-busy">' + busy.job_id + ' — ' + busy.job_title + '</div>'
+            : '<div class="opt-line2 text-avail">Free on this date</div>';
+        return $('<div class="opt-wrap">' + badge + '<div class="opt-line1">' + workerName + '</div>' + line2 + '</div>');
+    }
+
+    function jobTemplate(option) {
+        if (!option.id) return option.text;
+        var label           = $(option.element).data('label') || option.text;
+        var currentAssignId = $('#assignment_id').val();
+        var assigned = allAssignments.filter(function (a) {
+            return String(a.service_job_id) === String(option.id)
+                && String(a.id) !== String(currentAssignId);
+        });
+        var badge = assigned.length > 0 ? '<span class="opt-badge badge-assigned">Assigned</span>' : '<span class="opt-badge badge-free">Not Assigned</span>';
+        var names = assigned.map(function (a) { return a.worker_name; }).join(', ');
+        var line2 = assigned.length > 0
+            ? '<div class="opt-line2 text-assigned">' + names + '</div>'
+            : '<div class="opt-line2 text-avail">No worker assigned yet</div>';
+        return $('<div class="opt-wrap">' + badge + '<div class="opt-line1">' + label + '</div>' + line2 + '</div>');
+    }
+
+    // KEY FIX: dropdownParent: $('#assignForm') keeps dropdown inside the form
+    // so it inherits the correct col-md-4 width instead of going full page width
+    $('#service_job_id').select2({
+        width: '100%',
+        dropdownParent: $('#assignForm'),
+        placeholder: 'Select job',
+        templateResult: jobTemplate,
+        templateSelection: function (o) { return $(o.element).data('label') || o.text; }
+    });
+
+    $('#worker_id').select2({
+        width: '100%',
+        dropdownParent: $('#assignForm'),
+        placeholder: 'Select worker',
+        templateResult: workerTemplate,
+        templateSelection: function (o) { return $(o.element).data('name') || o.text; }
+    });
+
+    $('#assigned_date').on('change', function () {
+        var job    = $('#service_job_id').val();
+        var worker = $('#worker_id').val();
+        $('#service_job_id').val(null).trigger('change');
+        $('#worker_id').val(null).trigger('change');
+        if (job)    $('#service_job_id').val(job).trigger('change');
+        if (worker) $('#worker_id').val(worker).trigger('change');
+    });
+
+    if (document.getElementById('calendar')) {
+        var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            initialView: 'dayGridWeek',
+            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
+            firstDay: 1, height: 'auto',
+            events: { url: "{{ route('assignment.data') }}", method: 'GET' },
+            dayCellDidMount: function (info) {
+                if (isPast(info.dateStr)) return;
+                var frame = info.el.querySelector('.fc-daygrid-day-frame');
+                var wrapper = document.createElement('div'); wrapper.className = 'add-btn-cell';
+                var btn = document.createElement('button'); btn.textContent = '+';
+                btn.addEventListener('click', function () { openFormNew(info.date); });
+                wrapper.appendChild(btn); frame.prepend(wrapper);
+                var msg = document.createElement('div'); msg.className = 'no-assignment-msg';
+                msg.style.cssText = 'font-size:11px;color:#94a3b8;text-align:center;margin-top:25px;';
+                msg.innerText = 'No Assignment'; frame.appendChild(msg);
+            },
+            eventClick: function (info) { openFormEdit(info.event.id, info.event.extendedProps); },
+            eventDidMount: function (info) {
+                var p = info.event.extendedProps;
+                info.el.setAttribute('title', p.worker_name + ' | ' + p.job_title);
+                var dayEl = info.el.closest('.fc-daygrid-day-frame');
+                if (dayEl) { var m = dayEl.querySelector('.no-assignment-msg'); if (m) m.style.display = 'none'; }
+            }
+        });
+        calendar.render();
+    }
+
+    if (document.getElementById('workerCalendar')) {
+        var workerCalendar = new FullCalendar.Calendar(document.getElementById('workerCalendar'), {
+            initialView: 'dayGridWeek',
+            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
+            firstDay: 1, height: 'auto',
+            events: @json($myAssignments ?? []),
+            eventClick: function (info) { openModal(info.event.extendedProps); }
+        });
+        workerCalendar.render();
+    }
+
+    function openFormNew(date) {
+        isEdit = false; currentId = null;
+        $('#assignForm')[0].reset();
+        $('#assignment_id').val('');
+        var offset = date.getTimezoneOffset();
+        var local  = new Date(date.getTime() - offset * 60 * 1000);
+        $('#assigned_date').val(local.toISOString().split('T')[0]);
+        $('#service_job_id').val(null).trigger('change');
+        $('#worker_id').val(null).trigger('change');
+        $('#formCardTitle').text('New Assignment — ' + formatDateLabel(date));
+        $('#assignSaveBtn').text('Save Assignment');
+        $('#assignDeleteBtn').css('display', 'none');
+        $('#viewJobBtn').hide();
+        $('#assignFormContainer').show(200);
+        $('html, body').animate({ scrollTop: 0 }, 300);
+    }
+
+    function openFormEdit(id, p) {
+        isEdit = true; currentId = id;
+        $('#assignment_id').val(id);
+        $('#assigned_date').val(p.assigned_date);
+        $('#service_job_id').val(p.service_job_id).trigger('change');
+        $('#worker_id').val(p.worker_id).trigger('change');
+        $('#note').val(p.note ?? '');
+        $('#formCardTitle').text('Edit Assignment — ' + formatDateLabel(p.assigned_date));
+        $('#assignSaveBtn').text('Update Assignment');
+        $('#assignDeleteBtn').css('display', 'inline-block');
+        $('#viewJobBtn').attr('href', '/admin/service-job/' + p.service_job_id).show();
+        $('#assignFormContainer').show(200);
+        $('html, body').animate({ scrollTop: 0 }, 300);
     }
 
     function openModal(p) {
@@ -353,125 +446,24 @@ $(function () {
         $('#myAssignmentModal').modal('show');
     }
 
-    if (document.getElementById('calendar')) {
-        var calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridWeek',
-            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
-            firstDay: 1,
-            height: 'auto',
-            events: { url: "{{ route('assignment.data') }}", method: 'GET' },
-            dayCellDidMount: function (info) {
-                if (isPast(info.dateStr)) return;
-                var frame = info.el.querySelector('.fc-daygrid-day-frame');
-                var wrapper = document.createElement('div');
-                wrapper.className = 'add-btn-cell';
-                var btn = document.createElement('button');
-                btn.textContent = '+';
-                btn.addEventListener('click', function () { openFormNew(info.date); });
-                wrapper.appendChild(btn);
-                frame.prepend(wrapper);
-                var emptyMsg = document.createElement('div');
-                emptyMsg.className = 'no-assignment-msg';
-                emptyMsg.style.cssText = 'font-size:11px;color:#94a3b8;text-align:center;margin-top:25px;';
-                emptyMsg.innerText = 'No Assignment';
-                frame.appendChild(emptyMsg);
-            },
-            eventClick: function (info) {
-                openFormEdit(info.event.id, info.event.extendedProps);
-            },
-            eventDidMount: function (info) {
-                var p = info.event.extendedProps;
-                info.el.setAttribute('title', p.worker_name + ' | ' + p.job_title);
-                var dayEl = info.el.closest('.fc-daygrid-day-frame');
-                if (dayEl) { var msg = dayEl.querySelector('.no-assignment-msg'); if (msg) msg.style.display = 'none'; }
-            }
-        });
-        calendar.render();
-    }
-
-    if (document.getElementById('myCalendar')) {
-        var myCalendar = new FullCalendar.Calendar(document.getElementById('myCalendar'), {
-            initialView: 'dayGridMonth',
-            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
-            height: 'auto',
-            firstDay: 1,
-            events: @json($myAssignments ?? []),
-            eventClick: function (info) { openModal(info.event.extendedProps); }
-        });
-        myCalendar.render();
-    }
-
-    if (document.getElementById('workerCalendar')) {
-        var workerCalendar = new FullCalendar.Calendar(document.getElementById('workerCalendar'), {
-            initialView: 'dayGridWeek',
-            headerToolbar: { left: 'prev', center: 'title', right: 'today next' },
-            firstDay: 1,
-            height: 'auto',
-            events: @json($myAssignments ?? []),
-            eventClick: function (info) { openModal(info.event.extendedProps); }
-        });
-        workerCalendar.render();
-    }
-
-    function openFormNew(date) {
-        isEdit = false;
-        currentId = null;
-        $('#assignForm')[0].reset();
-        $('#assignment_id').val('');
-        const offset = date.getTimezoneOffset();
-        const localDate = new Date(date.getTime() - offset * 60 * 1000);
-        $('#assigned_date').val(localDate.toISOString().split('T')[0]);
-        $('#service_job_id').val(null).trigger('change');
-        $('#worker_id').val(null).trigger('change');
-        $('#formCardTitle').text('New Assignment — ' + formatDateLabel(date));
-        $('#assignSaveBtn').text('Save Assignment');
-        $('#assignDeleteBtn').css('display', 'none');
-        $('#viewJobBtn').hide();
-        $('#assignFormContainer').show(200);
-        $('html, body').animate({ scrollTop: 0 }, 300);
-    }
-
-    function openFormEdit(id, p) {
-        isEdit = true;
-        currentId = id;
-        $('#assignment_id').val(id);
-        $('#assigned_date').val(p.assigned_date);
-        $('#service_job_id').val(p.service_job_id).trigger('change');
-        $('#worker_id').val(p.worker_id).trigger('change');
-        $('#note').val(p.note ?? '');
-        $('#formCardTitle').text('Edit Assignment — ' + formatDateLabel(p.assigned_date));
-        $('#assignSaveBtn').text('Update Assignment');
-        $('#assignDeleteBtn').css('display', 'inline-block');
-        $('#viewJobBtn').attr('href', '/admin/service-job/' + p.service_job_id).show();
-        $('#assignFormContainer').show(200);
-        $('html, body').animate({ scrollTop: 0 }, 300);
-    }
-
     $('#assignFormCloseBtn').click(function () {
         $('#assignFormContainer').hide(200);
         $('#assignForm')[0].reset();
-        isEdit = false;
-        currentId = null;
+        isEdit = false; currentId = null;
     });
 
     $('#assignSaveBtn').click(function () {
-        var fd = new FormData(document.getElementById('assignForm'));
+        var fd  = new FormData(document.getElementById('assignForm'));
         var url = isEdit
             ? "{{ url('/admin/dashboard/assignment') }}/" + currentId + "/update"
             : "{{ route('assignment.store') }}";
-
         $.ajax({
-            url: url,
-            method: 'POST',
-            data: fd,
-            contentType: false,
-            processData: false,
+            url: url, method: 'POST', data: fd, contentType: false, processData: false,
             success: function (res) {
                 showSuccess(res.message);
                 $('#assignFormContainer').hide(200);
                 $('#assignForm')[0].reset();
-                isEdit = false;
-                currentId = null;
+                isEdit = false; currentId = null;
                 calendar.refetchEvents();
             },
             error: function (xhr) {
@@ -484,7 +476,6 @@ $(function () {
 
     $('#assignDeleteBtn').click(function () {
         if (!currentId) return;
-
         showConfirm('Delete this assignment?').then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
@@ -494,13 +485,10 @@ $(function () {
                         showSuccess(res.message);
                         $('#assignFormContainer').hide(200);
                         $('#assignForm')[0].reset();
-                        isEdit = false;
-                        currentId = null;
+                        isEdit = false; currentId = null;
                         calendar.refetchEvents();
                     },
-                    error: function (xhr) {
-                        showError(xhr.responseJSON?.message ?? 'Error');
-                    }
+                    error: function (xhr) { showError(xhr.responseJSON?.message ?? 'Error'); }
                 });
             }
         });

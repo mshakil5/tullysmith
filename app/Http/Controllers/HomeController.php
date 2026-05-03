@@ -36,7 +36,7 @@ class HomeController extends Controller
 
         $totalWorker       = User::byRole('Worker')->count();
         $activeJobs        = ServiceJob::where('status', 'active')->count();
-        $draftJobs       = ServiceJob::where('status', 'draft')->count();
+        $draftJobs         = ServiceJob::where('status', 'draft')->count();
         $todaysAssignments = JobAssignment::where('assigned_date', $today)->count();
 
         $jobs    = ServiceJob::whereIn('status', ['active', 'pending', 'completed'])->select('id', 'job_title', 'job_id')->latest()->get();
@@ -89,9 +89,23 @@ class HomeController extends Controller
             'textColor'       => '#ffffff',
         ]));
 
+        // ── NEW: all assignments for live dropdown status ──
+        $allAssignments = JobAssignment::with([
+            'job:id,job_title,job_id',
+            'worker:id,name',
+        ])->get()->map(fn($a) => [
+            'id'             => $a->id,
+            'service_job_id' => $a->service_job_id,
+            'worker_id'      => $a->worker_id,
+            'assigned_date'  => $a->assigned_date,
+            'worker_name'    => $a->worker->name ?? '-',
+            'job_title'      => $a->job->job_title ?? '-',
+            'job_id'         => $a->job->job_id ?? '-',
+        ]);
+
         return view('admin.pages.dashboard', compact(
             'totalWorker', 'activeJobs', 'draftJobs', 'todaysAssignments',
-            'myAssignments', 'jobs', 'workers', 'announcements'
+            'myAssignments', 'jobs', 'workers', 'announcements', 'allAssignments'
         ));
     }
     
