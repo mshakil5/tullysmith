@@ -146,9 +146,9 @@ class HomeController extends Controller
             'note'           => 'nullable|string|max:500',
         ]);
 
-        if ($this->hasConflict($request->worker_id, $request->assigned_date)) {
-            return response()->json(['message' => 'This worker is already assigned on the selected date.'], 422);
-        }
+        // if ($this->hasConflict($request->worker_id, $request->assigned_date)) {
+        //     return response()->json(['message' => 'This worker is already assigned on the selected date.'], 422);
+        // }
 
         $assignment = JobAssignment::create($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
 
@@ -171,9 +171,9 @@ class HomeController extends Controller
             'note'           => 'nullable|string|max:500',
         ]);
 
-        if ($this->hasConflict($request->worker_id, $request->assigned_date, $id)) {
-            return response()->json(['message' => 'This worker is already assigned on the selected date.'], 422);
-        }
+        // if ($this->hasConflict($request->worker_id, $request->assigned_date, $id)) {
+        //     return response()->json(['message' => 'This worker is already assigned on the selected date.'], 422);
+        // }
 
         $assignment = JobAssignment::findOrFail($id);
         $assignment->update($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
