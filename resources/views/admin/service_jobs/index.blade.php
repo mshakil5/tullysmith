@@ -352,7 +352,9 @@ $(function () {
         $.get("{{ url('/admin/service-job') }}/" + id + "/edit", {}, function (res) {
             $('#codeid').val(res.id);
             $('#job_title').val(res.job_title);
+            skipClientChange = true;
             $('#client_id').val(res.client_id).trigger('change');
+            skipClientChange = false;
             $('#address_line1').val(res.address_line1);
             $('#address_line2').val(res.address_line2);
             $('#city').val(res.city);
@@ -375,7 +377,10 @@ $(function () {
     });
     @endif
 
+    var skipClientChange = false;
+
     $('#client_id').on('change', function () {
+        if (skipClientChange) return;
         var clientId = $(this).val();
         if (!clientId) return;
 
