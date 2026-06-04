@@ -44,9 +44,12 @@ class ClientController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'primary_contact' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'nullable|email|unique:users,email',
             'phone' => 'required|string|max:20',
-            'address' => 'nullable|string|max:500',
+            'address_line1' => 'nullable|string',
+            'address_line2' => 'nullable|string',
+            'city' => 'nullable|string',
+            'postcode' => 'nullable|string',
             'additional_info' => 'nullable|string',
         ]);
 
@@ -55,7 +58,10 @@ class ClientController extends Controller
             'primary_contact' => $request->primary_contact,
             'email' => $request->email,
             'phone' => $request->phone,
-            'address' => $request->address,
+            'address_line1' => $request->address_line1,
+            'address_line2' => $request->address_line2,
+            'city' => $request->city,
+            'postcode' => $request->postcode,
             'additional_info' => $request->additional_info,
             'password' => null,
             'user_type' => 0,
@@ -77,9 +83,12 @@ class ClientController extends Controller
             'id' => 'required|exists:users,id',
             'name' => 'required|string|max:255',
             'primary_contact' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $request->id,
+            'email' => 'nullable|email|unique:users,email,' . $request->id,
             'phone' => 'required|string|max:20',
-            'address' => 'nullable|string|max:500',
+            'address_line1' => 'nullable|string',
+            'address_line2' => 'nullable|string',
+            'city' => 'nullable|string',
+            'postcode' => 'nullable|string',
             'additional_info' => 'nullable|string',
         ]);
 
@@ -89,7 +98,10 @@ class ClientController extends Controller
         $user->primary_contact = $request->primary_contact;
         $user->email = $request->email;
         $user->phone = $request->phone;
-        $user->address = $request->address;
+        $user->address_line1 = $request->address_line1;
+        $user->address_line2 = $request->address_line2;
+        $user->city = $request->city;
+        $user->postcode = $request->postcode;
         $user->additional_info = $request->additional_info;
 
         $user->save();

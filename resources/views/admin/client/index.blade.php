@@ -31,16 +31,28 @@
                                     <input type="text" id="primary_contact" name="primary_contact" class="form-control">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <label class="form-label">Email</label>
                                     <input type="email" id="email" name="email" class="form-control">
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label">Phone <span class="text-danger">*</span></label>
                                     <input type="text" id="phone" name="phone" class="form-control">
                                 </div>
-                                <div class="col-md-12">
-                                    <label class="form-label">Address</label>
-                                    <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                                <div class="col-md-6">
+                                    <label class="form-label">Address Line 1</label>
+                                    <input type="text" class="form-control" id="address_line1" name="address_line1">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Address Line 2</label>
+                                    <input type="text" class="form-control" id="address_line2" name="address_line2">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" name="city">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">PostCode</label>
+                                    <input type="text" class="form-control" id="postcode" name="postcode">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label">Additional Info</label>
@@ -194,7 +206,10 @@
                     $('#email').val(res.email);
                     $('#phone').val(res.phone);
                     $('#primary_contact').val(res.primary_contact);
-                    $('#address').val(res.address);
+                    $('#address_line1').val(res.address_line1);
+                    $('#address_line2').val(res.address_line2);
+                    $('#city').val(res.city);
+                    $('#postcode').val(res.postcode);
                     $(".summernote").summernote('code', res.additional_info ?? '');
                     $('#password, #password_confirmation').prop('required', false);
                     $('#cardTitle').text('Update Client');

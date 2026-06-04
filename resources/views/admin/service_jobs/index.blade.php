@@ -180,12 +180,28 @@
                             <input type="text" name="name" id="qc_name" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <label class="form-label">Email</label>
                             <input type="email" name="email" id="qc_email" class="form-control">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Phone <span class="text-danger">*</span></label>
                             <input type="text" name="phone" id="qc_phone" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Address Line 1</label>
+                            <input type="text" name="address_line1" id="qc_address_line1" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Address Line 2</label>
+                            <input type="text" name="address_line2" id="qc_address_line2" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" id="qc_city" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Postcode</label>
+                            <input type="text" name="postcode" id="qc_postcode" class="form-control">
                         </div>
                     </div>
                 </form>
@@ -228,6 +244,13 @@ $(function () {
             success: function (res) {
                 var newOption = new Option(res.client.name, res.client.id, true, true);
                 $('#client_id').append(newOption).trigger('change');
+
+                // Auto-fill address fields
+                $('#address_line1').val(res.client.address_line1 ?? '');
+                $('#address_line2').val(res.client.address_line2 ?? '');
+                $('#city').val(res.client.city ?? '');
+                $('#postcode').val(res.client.postcode ?? '');
+
                 $('#quickAddClientModal').modal('hide');
                 showSuccess(res.message);
             },
@@ -351,6 +374,18 @@ $(function () {
         });
     });
     @endif
+
+    $('#client_id').on('change', function () {
+        var clientId = $(this).val();
+        if (!clientId) return;
+
+        $.get("{{ url('/admin/client') }}/" + clientId + "/edit", function (res) {
+            $('#address_line1').val(res.address_line1 ?? '');
+            $('#address_line2').val(res.address_line2 ?? '');
+            $('#city').val(res.city ?? '');
+            $('#postcode').val(res.postcode ?? '');
+        });
+    });
 
 });
 </script>

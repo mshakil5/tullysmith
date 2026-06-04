@@ -10,7 +10,7 @@ class ClientController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::select(['id', 'name', 'email', 'phone', 'primary_contact', 'address', 'additional_info', 'status'])
+        $query = User::select(['id', 'name', 'email', 'phone', 'primary_contact', 'address_line1', 'address_line2', 'city', 'postcode', 'additional_info', 'status'])
             ->where('user_type', 0)
             ->orderByDesc('id');
 
@@ -32,9 +32,12 @@ class ClientController extends Controller
         $request->validate([
             'name'            => 'required|string|max:255',
             'primary_contact' => 'nullable|string|max:255',
-            'email'           => 'required|email|unique:users,email',
+            'email'           => 'nullable|email|unique:users,email',
             'phone'           => 'required|string|max:20',
-            'address'         => 'nullable|string|max:500',
+            'address_line1'   => 'nullable|string|max:255',
+            'address_line2'   => 'nullable|string|max:255',
+            'city'            => 'nullable|string|max:100',
+            'postcode'        => 'nullable|string|max:20',
             'additional_info' => 'nullable|string',
         ]);
 
@@ -43,7 +46,10 @@ class ClientController extends Controller
             'primary_contact' => $request->primary_contact,
             'email'           => $request->email,
             'phone'           => $request->phone,
-            'address'         => $request->address,
+            'address_line1'   => $request->address_line1,
+            'address_line2'   => $request->address_line2,
+            'city'            => $request->city,
+            'postcode'        => $request->postcode,
             'additional_info' => $request->additional_info,
             'password'        => null,
             'user_type'       => 0,
@@ -64,14 +70,20 @@ class ClientController extends Controller
         $request->validate([
             'name'            => 'required|string|max:255',
             'primary_contact' => 'nullable|string|max:255',
-            'email'           => 'required|email|unique:users,email,' . $id,
+            'email'           => 'nullable|email|unique:users,email,' . $id,
             'phone'           => 'required|string|max:20',
-            'address'         => 'nullable|string|max:500',
+            'address_line1'   => 'nullable|string|max:255',
+            'address_line2'   => 'nullable|string|max:255',
+            'city'            => 'nullable|string|max:100',
+            'postcode'        => 'nullable|string|max:20',
             'additional_info' => 'nullable|string',
         ]);
 
         $client = User::where('user_type', 0)->findOrFail($id);
-        $client->update($request->only(['name', 'primary_contact', 'email', 'phone', 'address', 'additional_info']));
+        $client->update($request->only([
+            'name', 'primary_contact', 'email', 'phone',
+            'address_line1', 'address_line2', 'city', 'postcode', 'additional_info'
+        ]));
 
         return response()->json(['message' => 'Client updated successfully.', 'client' => $client]);
     }
@@ -88,9 +100,7 @@ class ClientController extends Controller
 
         $client->delete();
 
-        return response()->json([
-            'message' => 'Client deleted successfully.'
-        ]);
+        return response()->json(['message' => 'Client deleted successfully.']);
     }
 
     public function toggleStatus(Request $request)

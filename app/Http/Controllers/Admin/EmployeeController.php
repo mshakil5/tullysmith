@@ -53,7 +53,7 @@ class EmployeeController extends Controller
             'primary_contact' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20',
-            'address' => 'nullable|string|max:500',
+            'address_line1' => 'nullable|string|max:500',
             'additional_info' => 'nullable|string',
             'password' => 'required|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
@@ -64,7 +64,7 @@ class EmployeeController extends Controller
             'primary_contact' => $request->primary_contact,
             'email' => $request->email,
             'phone' => $request->phone,
-            'address' => $request->address,
+            'address_line1' => $request->address_line1,
             'additional_info' => $request->additional_info,
             'password' => Hash::make($request->password),
             'user_type' => 1,
@@ -92,7 +92,7 @@ class EmployeeController extends Controller
             'primary_contact' => 'nullable|string|max:255',
             'email' => 'required|email|unique:users,email,' . $request->id,
             'phone' => 'required|string|max:20',
-            'address' => 'nullable|string|max:500',
+            'address_line1' => 'nullable|string|max:500',
             'additional_info' => 'nullable|string',
             'password' => 'nullable|string|min:6|confirmed',
             'role_id' => 'required|exists:roles,id',
@@ -104,7 +104,7 @@ class EmployeeController extends Controller
         $user->primary_contact = $request->primary_contact;
         $user->email = $request->email;
         $user->phone = $request->phone;
-        $user->address = $request->address;
+        $user->address_line1 = $request->address_line1;
         $user->additional_info = $request->additional_info;
         if ($request->password) $user->password = Hash::make($request->password);
         $user->save();

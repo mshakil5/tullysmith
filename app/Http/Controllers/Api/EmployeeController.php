@@ -12,7 +12,7 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::select(['id', 'name', 'email', 'phone', 'primary_contact', 'address', 'status'])
+        $query = User::select(['id', 'name', 'email', 'phone', 'primary_contact', 'address_line1', 'status'])
             ->where('user_type', 1)
             ->with('roles')
             ->orderByDesc('id');
@@ -50,7 +50,7 @@ class EmployeeController extends Controller
             'primary_contact' => 'nullable|string|max:255',
             'email'           => 'required|email|unique:users,email',
             'phone'           => 'required|string|max:20',
-            'address'         => 'nullable|string|max:500',
+            'address_line1'   => 'nullable|string|max:500',
             'password'        => 'required|string|min:6',
             'role_id'         => 'required|exists:roles,id',
         ]);
@@ -60,7 +60,7 @@ class EmployeeController extends Controller
             'primary_contact' => $request->primary_contact,
             'email'           => $request->email,
             'phone'           => $request->phone,
-            'address'         => $request->address,
+            'address_line1'   => $request->address_line1,
             'password'        => Hash::make($request->password),
             'user_type'       => 1,
             'status'          => 1,
@@ -87,7 +87,7 @@ class EmployeeController extends Controller
             'primary_contact' => 'nullable|string|max:255',
             'email'           => 'required|email|unique:users,email,' . $id,
             'phone'           => 'required|string|max:20',
-            'address'         => 'nullable|string|max:500',
+            'address_line1'   => 'nullable|string|max:500',
             'password'        => 'nullable|string|min:6',
             'role_id'         => 'required|exists:roles,id',
         ]);
@@ -97,7 +97,7 @@ class EmployeeController extends Controller
         $user->primary_contact = $request->primary_contact;
         $user->email           = $request->email;
         $user->phone           = $request->phone;
-        $user->address         = $request->address;
+        $user->address_line1   = $request->address_line1;
         if ($request->password) $user->password = Hash::make($request->password);
         $user->save();
 
@@ -125,9 +125,7 @@ class EmployeeController extends Controller
 
         $user->delete();
 
-        return response()->json([
-            'message' => 'Employee deleted successfully.'
-        ]);
+        return response()->json(['message' => 'Employee deleted successfully.']);
     }
 
     public function toggleStatus(Request $request)

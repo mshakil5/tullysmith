@@ -40,7 +40,7 @@
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label">Address</label>
-                                    <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                                    <textarea class="form-control" id="address_line1" name="address_line1" rows="2"></textarea>
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label">Additional Info</label>
@@ -208,7 +208,7 @@
                     $('#email').val(res.email);
                     $('#phone').val(res.phone);
                     $('#primary_contact').val(res.primary_contact);
-                    $('#address').val(res.address);
+                    $('#address_line1').val(res.address_line1);
                     $(".summernote").summernote('code', res.additional_info ?? '');
                     $('#role_id').val(res.role_id ?? '');
                     $('#password, #password_confirmation').prop('required', false);
