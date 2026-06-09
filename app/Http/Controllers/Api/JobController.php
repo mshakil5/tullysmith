@@ -561,6 +561,7 @@ class JobController extends Controller
             'amount'         => in_array($request->type, ['invoice', 'receipt']) ? $request->amount : null,
             'file'           => '/uploads/documents/' . $fileName,
             'status'         => $user->creation_status,
+            'invoice_date' => in_array($request->type, ['invoice', 'receipt']) ? date('Y-m-d') : null,
         ]);
 
         $isWorker = $user->hasRole('worker');
