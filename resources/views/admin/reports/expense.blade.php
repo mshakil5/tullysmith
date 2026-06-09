@@ -376,7 +376,7 @@
                         var rowClass = isNewDate && i > 0 ? 'date-separator' : '';
                         html += '<tr class="' + rowClass + '">' +
                             '<td class="text-muted small">' + (i + 1) + '</td>' +
-                            '<td class="small fw-semibold">' + (isNewDate ? e.date : '') + '</td>';
+                            '<td class="small fw-semibold">' + e.date + '</td>';
                         if (!isJobFiltered) {
                             html += '<td><span class="fw-semibold">' + e.job +
                                 '</span><div class="text-muted small">' + e.job_id + '</div></td>';
