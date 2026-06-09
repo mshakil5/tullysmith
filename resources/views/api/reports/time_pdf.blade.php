@@ -262,7 +262,7 @@
                 @forelse($logs as $i => $l)
                     <tr class="{{ $l['date'] !== $prevDate && $i > 0 ? 'date-separator' : '' }}">
                         <td class="muted txt-center">{{ $i + 1 }}</td>
-                        <td class="fw text-dark">{{ $l['date'] !== $prevDate ? $l['date'] : '' }}</td>
+                        <td class="fw text-dark">{{ $l['date'] }}</td>
                         @if (!$workerFiltered)
                             <td>{{ $l['worker'] }}</td>
                         @endif

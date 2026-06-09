@@ -322,7 +322,7 @@
                 @forelse($answers as $i => $a)
                     <tr class="{{ $a['date'] !== $prevDate && $i > 0 ? 'date-separator' : '' }}">
                         <td class="muted txt-center">{{ $i + 1 }}</td>
-                        <td class="fw text-dark">{{ $a['date'] !== $prevDate ? $a['date'] : '' }}</td>
+                        <td class="fw text-dark">{{ $a['date'] }}</td>
                         <td class="muted">{{ $a['time'] }}</td>
                         @if (!$workerFiltered)
                             <td>{{ $a['worker'] }}</td>

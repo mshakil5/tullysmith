@@ -244,7 +244,7 @@
       @forelse($expenses as $i => $e)
         <tr class="{{ $e['date'] !== $prevDate && $i > 0 ? 'date-separator' : '' }}">
           <td class="muted txt-center">{{ $i + 1 }}</td>
-          <td class="fw text-dark">{{ $e['date'] !== $prevDate ? $e['date'] : '' }}</td>
+          <td class="fw text-dark">{{ $e['date'] }}</td>
           @if(!$jobFiltered)
             <td>
               <div class="fw text-dark">{{ $e['job'] }}</div>
