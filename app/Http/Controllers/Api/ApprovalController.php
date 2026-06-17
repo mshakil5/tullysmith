@@ -76,16 +76,17 @@ class ApprovalController extends Controller
         ]);
 
         $mappedDocuments = collect($documents->items())->map(fn($d) => [
-            'id'         => $d->id,
-            'type'       => 'document',
-            'title'      => $d->title ?? ucfirst($d->type),
-            'job'        => $d->job->job_title ?? '',
-            'created_by' => $d->user->name ?? 'Unknown',
-            'created_at' => $d->created_at->format('M d, H:i'),
-            'status'     => $d->status,
-            'doc_type'   => $d->type,
-            'amount'     => $d->amount,
-            'file_url'   => $d->file ? asset($d->file) : null,
+            'id'          => $d->id,
+            'type'        => 'document',
+            'title'       => $d->title ?? ucfirst($d->type),
+            'job'         => $d->job->job_title ?? '',
+            'created_by'  => $d->user->name ?? 'Unknown',
+            'created_at'  => $d->created_at->format('M d, H:i'),
+            'status'      => $d->status,
+            'doc_type'    => $d->type,
+            'show_amount' => in_array($d->type, ['receipt', 'invoice']),
+            'amount'      => in_array($d->type, ['receipt', 'invoice']) ? $d->amount : null,
+            'file_url'    => $d->file ? asset($d->file) : null,
         ]);
 
         $items = $mappedChecklists->concat($mappedTimelogs)->concat($mappedServiceJobs)->concat($mappedDocuments)
@@ -160,6 +161,8 @@ class ApprovalController extends Controller
         }
         if ($type === 'document') {
             $item = Document::with(['user:id,name', 'job:id,job_title'])->findOrFail($id);
+            $docType    = $item->type;
+            $showAmount = in_array($docType, ['receipt', 'invoice']);
 
             return response()->json([
                 'id'               => $item->id,
@@ -169,8 +172,9 @@ class ApprovalController extends Controller
                 'submitted_by'     => $item->user->name ?? '',
                 'status'           => $item->status,
                 'rejection_reason' => $item->rejection_reason,
-                'doc_type'         => $item->type,
-                'amount'           => $item->amount,
+                'doc_type'         => $docType,
+                'show_amount'      => $showAmount,
+                'amount'           => $showAmount ? $item->amount : null,
                 'file_url'         => $item->file ? asset($item->file) : null,
             ]);
         } else {
@@ -219,6 +223,12 @@ class ApprovalController extends Controller
             ]);
         } elseif ($type === 'timelog') {
             $item = TimeLog::findOrFail($id);
+            $item->update([
+                'status'           => $request->action,
+                'rejection_reason' => $request->action === 'rejected' ? $request->rejection_reason : null,
+            ]);
+        } elseif ($type === 'document') {
+            $item = Document::findOrFail($id);
             $item->update([
                 'status'           => $request->action,
                 'rejection_reason' => $request->action === 'rejected' ? $request->rejection_reason : null,
