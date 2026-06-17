@@ -152,11 +152,16 @@ class HomeController extends Controller
 
         $assignment = JobAssignment::create($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
 
+        $serviceJob = ServiceJob::find($request->service_job_id);
+
         app(NotificationService::class)->sendToUser(
             userId: $request->worker_id,
             title:  'New Job Assigned',
-            body: "You have been assigned a new job (ID: " . ServiceJob::find($request->service_job_id)->job_id . ") on " . Carbon::parse($request->assigned_date)->format('d F Y') . ".",
+            body: "You have been assigned a new job (ID: " . $serviceJob->job_id . ") on " . Carbon::parse($request->assigned_date)->format('d F Y') . ".",
             type:   'job',
+            data: [
+                'job_id' => (string) $request->service_job_id 
+            ],
         );
 
         return response()->json(['message' => 'Assignment created successfully.']);
@@ -183,6 +188,9 @@ class HomeController extends Controller
             title:  'Job Updated',
             body: "Your job assignment (ID: " . ServiceJob::find($request->service_job_id)->job_id . ") on " . Carbon::parse($request->assigned_date)->format('d F Y') . " has been updated.",
             type:   'job',
+            data: [
+                'job_id' => (string) $request->service_job_id 
+            ],
         );
 
         return response()->json(['message' => 'Assignment updated successfully.']);

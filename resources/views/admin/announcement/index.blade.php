@@ -121,7 +121,11 @@
         });
 
         $('#addBtn').click(function () {
-            var isCreate = $(this).val() === 'Create';
+            var $btn = $(this);
+            var originalText = $btn.text();
+            $btn.prop('disabled', true).text('Working...');
+
+            var isCreate = $btn.val() === 'Create';
             var url = isCreate ? "{{ route('announcement.store') }}" : "{{ route('announcement.update') }}";
             var fd = new FormData(document.getElementById('createThisForm'));
             if (!isCreate) fd.append('id', $('#codeid').val());
@@ -144,6 +148,9 @@
                         let first = Object.values(xhr.responseJSON.errors)[0][0];
                         showError(first);
                     } else showError(xhr.responseJSON?.message ?? 'Error');
+                },
+                complete: function () {
+                    $btn.prop('disabled', false).text(originalText);
                 }
             });
         });

@@ -453,6 +453,11 @@ $(function () {
     });
 
     $('#assignSaveBtn').click(function () {
+        var $btn = $(this);
+        var originalText = $btn.text();
+
+        $btn.prop('disabled', true).text('Sending notification...');
+
         var fd  = new FormData(document.getElementById('assignForm'));
         var url = isEdit
             ? "{{ url('/admin/dashboard/assignment') }}/" + currentId + "/update"
@@ -465,11 +470,18 @@ $(function () {
                 $('#assignForm')[0].reset();
                 isEdit = false; currentId = null;
                 calendar.refetchEvents();
+
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1500);
             },
             error: function (xhr) {
                 if (xhr.status === 422 && xhr.responseJSON?.errors) {
                     showError(Object.values(xhr.responseJSON.errors)[0][0]);
                 } else showError(xhr.responseJSON?.message ?? 'Error');
+            },
+            complete: function () {
+                $btn.prop('disabled', false).text(originalText);
             }
         });
     });
@@ -487,6 +499,10 @@ $(function () {
                         $('#assignForm')[0].reset();
                         isEdit = false; currentId = null;
                         calendar.refetchEvents();
+
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1500);
                     },
                     error: function (xhr) { showError(xhr.responseJSON?.message ?? 'Error'); }
                 });
