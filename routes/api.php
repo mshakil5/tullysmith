@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthContoller::class, 'login']);
 
+Route::get('/app-status', [AuthContoller::class, 'appStatus']);
+
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/dashboard', [AuthContoller::class, 'dashboard']);
     Route::get('/dashboard/assignment-data', [AuthContoller::class, 'assignmentData']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\AppSetting;
 use App\Models\Document;
 use App\Models\JobAssignment;
 use App\Models\ServiceJob;
@@ -64,9 +65,9 @@ class AuthContoller extends Controller
         $totalEmployees = User::where('user_type', 1)->count();
         $pendingApprovals =
             (int) ServiceJobChecklist::where('status', 'pending')->count()
-        + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
-        + (int) ServiceJob::where('status', 'completed')->count()
-        + (int) Document::where('status', 'pending')->count();
+            + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
+            + (int) ServiceJob::where('status', 'completed')->count()
+            + (int) Document::where('status', 'pending')->count();
 
         $announcements = Announcement::with('job:id,job_title,job_id')
             ->where('status', 1)
@@ -76,9 +77,9 @@ class AuthContoller extends Controller
             ->when($isWorker, function ($q) use ($user) {
                 $q->where(function ($q2) use ($user) {
                     $q2->whereNull('service_job_id')
-                    ->orWhereHas('job.assignments', function ($q3) use ($user) {
-                        $q3->where('worker_id', $user->id);
-                    });
+                        ->orWhereHas('job.assignments', function ($q3) use ($user) {
+                            $q3->where('worker_id', $user->id);
+                        });
                 });
             })
             ->orderByRaw("FIELD(priority, 'high', 'medium', 'low')")
@@ -147,29 +148,29 @@ class AuthContoller extends Controller
             'job.client:id,name',
             'worker:id,name',
         ])
-        ->whereBetween('assigned_date', [$request->start, $request->end])
-        ->get()
-        ->map(fn($a) => [
-            'id'             => $a->id,
-            'title'          => $a->worker->name . ' — ' . $a->job->job_title,
-            'start'          => $a->assigned_date,
-            'assigned_date'  => $a->assigned_date,
-            'worker_name'    => $a->worker->name ?? '-',
-            'job_title'      => $a->job->job_title ?? '',
-            'job_id'         => $a->job->job_id ?? '',
-            'client_name'    => $a->job->client->name ?? '-',
-            'address'        => collect([
-                $a->job->address_line1,
-                $a->job->address_line2,
-                $a->job->city,
-                $a->job->postcode,
-            ])->filter()->implode(', '),
-            'status'         => $a->job->status ?? '',
-            'priority'       => $a->job->priority ?? '',
-            'note'           => $a->note,
-            'service_job_id' => $a->service_job_id,
-            'worker_id'      => $a->worker_id,
-        ]);
+            ->whereBetween('assigned_date', [$request->start, $request->end])
+            ->get()
+            ->map(fn($a) => [
+                'id'             => $a->id,
+                'title'          => $a->worker->name . ' — ' . $a->job->job_title,
+                'start'          => $a->assigned_date,
+                'assigned_date'  => $a->assigned_date,
+                'worker_name'    => $a->worker->name ?? '-',
+                'job_title'      => $a->job->job_title ?? '',
+                'job_id'         => $a->job->job_id ?? '',
+                'client_name'    => $a->job->client->name ?? '-',
+                'address'        => collect([
+                    $a->job->address_line1,
+                    $a->job->address_line2,
+                    $a->job->city,
+                    $a->job->postcode,
+                ])->filter()->implode(', '),
+                'status'         => $a->job->status ?? '',
+                'priority'       => $a->job->priority ?? '',
+                'note'           => $a->note,
+                'service_job_id' => $a->service_job_id,
+                'worker_id'      => $a->worker_id,
+            ]);
 
         return response()->json($assignments);
     }
@@ -193,11 +194,11 @@ class AuthContoller extends Controller
 
         app(NotificationService::class)->sendToUser(
             userId: $request->worker_id,
-            title:  'New Job Assigned',
+            title: 'New Job Assigned',
             body: "You have been assigned a new job (ID: " . $serviceJob->job_id . ") on " . \Carbon\Carbon::parse($request->assigned_date)->format('d F Y') . ".",
-            type:   'job',
+            type: 'job',
             data: [
-                'job_id' => (string) $request->service_job_id 
+                'job_id' => (string) $request->service_job_id
             ],
         );
 
@@ -222,11 +223,11 @@ class AuthContoller extends Controller
 
         app(NotificationService::class)->sendToUser(
             userId: $request->worker_id,
-            title:  'Job Assignment Updated',
+            title: 'Job Assignment Updated',
             body: "Your assignment for job (ID: " . ServiceJob::find($request->service_job_id)->job_id . ") has been updated to " . Carbon::parse($request->assigned_date)->format('d F Y') . ".",
-            type:   'job',
+            type: 'job',
             data: [
-                'job_id' => (string) $request->service_job_id 
+                'job_id' => (string) $request->service_job_id
             ],
         );
 
@@ -244,5 +245,15 @@ class AuthContoller extends Controller
         $query = JobAssignment::where('worker_id', $workerId)->where('assigned_date', $assignedDate);
         if ($excludeId) $query->where('id', '!=', $excludeId);
         return $query->exists();
+    }
+
+    public function appStatus()
+    {
+        $setting = AppSetting::first();
+
+        return response()->json([
+            'min_version' => $setting->min_version ?? '',
+            'store_link'  => $setting->store_link ?? '',
+        ]);
     }
 }
