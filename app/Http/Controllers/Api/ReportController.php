@@ -169,33 +169,59 @@ class ReportController extends Controller
             ->where('status', 'approved')
             ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()]);
 
-        if ($request->job_id) $query->where('service_job_id', $request->job_id);
+        if ($request->job_id) {
+            $query->where('service_job_id', $request->job_id);
+        }
 
-        $expenses = $query->orderBy('invoice_date')->get();
-        $company  = CompanyDetails::firstOrCreate();
+        $rawExpenses = $query->orderBy('invoice_date')->get();
+        $company     = CompanyDetails::firstOrCreate();
+        $totalAmount = $rawExpenses->sum('amount');
 
-        $jobLabel = $jobFiltered
-            ? (ServiceJob::find($request->job_id)?->job_title ?? 'All Jobs')
-            : 'All Jobs';
+        $mappedExpenses = $rawExpenses->map(function ($e) {
+            $fileBase64 = null;
+            $fileExt    = null;
 
-        $totalAmount = $expenses->sum('amount');
+            if ($e->file) {
+                $filePath = public_path($e->file);
+                $ext      = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+                $imgExts  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+                if (in_array($ext, $imgExts) && file_exists($filePath)) {
+                    $mime = match ($ext) {
+                        'png'   => 'image/png',
+                        'gif'   => 'image/gif',
+                        'webp'  => 'image/webp',
+                        default => 'image/jpeg',
+                    };
+                    $fileBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($filePath));
+                    $fileExt    = $ext;
+                } elseif ($ext === 'pdf') {
+                    $fileExt = 'pdf';
+                }
+            }
+
+            return [
+                'date'        => $e->invoice_date ? Carbon::parse($e->invoice_date)->format('d M Y') : '—',
+                'job'         => $e->job->job_title ?? '—',
+                'job_id'      => $e->job->job_id ?? '—',
+                'title'       => $e->title ?? '—',
+                'amount'      => number_format($e->amount, 2),
+                'file_base64' => $fileBase64,
+                'file_ext'    => $fileExt,
+            ];
+        })->values();
 
         $data = [
             'company'      => $company,
             'label'        => $label,
-            'job'          => $jobLabel,
+            'job'          => $jobFiltered
+                ? (ServiceJob::find($request->job_id)?->job_title ?? 'All Jobs')
+                : 'All Jobs',
             'generated_at' => now()->format('d M Y, h:i A'),
             'total_amount' => number_format($totalAmount, 2),
             'total_words'  => $this->numberToWords($totalAmount),
             'jobFiltered'  => $jobFiltered,
-            'expenses'     => $expenses->map(fn($e) => [
-                'date'   => $e->invoice_date
-                    ? Carbon::parse($e->invoice_date)->format('d M Y') : '—',
-                'job'    => $e->job->job_title ?? '—',
-                'job_id' => $e->job->job_id    ?? '—',
-                'title'  => $e->title          ?? '—',
-                'amount' => number_format($e->amount, 2),
-            ])->values(),
+            'expenses'     => $mappedExpenses,
         ];
 
         $filename = 'expense_report_' . now()->format('d-M-Y') . '.pdf';

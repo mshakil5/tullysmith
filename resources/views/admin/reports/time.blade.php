@@ -12,7 +12,7 @@
                 <h4 class="mb-1 fw-bold"><i class="ri-time-line me-2 text-primary"></i>Time Report</h4>
             </div>
             <div class="d-flex gap-2">
-                <a id="exportBtn" href="#" class="btn btn-soft-success btn-sm"><i
+                <a id="exportBtn" href="#" class="btn btn-soft-success btn-sm d-none"><i
                         class="ri-download-2-line me-1"></i>Export CSV</a>
                 <button class="btn btn-soft-primary btn-sm" id="printBtn">
                     <i class="ri-file-pdf-line me-1"></i>PDF

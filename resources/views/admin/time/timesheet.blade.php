@@ -20,7 +20,7 @@
                 <!-- ── FIXED: Always include worker_id when set ── -->
                 @unlessrole('Worker')
                 <a href="{{ route('time.export') }}?mode={{ $mode }}&offset={{ $offset }}{!! $workerId ? '&worker_id=' . $workerId : '' !!}"
-                   class="btn btn-soft-primary btn-sm {{ !$workerId ? 'disabled opacity-50' : '' }}">
+                   class="btn btn-soft-primary d-none btn-sm {{ !$workerId ? 'disabled opacity-50' : '' }}">
                     <i class="ri-download-2-line me-1"></i> Export CSV
                 </a>
                 @endunlessrole

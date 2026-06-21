@@ -176,6 +176,7 @@
                         <th>Invoice Date</th>
                         <th>Created By</th>
                         <th>Created At</th>
+                        <th>File</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -215,6 +216,7 @@ $(function () {
         { data: 'invoice_date', name: 'invoice_date' },
         { data: 'created_by', name: 'created_by' },
         { data: 'created_at', name: 'created_at' },
+        { data: 'file', name: 'file', orderable: false, searchable: false },
         { data: 'action', name: 'action', orderable: false, searchable: false }
     );
 

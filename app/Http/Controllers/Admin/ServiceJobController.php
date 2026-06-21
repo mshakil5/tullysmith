@@ -314,6 +314,48 @@ class ServiceJobController extends Controller
                     return '<strong class="text-success">£' . number_format($row->amount, 2) . '</strong>';
                 })
 
+                ->addColumn('file', function ($row) {
+                    if (!$row->file) return '-';
+                    
+                    $ext = strtolower(pathinfo($row->file, PATHINFO_EXTENSION));
+                    $fileUrl = asset($row->file);
+                    $modalId = 'fileModal_' . $row->id; 
+
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                        $trigger = '<img src="' . $fileUrl . '" style="height:45px;width:60px;object-fit:cover;border-radius:4px;cursor:pointer;" data-bs-toggle="modal" data-bs-target="#' . $modalId . '">';
+                        $modalBody = '<img src="' . $fileUrl . '" class="img-fluid d-block mx-auto">';
+                    } 
+                    else {
+                        $trigger = '<button type="button" class="btn btn-soft-info btn-sm" data-bs-toggle="modal" data-bs-target="#' . $modalId . '">
+                                        <i class="ri-file-pdf-line me-1"></i>PDF
+                                    </button>';
+                        $modalBody = '<iframe src="' . $fileUrl . '" width="100%" height="500px" style="border:none;"></iframe>';
+                    }
+
+                    $modalHtml = '
+                    <div class="modal fade" id="' . $modalId . '" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">File Preview</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body text-center bg-light">
+                                    ' . $modalBody . '
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="' . $fileUrl . '" download class="btn btn-success btn-sm">
+                                        <i class="ri-download-2-line me-1"></i> Download File
+                                    </a>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>';
+
+                    return $trigger . $modalHtml;
+                })
+
                 ->addColumn('invoice_date', function ($row) {
                     return $row->invoice_date
                         ? \Carbon\Carbon::parse($row->invoice_date)->format('d M Y')
@@ -336,12 +378,6 @@ class ServiceJobController extends Controller
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item" href="' . asset($row->file) . '" target="_blank">
-                                        <i class="ri-eye-fill me-2"></i>View File
-                                    </a>
-                                </li>
-                                <li class="dropdown-divider"></li>
-                                <li>
                                     <button class="dropdown-item EditExpenseBtn" data-id="' . $row->id . '">
                                         <i class="ri-pencil-fill me-2"></i>Edit
                                     </button>
@@ -356,7 +392,7 @@ class ServiceJobController extends Controller
                         </div>';
                 })
 
-                ->rawColumns(['job', 'type', 'title', 'amount', 'action'])
+                ->rawColumns(['job', 'type', 'title', 'amount', 'file', 'action'])
                 ->make(true);
         }
 
