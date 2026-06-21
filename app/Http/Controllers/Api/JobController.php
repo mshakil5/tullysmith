@@ -460,8 +460,8 @@ class JobController extends Controller
                 'id'         => $a->id,
                 'worker'     => $a->worker->name ?? '-',
                 'date'       => $a->formatted_date ?? $a->date,
-                'start_time' => $a->start_time,
-                'end_time'   => $a->end_time,
+                'start_time' => $a->start_time ? \Carbon\Carbon::parse($a->start_time)->format('h:i A') : null,
+                'end_time'   => $a->end_time ? \Carbon\Carbon::parse($a->end_time)->format('h:i A') : null,
                 'note'       => $a->note,
             ]);
 
