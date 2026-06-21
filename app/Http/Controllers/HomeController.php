@@ -63,6 +63,8 @@ class HomeController extends Controller
                 'title'          => $a->worker->name . ' — ' . $a->job->job_title,
                 'start'          => $a->assigned_date,
                 'assigned_date'  => $a->assigned_date,
+                'start_time' => $a->start_time,
+                'end_time'   => $a->end_time,
                 'worker_name'    => $a->worker->name ?? '-',
                 'job_title'      => $a->job->job_title,
                 'job_id'         => $a->job->job_id,
@@ -119,6 +121,8 @@ class HomeController extends Controller
                 'title'           => $a->worker->name . ' — ' . $a->job->job_title,
                 'start'           => $a->assigned_date,
                 'assigned_date'   => $a->assigned_date,
+                'start_time' => $a->start_time,
+                'end_time'   => $a->end_time,
                 'worker_name'     => $a->worker->name,
                 'job_title'       => $a->job->job_title,
                 'job_id'          => $a->job->job_id,
@@ -143,6 +147,8 @@ class HomeController extends Controller
             'service_job_id' => 'required|exists:service_jobs,id',
             'worker_id'      => 'required|exists:users,id',
             'assigned_date'  => 'required|date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time'   => 'nullable|date_format:H:i|after:start_time',
             'note'           => 'nullable|string|max:500',
         ]);
 
@@ -150,7 +156,7 @@ class HomeController extends Controller
         //     return response()->json(['message' => 'This worker is already assigned on the selected date.'], 422);
         // }
 
-        $assignment = JobAssignment::create($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
+        $assignment = JobAssignment::create($request->only(['service_job_id', 'worker_id', 'assigned_date', 'start_time', 'end_time', 'note']));
 
         $serviceJob = ServiceJob::find($request->service_job_id);
 
@@ -173,6 +179,8 @@ class HomeController extends Controller
             'service_job_id' => 'required|exists:service_jobs,id',
             'worker_id'      => 'required|exists:users,id',
             'assigned_date'  => 'required|date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time'   => 'nullable|date_format:H:i|after:start_time',
             'note'           => 'nullable|string|max:500',
         ]);
 
@@ -181,7 +189,7 @@ class HomeController extends Controller
         // }
 
         $assignment = JobAssignment::findOrFail($id);
-        $assignment->update($request->only(['service_job_id', 'worker_id', 'assigned_date', 'note']));
+        $assignment->update($request->only(['service_job_id', 'worker_id', 'assigned_date', 'start_time', 'end_time', 'note']));
 
         app(NotificationService::class)->sendToUser(
             userId: $request->worker_id,

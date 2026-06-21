@@ -167,6 +167,14 @@
                                 <label class="form-label">Assign Date <span class="text-danger">*</span></label>
                                 <input type="date" name="assigned_date" id="assigned_date" class="form-control" required>
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Start Time</label>
+                                <input type="time" name="start_time" id="start_time" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">End Time</label>
+                                <input type="time" name="end_time" id="end_time" class="form-control">
+                            </div>
                             <div class="col-md-12">
                                 <label class="form-label">Note</label>
                                 <textarea name="note" id="note" class="form-control" rows="3"></textarea>
@@ -220,6 +228,14 @@
                             <div>
                                 <p class="mb-0 fw-semibold text-dark" style="font-size:0.88rem;">{{ $tj['job_title'] }}</p>
                                 <p class="mb-0 text-muted" style="font-size:0.78rem;">{{ $tj['job_id'] }} · {{ $tj['client_name'] }}</p>
+                                @if($tj['start_time'] || $tj['end_time'])
+                                    <p class="mb-0 text-muted" style="font-size:0.78rem;">
+                                        <i class="ri-time-line me-1"></i>
+                                        {{ $tj['start_time'] ? \Carbon\Carbon::parse($tj['start_time'])->format('h:i A') : '--' }}
+                                        —
+                                        {{ $tj['end_time'] ? \Carbon\Carbon::parse($tj['end_time'])->format('h:i A') : '--' }}
+                                    </p>
+                                @endif
                                 @if($tj['address'])<p class="mb-0 text-muted"><i class="ri-map-pin-line me-1"></i>{{ $tj['address'] }}</p>@endif
                             </div>
                             <div class="text-end ms-2">
@@ -421,6 +437,9 @@ $(function () {
         isEdit = true; currentId = id;
         $('#assignment_id').val(id);
         $('#assigned_date').val(p.assigned_date);
+        console.log(p);
+        $('#start_time').val(p.start_time ?? '');
+        $('#end_time').val(p.end_time ?? '');
         $('#service_job_id').val(p.service_job_id).trigger('change');
         $('#worker_id').val(p.worker_id).trigger('change');
         $('#note').val(p.note ?? '');

@@ -194,6 +194,8 @@
                                         <th>#</th>
                                         <th>Worker</th>
                                         <th>Date</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
                                         <th>Note</th>
                                     </tr>
                                 </thead>
@@ -203,6 +205,8 @@
                                         <td>{{ $i + 1 }}</td>
                                         <td>{{ $assignment->worker->name ?? '-' }}</td>
                                         <td>{{ $assignment->formatted_date }}</td>
+                                        <td>{{ $assignment->start_time ? \Carbon\Carbon::parse($assignment->start_time)->format('h:i A') : '-' }}</td>
+                                        <td>{{ $assignment->end_time ? \Carbon\Carbon::parse($assignment->end_time)->format('h:i A') : '-' }}</td>
                                         <td>{{ $assignment->note ?? '-' }}</td>
                                     </tr>
                                     @endforeach
