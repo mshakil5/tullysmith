@@ -416,10 +416,10 @@
                                     'data-src="' + e.file + '" data-type="image">';
 
                                 attachHtml += '<div class="col-6 col-md-3">' +
-                                    '<div class="attachment-card">' +
-                                    '<a href="' + e.file + '" target="_blank">' +
+                                    '<div class="attachment-card" style="cursor:pointer;" ' +
+                                    'data-bs-toggle="modal" data-bs-target="#filePreviewModal" ' +
+                                    'data-src="' + e.file + '" data-type="image">' +
                                     '<img src="' + e.file + '">' +
-                                    '</a>' +
                                     '<div class="att-amount">£' + e.amount + '</div>' +
                                     '</div>' +
                                     '</div>';
@@ -432,12 +432,12 @@
                                     '<i class="ri-file-pdf-line"></i></button>';
 
                                 attachHtml += '<div class="col-6 col-md-3">' +
-                                    '<div class="attachment-card">' +
-                                    '<a href="' + e.file + '" target="_blank">' +
+                                    '<div class="attachment-card" style="cursor:pointer;" ' +
+                                    'data-bs-toggle="modal" data-bs-target="#filePreviewModal" ' +
+                                    'data-src="' + e.file + '" data-type="pdf">' +
                                     '<div class="att-pdf">' +
                                     '<i class="ri-file-pdf-line text-danger" style="font-size:64px;"></i>' +
                                     '</div>' +
-                                    '</a>' +
                                     '<div class="att-amount">£' + e.amount + '</div>' +
                                     '</div>' +
                                     '</div>';
