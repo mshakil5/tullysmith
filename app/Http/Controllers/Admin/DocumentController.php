@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Document;
 use App\Models\ServiceJob;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DocumentController extends Controller
 {
@@ -17,6 +18,14 @@ class DocumentController extends Controller
             'title' => 'nullable|string|max:255',
             'amount' => 'nullable|numeric',
             'file' => 'required|file|max:5120',
+            'amount' => [
+                'nullable',
+                'numeric',
+                Rule::when(
+                    in_array($request->type, ['invoice', 'receipt']),
+                    ['required', 'numeric', 'min:0.01']
+                ),
+            ],
         ]);
 
         $amount = null;
@@ -77,7 +86,7 @@ class DocumentController extends Controller
                     $q->where('status', 'approved');
                 } else {
                     $q->where('status', 'approved')
-                    ->where('created_by', $user->id);
+                        ->where('created_by', $user->id);
                 }
             })
             ->get();

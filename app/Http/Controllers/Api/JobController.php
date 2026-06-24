@@ -12,6 +12,7 @@ use App\Models\ServiceJobChecklist;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Intervention\Image\Facades\Image;
 
 class JobController extends Controller
@@ -38,9 +39,9 @@ class JobController extends Controller
             // ->where('status', '!=', 'archived')
             ->orderByDesc('id');
 
-            if (!$request->include_archived) {
-                $query->where('status', '!=', 'archived');
-            }
+        if (!$request->include_archived) {
+            $query->where('status', '!=', 'archived');
+        }
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -540,7 +541,14 @@ class JobController extends Controller
         $request->validate([
             'type'   => 'required|string',
             'title'  => 'nullable|string|max:255',
-            'amount' => 'nullable|numeric',
+            'amount' => [
+                'nullable',
+                'numeric',
+                Rule::when(
+                    in_array($request->type, ['invoice', 'receipt']),
+                    ['required', 'numeric', 'min:0.01']
+                ),
+            ],
             'file'   => 'required|file|max:5120',
         ]);
 
@@ -565,7 +573,7 @@ class JobController extends Controller
         ]);
 
         $isWorker = $user->hasRole('worker');
-        $message = $isWorker 
+        $message = $isWorker
             ? 'Document uploaded and pending approval'
             : 'Document uploaded successfully';
 
