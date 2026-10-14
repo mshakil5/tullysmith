@@ -14,6 +14,7 @@ class EmployeeController extends Controller
     {
         $query = User::select(['id', 'name', 'email', 'phone', 'primary_contact', 'address_line1', 'status'])
             ->where('user_type', 1)
+            ->where('is_deleted', 0)
             ->with('roles')
             ->orderByDesc('id');
 
@@ -64,6 +65,7 @@ class EmployeeController extends Controller
             'password'        => Hash::make($request->password),
             'user_type'       => 1,
             'status'          => 1,
+            'is_deleted'      => 0,
         ]);
 
         $role = Role::find($request->role_id);
@@ -74,7 +76,7 @@ class EmployeeController extends Controller
 
     public function show($id)
     {
-        $user = User::where('user_type', 1)->findOrFail($id);
+        $user = User::where('user_type', 1)->where('is_deleted', 0)->findOrFail($id);
         $user->role_id = $user->roles()->first()?->id;
         $user->role = $user->getRoleNames()->first() ?? '-';
         return response()->json($user);
@@ -92,7 +94,7 @@ class EmployeeController extends Controller
             'role_id'         => 'required|exists:roles,id',
         ]);
 
-        $user = User::where('user_type', 1)->findOrFail($id);
+        $user = User::where('user_type', 1)->where('is_deleted', 0)->findOrFail($id);
         $user->name            = $request->name;
         $user->primary_contact = $request->primary_contact;
         $user->email           = $request->email;
@@ -109,7 +111,7 @@ class EmployeeController extends Controller
 
     public function destroy($id)
     {
-        $user = User::where('user_type', 1)->findOrFail($id);
+        $user = User::where('user_type', 1)->where('is_deleted', 0)->findOrFail($id);
 
         if ($user->hasRole('Super Admin')) {
             return response()->json([
@@ -117,20 +119,23 @@ class EmployeeController extends Controller
             ], 422);
         }
 
-        if ($user->jobAssignments()->exists()) {
-            return response()->json([
-                'message' => 'Employee has assigned jobs. Cannot delete.'
-            ], 422);
-        }
-
-        $user->delete();
+        // Dummy delete: keep the row for foreign-key history, just hide + deactivate.
+        $user->update([
+            'is_deleted' => 1,
+            'status' => 0,
+        ]);
 
         return response()->json(['message' => 'Employee deleted successfully.']);
     }
 
     public function toggleStatus(Request $request)
     {
-        $user = User::where('user_type', 1)->findOrFail($request->id);
+        $request->validate([
+            'id' => 'required|exists:users,id',
+            'status' => 'required|boolean',
+        ]);
+
+        $user = User::where('user_type', 1)->where('is_deleted', 0)->findOrFail($request->id);
         $user->status = $request->status;
         $user->save();
         return response()->json(['message' => 'Status updated successfully.']);

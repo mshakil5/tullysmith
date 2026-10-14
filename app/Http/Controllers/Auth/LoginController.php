@@ -29,7 +29,7 @@ class LoginController extends Controller
 
     $chksts = User::where('email', $input['email'])->first();
     if ($chksts) {
-      if ($chksts->status == 1) {
+      if ($chksts->status == 1 && !$chksts->is_deleted) {
         if (auth()->attempt(['email' => $input['email'], 'password' => $input['password']])) {
           if (in_array(auth()->user()->user_type, [1, 2, 3])) {
             return redirect()->route('admin.dashboard');

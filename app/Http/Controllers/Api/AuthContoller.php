@@ -30,6 +30,15 @@ class AuthContoller extends Controller
         }
 
         $user = Auth::user();
+
+        if ($user->is_deleted || $user->status != 1) {
+            Auth::logout();
+            return response()->json([
+                'message' => 'Your account is inactive. Please contact administrator.',
+                'error' => 'Unauthorized'
+            ], 403);
+        }
+
         $role = $user->getRoleNames()->first();
 
         if (!$role) {
@@ -62,7 +71,7 @@ class AuthContoller extends Controller
         $pendingJobs   = ServiceJob::where('status', 'pending')->count();
         $completedJobs = ServiceJob::where('status', 'completed')->count();
         $totalClients  = User::where('user_type', 0)->count();
-        $totalEmployees = User::where('user_type', 1)->count();
+        $totalEmployees = User::where('user_type', 1)->where('is_deleted', 0)->count();
         $pendingApprovals =
             (int) ServiceJobChecklist::where('status', 'pending')->count()
             + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()

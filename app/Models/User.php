@@ -24,6 +24,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_deleted' => 'boolean',
+            'status' => 'boolean',
         ];
     }
 
@@ -51,7 +53,18 @@ class User extends Authenticatable
     public function scopeByRole($query, $roleName)
     {
         return $query->whereHas('roles', fn($q) => $q->where('name', $roleName))
-                    ->where('user_type', 1);
+                    ->where('user_type', 1)
+                    ->where('is_deleted', 0);
+    }
+
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('is_deleted', 0);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_deleted', 0)->where('status', 1);
     }
 
     // $workers   = User::byRole('Worker')->get();
