@@ -11,6 +11,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Intervention\Image\Facades\Image;
 
 class TimeController extends Controller
@@ -40,8 +41,8 @@ class TimeController extends Controller
                 ],
             ]);
 
-        $activeLog  = TimeLog::with('job:id,job_title')->where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->first();
-        $recentLogs = TimeLog::with('job:id,job_title')->where('worker_id', $workerId)->latest()->take(10)->get();
+        $activeLog  = TimeLog::with('job:id,job_title,postcode')->where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->first();
+        $recentLogs = TimeLog::with('job:id,job_title,postcode')->where('worker_id', $workerId)->latest()->take(10)->get();
 
         return response()->json([
             'todayAssignments' => $todayAssignments,
@@ -58,8 +59,8 @@ class TimeController extends Controller
         $request->validate([
             'job_assignment_id' => 'required|exists:job_assignments,id',
             'photo'             => 'required|string',
-            'lat'               => 'nullable|numeric',
-            'lng'               => 'nullable|numeric',
+            'lat'               => 'required|numeric|between:-90,90',
+            'lng'               => 'required|numeric|between:-180,180',
             'force'             => 'nullable|boolean',
         ]);
 
@@ -89,26 +90,11 @@ class TimeController extends Controller
             }
         }
 
-        $locationMsg = null;
-        if ($request->filled('lat') && $request->filled('lng') && $assignment->job->postcode) {
-            try {
-                $geo = Http::timeout(5)->get('https://api.postcodes.io/postcodes/' . urlencode($assignment->job->postcode))->json();
-                if (($geo['status'] ?? null) === 200) {
-                    $dist = $this->haversine($request->lat, $request->lng, $geo['result']['latitude'], $geo['result']['longitude']);
-
-                    if ($dist > 100 && !$request->force) {
-                        return response()->json([
-                            'warning' => true,
-                            'message' => 'You are ' . round($dist) . 'm away from the job site. You must be within 100m to clock in.',
-                        ], 200);
-                    }
-
-                    $locationMsg = $dist <= 100 ? 'location_verified' : round($dist) . 'm from job site';
-                }
-            } catch (\Exception $e) {
-                $locationMsg = 'location_check_failed';
-            }
-        }
+        // Server-side geofence is mandatory. The legacy `force` flag is only for
+        // acknowledging a repeated shift; it must never bypass the location rule.
+        $locationError = $this->validateJobLocation($assignment->job?->postcode, $request->lat, $request->lng, 'clock in');
+        if ($locationError) return $locationError;
+        $locationMsg = 'location_verified';
 
         $clockInTime = now();
 
@@ -135,10 +121,18 @@ class TimeController extends Controller
 
     public function clockOut(Request $request)
     {
-        $request->validate(['photo' => 'required|string']);
+        $request->validate([
+            'photo' => 'required|string',
+            'lat' => 'required|numeric|between:-90,90',
+            'lng' => 'required|numeric|between:-180,180',
+        ]);
 
         $workerId = auth()->id();
-        $log      = TimeLog::where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->firstOrFail();
+        $log      = TimeLog::with('job:id,postcode')->where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->firstOrFail();
+
+        $locationError = $this->validateJobLocation($log->job?->postcode, $request->lat, $request->lng, 'clock out');
+        if ($locationError) return $locationError;
+
 
         $clockOut   = now();
         $totalHours = round($log->clock_in_at->diffInMinutes($clockOut) / 60, 2);
@@ -149,7 +143,7 @@ class TimeController extends Controller
             'total_hours'     => $totalHours,
             'clock_out_lat'    => $request->lat,
             'clock_out_lng'    => $request->lng,
-            'location_note' => $log->location_note,
+            'location_note' => 'location_verified',
         ]);
 
         return response()->json([
@@ -322,7 +316,7 @@ class TimeController extends Controller
             'clock_in_lng'          => $log->clock_in_lng,
             'location_note'         => $log->location_note,
             'status'                => $log->status,
-            'job'                   => $log->job ? ['id' => $log->job->id, 'job_title' => $log->job->job_title] : null,
+            'job'                   => $log->job ? ['id' => $log->job->id, 'job_title' => $log->job->job_title, 'postcode' => $log->job->postcode] : null,
         ];
     }
 
@@ -353,6 +347,41 @@ class TimeController extends Controller
 
         $img->encode('webp', 60)->save($path . $file);
         return '/uploads/time-logs/' . $file;
+    }
+
+    /** Fail closed when the assigned job location cannot be verified. */
+    private function validateJobLocation(?string $postcode, $lat, $lng, string $action)
+    {
+        $postcode = strtoupper(trim((string) $postcode));
+        if ($postcode === '') {
+            return response()->json(['message' => 'The job has no postcode. Please contact an administrator to correct it before you ' . $action . '.'], 422);
+        }
+
+        try {
+            $coordinates = Cache::remember('job-postcode-geo:' . sha1($postcode), now()->addDays(7), function () use ($postcode) {
+                $response = Http::timeout(5)->get('https://api.postcodes.io/postcodes/' . rawurlencode($postcode));
+                if (!$response->successful()) return null;
+                $result = $response->json('result');
+                if (!is_array($result) || !is_numeric($result['latitude'] ?? null) || !is_numeric($result['longitude'] ?? null)) return null;
+                return ['lat' => (float) $result['latitude'], 'lng' => (float) $result['longitude']];
+            });
+        } catch (\Throwable $e) {
+            report($e);
+            $coordinates = null;
+        }
+
+        if (!$coordinates) {
+            return response()->json(['message' => 'Unable to verify the job postcode at present. Please try again or contact an administrator.'], 422);
+        }
+
+        $distance = $this->haversine((float) $lat, (float) $lng, $coordinates['lat'], $coordinates['lng']);
+        if ($distance > 100) {
+            return response()->json([
+                'message' => 'You are ' . round($distance) . 'm away from the job site. You must be within 100m to ' . $action . '. If you forgot, ask an administrator to correct your time log.',
+                'distance_metres' => round($distance),
+            ], 422);
+        }
+        return null;
     }
 
     private function haversine($lat1, $lng1, $lat2, $lng2): float
