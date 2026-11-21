@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AppVersionController;
 use App\Http\Controllers\Api\AdminTimeController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ApprovalController;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [AuthContoller::class, 'login']);
 
 Route::get('/app-status', [AuthContoller::class, 'appStatus']);
+Route::get('/app/version', [AppVersionController::class, 'show']);
 
 Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/dashboard', [AuthContoller::class, 'dashboard']);
