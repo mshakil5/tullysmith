@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->use([
 
         ]);
+        $middleware->api(prepend: [\App\Http\Middleware\MonitorApi::class]);
         $middleware->alias([
             'is_admin' => IsAdmin::class,
             'is_client' => IsClient::class,

@@ -353,13 +353,14 @@ class TimeController extends Controller
     private function validateJobLocation(?string $postcode, $lat, $lng, string $action)
     {
         $postcode = strtoupper(trim((string) $postcode));
-        if ($postcode === '') {
-            return response()->json(['message' => 'The job has no postcode. Please contact an administrator to correct it before you ' . $action . '.'], 422);
+        if (!preg_match('/^(?:GIR\s?0AA|[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2})$/iD', $postcode)) {
+            \App\Services\AppIncident::record(['source'=>'server','operation'=>'attendance','kind'=>'invalid_postcode','user_id'=>auth()->id()]);
+            return response()->json(['message' => 'The job needs a complete UK postcode. Please contact an administrator to correct it before you ' . $action . '.'], 422);
         }
 
         try {
             $coordinates = Cache::remember('job-postcode-geo:' . sha1($postcode), now()->addDays(7), function () use ($postcode) {
-                $response = Http::timeout(5)->get('https://api.postcodes.io/postcodes/' . rawurlencode($postcode));
+                $response = Http::connectTimeout(2)->timeout(5)->get('https://api.postcodes.io/postcodes/' . rawurlencode($postcode));
                 if (!$response->successful()) return null;
                 $result = $response->json('result');
                 if (!is_array($result) || !is_numeric($result['latitude'] ?? null) || !is_numeric($result['longitude'] ?? null)) return null;
@@ -371,11 +372,13 @@ class TimeController extends Controller
         }
 
         if (!$coordinates) {
+            \App\Services\AppIncident::record(['source'=>'server','operation'=>'postcode','kind'=>'gps_error','user_id'=>auth()->id()]);
             return response()->json(['message' => 'Unable to verify the job postcode at present. Please try again or contact an administrator.'], 422);
         }
 
         $distance = $this->haversine((float) $lat, (float) $lng, $coordinates['lat'], $coordinates['lng']);
         if ($distance > 100) {
+            \App\Services\AppIncident::record(['source'=>'server','operation'=>'attendance','kind'=>'geofence_rejected','user_id'=>auth()->id()]);
             return response()->json([
                 'message' => 'You are ' . round($distance) . 'm away from the job site. You must be within 100m to ' . $action . '. If you forgot, ask an administrator to correct your time log.',
                 'distance_metres' => round($distance),

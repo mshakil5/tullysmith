@@ -28,6 +28,9 @@
             <div id="two-column-menu">
             </div>
             <ul class="navbar-nav" id="navbar-nav">
+                @role('Super Admin')
+                <li class="nav-item"><a class="nav-link menu-link" href="{{ route('admin.monitoring') }}"><i class="ri-pulse-line"></i> System Monitoring</a></li>
+                @endrole
 
                 <li class="nav-item d-none">
                     <a class="nav-link menu-link" href="#sidebarMultilevel" data-bs-toggle="collapse"

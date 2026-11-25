@@ -20,6 +20,7 @@ Route::get('/app-status', [AuthContoller::class, 'appStatus']);
 Route::get('/app/version', [AppVersionController::class, 'show']);
 
 Route::group(['middleware' => ['auth:api']], function () {
+    Route::post('/diagnostics', [\App\Http\Controllers\Api\DiagnosticsController::class, 'store'])->middleware('throttle:12,1');
     Route::get('/dashboard', [AuthContoller::class, 'dashboard']);
     Route::get('/dashboard/assignment-data', [AuthContoller::class, 'assignmentData']);
     Route::post('/dashboard/assignment', [AuthContoller::class, 'assignmentStore']);
@@ -99,7 +100,7 @@ Route::group(['middleware' => ['auth:api']], function () {
         Route::get('/timesheet', [TimeController::class, 'timesheet']);
     });
 
-    Route::prefix('admin/time')->name('api.admin.time.')->group(function () {
+    Route::prefix('admin/time')->middleware(\App\Http\Middleware\RequireAttendanceAdmin::class)->name('api.admin.time.')->group(function () {
         Route::get('/workers', [AdminTimeController::class, 'workers']);
         Route::get('/worker-data', [AdminTimeController::class, 'workerData']);
         Route::post('/manual-clock-in', [AdminTimeController::class, 'manualClockIn']);

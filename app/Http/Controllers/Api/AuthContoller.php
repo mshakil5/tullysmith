@@ -67,16 +67,16 @@ class AuthContoller extends Controller
         $today    = now()->toDateString();
         $isWorker = $user->hasRole('Worker');
 
-        $activeJobs    = ServiceJob::where('status', 'active')->count();
-        $pendingJobs   = ServiceJob::where('status', 'pending')->count();
-        $completedJobs = ServiceJob::where('status', 'completed')->count();
-        $totalClients  = User::where('user_type', 0)->count();
-        $totalEmployees = User::where('user_type', 1)->where('is_deleted', 0)->count();
-        $pendingApprovals =
+        $activeJobs    = $isWorker ? 0 : ServiceJob::where('status', 'active')->count();
+        $pendingJobs   = $isWorker ? 0 : ServiceJob::where('status', 'pending')->count();
+        $completedJobs = $isWorker ? 0 : ServiceJob::where('status', 'completed')->count();
+        $totalClients  = $isWorker ? 0 : User::where('user_type', 0)->count();
+        $totalEmployees = $isWorker ? 0 : User::where('user_type', 1)->where('is_deleted', 0)->count();
+        $pendingApprovals = $isWorker ? 0 : (
             (int) ServiceJobChecklist::where('status', 'pending')->count()
             + (int) TimeLog::whereNotNull('clock_out_at')->where('status', 'pending')->count()
             + (int) ServiceJob::where('status', 'completed')->count()
-            + (int) Document::where('status', 'pending')->count();
+            + (int) Document::where('status', 'pending')->count());
 
         $announcements = Announcement::with('job:id,job_title,job_id')
             ->where('status', 1)
@@ -106,10 +106,10 @@ class AuthContoller extends Controller
                 'job_id'         => $a->job->job_id ?? '',
                 'client_name'    => $a->job->client->name ?? '-',
                 'address'        => collect([
-                    $a->job->address_line1,
-                    $a->job->address_line2,
-                    $a->job->city,
-                    $a->job->postcode,
+                    $a->job?->address_line1,
+                    $a->job?->address_line2,
+                    $a->job?->city,
+                    $a->job?->postcode,
                 ])->filter()->implode(', '),
                 'status'         => $a->job->status ?? '',
                 'priority'       => $a->job->priority ?? '',
@@ -133,8 +133,8 @@ class AuthContoller extends Controller
             $todayJobs   = JobAssignment::where('assigned_date', $today)->count();
         }
 
-        $jobs    = ServiceJob::whereIn('status', ['active', 'pending', 'completed'])->select('id', 'job_title', 'job_id')->latest()->get();
-        $workers = User::byRole('Worker')->select('id', 'name')->get();
+        $jobs    = $isWorker ? collect() : ServiceJob::whereIn('status', ['active', 'pending', 'completed'])->select('id', 'job_title', 'job_id')->latest()->get();
+        $workers = $isWorker ? collect() : User::byRole('Worker')->select('id', 'name')->get();
 
         return response()->json([
             'today_jobs'      => $todayJobs,

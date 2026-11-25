@@ -18,6 +18,7 @@ use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'admin/', 'middleware' => ['auth', 'is_admin', 'permission.check']], function () {
+    Route::get('/monitoring', [\App\Http\Controllers\Admin\MonitoringController::class, 'index'])->name('admin.monitoring');
     Route::get('/dashboard', [HomeController::class, 'adminHome'])->name('admin.dashboard');
     Route::get('/dashboard/assignment-data', [HomeController::class, 'assignmentData'])->name('assignment.data');
     Route::post('/dashboard/assignment', [HomeController::class, 'assignmentStore'])->name('assignment.store');
