@@ -59,6 +59,11 @@ class NotificationService
             ->values()
             ->all();
 
+        if ($type === 'attendance_reminder') {
+            foreach ($users as $user) {
+                if (empty($user->fcm_token)) AppIncident::record(['source'=>'server','operation'=>'attendance_reminder','kind'=>'push_not_registered','user_id'=>$user->id]);
+            }
+        }
         if (empty($tokens)) return;
 
         $payload = array_merge($data, ['type' => $type]);
@@ -68,9 +73,19 @@ class NotificationService
                 $message = CloudMessage::new()
                     ->withNotification(FcmNotification::create($title, $body))
                     ->withData($payload);
-                $this->messaging->sendMulticast($message, $chunk);
+                $report = $this->messaging->sendMulticast($message, $chunk);
+                if ($type === 'attendance_reminder') {
+                    foreach ($report->getItems() as $item) {
+                        foreach ($users as $user) {
+                            if ($user->fcm_token === $item->target()->value()) {
+                                AppIncident::record(['source'=>'server','operation'=>'attendance_reminder','kind'=>$item->isSuccess()?'push_accepted':'push_failed','user_id'=>$user->id]);
+                            }
+                        }
+                    }
+                }
             } catch (\Throwable $e) {
-                Log::error('FCM Error: ' . $e->getMessage());
+                Log::warning('FCM send failed');
+                if ($type === 'attendance_reminder') foreach ($users as $user) { if (in_array($user->fcm_token, $chunk, true)) AppIncident::record(['source'=>'server','operation'=>'attendance_reminder','kind'=>'push_failed','user_id'=>$user->id]); }
             }
         }
     }

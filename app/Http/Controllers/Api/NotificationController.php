@@ -38,14 +38,20 @@ class NotificationController extends Controller
 
     public function saveFcmToken(Request $request)
     {
-        $request->validate(['fcm_token' => 'required|string']);
-        $request->user()->update(['fcm_token' => $request->fcm_token]);
+        $request->validate(['fcm_token' => 'required|string|max:4096']);
+        $request->user()->update(['fcm_token' => $request->fcm_token, 'fcm_registered_at' => now()]);
         return response()->json(['message' => 'Token saved.']);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->token()->revoke();
+        return response()->json(['message' => 'Logged out.']);
     }
 
     public function deleteFcmToken(Request $request)
     {
-        $request->user()->update(['fcm_token' => null]);
+        $request->user()->update(['fcm_token' => null, 'fcm_registered_at' => null]);
         return response()->json(['message' => 'Token removed.']);
     }
 }

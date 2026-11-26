@@ -30,6 +30,7 @@
             <ul class="navbar-nav" id="navbar-nav">
                 @role('Super Admin')
                 <li class="nav-item"><a class="nav-link menu-link" href="{{ route('admin.monitoring') }}"><i class="ri-pulse-line"></i> System Monitoring</a></li>
+                <li class="nav-item"><a class="nav-link menu-link" href="{{ route('admin.attendance-settings') }}"><i class="ri-settings-3-line"></i> Attendance Settings</a></li>
                 @endrole
 
                 <li class="nav-item d-none">

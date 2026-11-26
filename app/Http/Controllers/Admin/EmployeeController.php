@@ -14,9 +14,10 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::select(['id', 'name', 'email', 'phone', 'status', 'primary_contact'])->where('user_type', 1)->where('is_deleted', 0)->orderByDesc('id');
+            $users = User::select(['id', 'name', 'email', 'phone', 'status', 'primary_contact', 'fcm_registered_at'])->selectRaw("CASE WHEN fcm_token IS NOT NULL AND fcm_token <> '' THEN 1 ELSE 0 END as notification_registered")->where('user_type', 1)->where('is_deleted', 0)->orderByDesc('id');
             return DataTables::of($users)
                 ->addIndexColumn()
+                ->addColumn('notification_status', fn($row) => !$row->notification_registered ? 'Not registered' : ('Registered — '.($row->fcm_registered_at ?? 'date unknown')))
                 ->addColumn('status', function ($row) {
                     $checked = $row->status ? 'checked' : '';
                     return '<div class="form-check form-switch">

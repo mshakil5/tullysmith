@@ -8,3 +8,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 \Illuminate\Support\Facades\Schedule::call(function () { \Illuminate\Support\Facades\DB::table('app_incidents')->where('created_at','<',now()->subDays(30))->delete(); })->daily();
+
+\Illuminate\Support\Facades\Schedule::command('attendance:remind')->everyMinute()->withoutOverlapping();

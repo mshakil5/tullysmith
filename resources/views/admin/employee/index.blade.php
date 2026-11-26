@@ -91,6 +91,7 @@
                             <th>Phone</th>
                             <th>Contact</th>
                             <th>Status</th>
+                            <th>Notification status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -145,6 +146,9 @@
                         name: 'status',
                         orderable: false,
                         searchable: false
+                    },
+                    {
+                        data: 'notification_status', orderable: false, searchable: false
                     },
                     {
                         data: 'action',

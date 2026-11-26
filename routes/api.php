@@ -123,6 +123,7 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::post('/logout', [NotificationController::class, 'logout']);
     Route::post('/fcm-token', [NotificationController::class, 'saveFcmToken']);
     Route::delete('/fcm-token', [NotificationController::class, 'deleteFcmToken']);
 

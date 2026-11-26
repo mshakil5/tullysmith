@@ -16,7 +16,7 @@ class MonitorApi {
   } finally {
    $ms = (int)((hrtime(true)-$start)/1000000);
    if (!$request->is('api/diagnostics') && !($request->is('api/login') && $status === 401) && ($status >= 400 || $ms >= 2000)) {
-    try { AppIncident::record(['source'=>'server','operation'=>substr($request->method().' '.($request->route()?->uri() ?? 'unmatched'),0,120),'kind'=>$status>=400?'http_error':'slow_request','status'=>$status,'duration_ms'=>$ms,'reference'=>$reference,'user_id'=>auth('api')->id()]); } catch (\Throwable $ignored) {}
+    try { AppIncident::record(['source'=>'server','operation'=>substr($request->method().' '.($request->route()?->uri() ?? 'unmatched'),0,120),'kind'=>$status>=400?'http_error':'slow_request','status'=>$status,'duration_ms'=>$ms,'reference'=>$reference,'user_id'=>auth('api')->id(),'platform'=>substr((string)$request->header('X-App-Platform'),0,20) ?: null,'version'=>substr((string)$request->header('X-App-Version'),0,40) ?: null]); } catch (\Throwable $ignored) {}
    }
   }
  }

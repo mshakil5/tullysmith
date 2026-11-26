@@ -1,0 +1,13 @@
+@extends('admin.pages.master')
+@section('title','Attendance Settings')
+@section('content')
+<div class="container-fluid py-3"><h3>Attendance Settings</h3><p>UK local time. Assignment times take priority. Defaults apply only to assigned work on selected days. Reminders do not clock employees in or out.</p>
+@if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+@foreach($errors->all() as $error)<div class="alert alert-danger">{{ $error }}</div>@endforeach
+<form method="post" action="{{ route('admin.attendance-settings.update') }}">@csrf
+<div class="card p-4 mb-3"><h5>Default working hours</h5><div class="row"><div class="col-md-6"><label for="start">Start time</label><input id="start" type="time" name="start" class="form-control" value="{{ old('start',$s['start']) }}"></div><div class="col-md-6"><label for="finish">Finish time</label><input id="finish" type="time" name="finish" class="form-control" value="{{ old('finish',$s['finish']) }}"></div></div><p class="text-muted mt-2">Leave both blank to use explicit assignment times only. A finish earlier than start means next day.</p><label>Default working days</label><div class="d-flex flex-wrap gap-3">@foreach(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as $i=>$day)<label><input type="checkbox" name="days[]" value="{{ $i+1 }}" @checked(in_array($i+1,old('days',$s['days'])))> {{ $day }}</label>@endforeach</div></div>
+<div class="card p-4 mb-3"><h5>Attendance notifications</h5>@foreach(['clock_in'=>'Enable clock-in reminders','clock_out'=>'Enable clock-out reminders'] as $key=>$label)<input type="hidden" name="{{ $key }}" value="0"><label class="mb-2"><input type="checkbox" name="{{ $key }}" value="1" @checked(old($key,$s[$key]))> {{ $label }}</label>@endforeach
+<label for="before">Clock-in reminder (minutes before start)</label><select id="before" name="before" class="form-select mb-3">@foreach([0,5,10,15,30] as $n)<option @selected(old('before',$s['before'])==$n)>{{ $n }}</option>@endforeach</select>
+<label for="repeat">Repeat clock-out reminder (minutes after finish)</label><select id="repeat" name="repeat" class="form-select">@foreach([15,30,45,60] as $n)<option @selected(old('repeat',$s['repeat'])==$n)>{{ $n }}</option>@endforeach</select></div>
+<div class="card p-4 mb-3"><h5>Attendance exceptions</h5><label for="max_hours">Maximum normal shift duration (hours)</label><input id="max_hours" type="number" min="8" max="24" name="max_hours" class="form-control" value="{{ old('max_hours',$s['max_hours']) }}"><p class="text-muted mt-2">Existing overnight review rules remain active. GPS radius remains 100m. Automatic clock-out is not enabled.</p></div><button class="btn btn-primary">Save attendance settings</button></form></div>
+@endsection
