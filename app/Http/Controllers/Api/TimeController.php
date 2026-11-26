@@ -130,6 +130,9 @@ class TimeController extends Controller
         $workerId = auth()->id();
         $log      = TimeLog::with('job:id,postcode')->where('worker_id', $workerId)->whereNull('clock_out_at')->latest()->firstOrFail();
 
+        if (\App\Services\AttendanceExceptions::stale($log)) {
+            return response()->json(['message'=>'This attendance needs review. Ask an administrator to confirm your actual finish time before starting another shift.'],422);
+        }
         $locationError = $this->validateJobLocation($log->job?->postcode, $request->lat, $request->lng, 'clock out');
         if ($locationError) return $locationError;
 
@@ -378,7 +381,7 @@ class TimeController extends Controller
 
         $distance = $this->haversine((float) $lat, (float) $lng, $coordinates['lat'], $coordinates['lng']);
         if ($distance > 100) {
-            \App\Services\AppIncident::record(['source'=>'server','operation'=>'attendance','kind'=>'geofence_rejected','user_id'=>auth()->id()]);
+            \App\Services\AppIncident::record(['source'=>'server','operation'=>'attendance','kind'=>'geofence_rejected','user_id'=>auth()->id(),'distance_metres'=>(int)round($distance)]);
             return response()->json([
                 'message' => 'You are ' . round($distance) . 'm away from the job site. You must be within 100m to ' . $action . '. If you forgot, ask an administrator to correct your time log.',
                 'distance_metres' => round($distance),
